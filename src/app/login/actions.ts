@@ -36,7 +36,9 @@ export async function signup(formData: FormData) {
     .single();
 
   if (existingProfile) {
-    return redirect(`/login?message=${encodeURIComponent("Nickname already exists.")}`);
+    return redirect(
+      `/login?message=${encodeURIComponent("Nickname already exists.")}`,
+    );
   }
 
   const { data, error } = await supabase.auth.signUp({
@@ -46,7 +48,7 @@ export async function signup(formData: FormData) {
       data: {
         nickname,
       },
-      emailRedirectTo: process.env.NEXT_PUBLIC_SITE_URL ? `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback` : "http://localhost:3000/auth/callback",
+      emailRedirectTo: "https://ssajoon.vercel.app/auth/callback",
     },
   });
 
