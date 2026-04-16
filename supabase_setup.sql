@@ -11,12 +11,16 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow public read access to profiles for deduplication" ON public.profiles FOR SELECT USING (true);
 CREATE POLICY "Users can insert their own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
--- Trigger to automatically insert row into profiles when auth.users is created
+-- Trigger to automatically insert row into users when auth.users is created
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, nickname)
-  VALUES (new.id, new.raw_user_meta_data->>'nickname');
+  INSERT INTO public.users (id, nickname)
+  VALUES (
+    new.id, 
+    -- Provide a fallback random nickname so the insertion survives NOT NULL rules during Google OAuth
+    COALESCE(new.raw_user_meta_data->>'nickname', 'user_' || substr(md5(random()::text), 1, 8))
+  );
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;

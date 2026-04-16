@@ -4,59 +4,23 @@ import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-export async function login(formData: FormData) {
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
+export async function login() {
   const supabase = await createClient();
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (error) {
-    return redirect("/login?message=Could not authenticate user");
-  }
-
-  revalidatePath("/", "layout");
-  redirect("/");
-}
-
-export async function signup(formData: FormData) {
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-  const nickname = formData.get("nickname") as string;
-  const supabase = await createClient();
-
-  // Validate Duplicate Nickname
-  const { data: existingProfile } = await supabase
-    .from("profiles")
-    .select("nickname")
-    .eq("nickname", nickname)
-    .single();
-
-  if (existingProfile) {
-    return redirect(
-      `/login?message=${encodeURIComponent("Nickname already exists.")}`,
-    );
-  }
-
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
     options: {
-      data: {
-        nickname,
-      },
-      emailRedirectTo: "https://ssajoon.vercel.app/auth/callback",
+      redirectTo: "http://localhost:3000/auth/callback",
     },
   });
 
   if (error) {
-    return redirect("/login?message=Could not sign up user");
+    return redirect(`/login?message=${encodeURIComponent(error.message)}`);
   }
 
-  return redirect("/login?message=Check email to continue sign in process");
+  if (data.url) {
+    redirect(data.url);
+  }
 }
 
 export async function signout() {

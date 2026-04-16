@@ -39,11 +39,36 @@ export async function updateSession(request: NextRequest) {
     !user &&
     !request.nextUrl.pathname.startsWith('/login') &&
     !request.nextUrl.pathname.startsWith('/api') &&
+    !request.nextUrl.pathname.startsWith('/auth') &&
     request.nextUrl.pathname.startsWith('/submissions') // protect specific routes
   ) {
-    // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()
     url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
+
+  // Force onboarding if nickname is missing and user is not already on onboarding
+  if (
+    user && 
+    !user.user_metadata?.nickname && 
+    !request.nextUrl.pathname.startsWith('/onboarding') &&
+    !request.nextUrl.pathname.startsWith('/api') &&
+    !request.nextUrl.pathname.startsWith('/auth') &&
+    !request.nextUrl.pathname.startsWith('/login')
+  ) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/onboarding'
+    return NextResponse.redirect(url)
+  }
+
+  // Prevent users from accessing onboarding if they already have a nickname
+  if (
+    user && 
+    user.user_metadata?.nickname && 
+    request.nextUrl.pathname.startsWith('/onboarding')
+  ) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/'
     return NextResponse.redirect(url)
   }
 
