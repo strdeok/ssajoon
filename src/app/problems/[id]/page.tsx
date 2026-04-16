@@ -167,7 +167,7 @@ export default function ProblemPage({
                 htmlFor="language-select"
                 className="text-sm font-medium text-zinc-500 dark:text-zinc-400"
               >
-                Language
+                언어
               </label>
               <select
                 id="language-select"
@@ -191,7 +191,7 @@ export default function ProblemPage({
                 ) : (
                   <Play className="w-4 h-4" />
                 )}
-                <span>Run Code</span>
+                <span>코드 실행</span>
               </button>
               <button
                 onClick={handleSubmit}
@@ -203,7 +203,7 @@ export default function ProblemPage({
                 ) : (
                   <Send className="w-4 h-4" />
                 )}
-                <span>{status === "PENDING" ? "Evaluating..." : "Submit Code"}</span>
+                <span>{status === "PENDING" ? "채점 중..." : "제출하기"}</span>
               </button>
             </div>
           </div>

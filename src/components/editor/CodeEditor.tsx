@@ -40,7 +40,7 @@ export function CodeEditor({
         }}
         loading={
           <div className="flex items-center justify-center h-full text-zinc-500 animate-pulse">
-            Loading Editor...
+            에디터를 불러오는 중...
           </div>
         }
       />

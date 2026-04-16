@@ -12,10 +12,10 @@ export default function OnboardingPage({ searchParams }: { searchParams: Promise
       <div className="w-full max-w-sm flex flex-col gap-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-2xl shadow-xl p-8">
         
         <h1 className="text-2xl font-bold text-center text-zinc-900 dark:text-zinc-100 mb-2">
-          Choose your Nickname
+          닉네임 설정
         </h1>
         <p className="text-sm text-center text-zinc-500">
-          You are successfully signed in with Google. Now let's pick a unique username for your profile.
+          구글 로그인이 완료되었습니다. 프로필에 사용할 고유한 닉네임을 설정해주세요.
         </p>
 
         {params.message && (
@@ -27,7 +27,7 @@ export default function OnboardingPage({ searchParams }: { searchParams: Promise
         <form className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="nickname">
-              Nickname
+              닉네임
             </label>
             <input
               id="nickname"
@@ -44,7 +44,7 @@ export default function OnboardingPage({ searchParams }: { searchParams: Promise
             className="w-full mt-2 flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 shadow-md hover:-translate-y-0.5 active:translate-y-0"
           >
             <Send className="w-4 h-4" />
-            <span>Complete Setup</span>
+            <span>설정 완료</span>
           </button>
         </form>
       </div>

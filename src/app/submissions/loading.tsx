@@ -11,12 +11,12 @@ export default function SubmissionsLoading() {
           <table className="w-full text-sm text-left text-zinc-500 dark:text-zinc-400">
             <thead className="text-xs text-zinc-700 uppercase bg-zinc-50 dark:bg-zinc-900/50 dark:text-zinc-400">
               <tr>
-                <th className="px-6 py-4">Submission ID</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Language</th>
-                <th className="px-6 py-4">Execution Time</th>
-                <th className="px-6 py-4">Memory</th>
-                <th className="px-6 py-4">Time</th>
+                <th className="px-6 py-4">제출 ID</th>
+                <th className="px-6 py-4">상태</th>
+                <th className="px-6 py-4">언어</th>
+                <th className="px-6 py-4">실행 시간</th>
+                <th className="px-6 py-4">메모리</th>
+                <th className="px-6 py-4">제출 시각</th>
               </tr>
             </thead>
             <tbody>

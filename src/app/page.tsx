@@ -20,10 +20,10 @@ export default async function Home() {
     <div className="container mx-auto px-6 pt-12 pb-24">
       <div className="mb-12">
         <h1 className="text-4xl font-extrabold text-zinc-900 dark:text-white tracking-tight sm:text-5xl mb-4">
-          Challenges
+          알고리즘 문제
         </h1>
         <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl">
-          Solve algorithmic problems specifically curated for your learning journey.
+          성장을 위해 특별히 큐레이션된 알고리즘 문제들을 해결해보세요.
         </p>
       </div>
       

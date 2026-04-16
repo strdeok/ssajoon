@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="ko" suppressHydrationWarning>
       <body className={`${inter.className} min-h-screen bg-background text-foreground flex flex-col antialiased selection:bg-blue-500/30 selection:text-blue-200`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <div className="flex flex-col min-h-screen">
@@ -31,8 +31,8 @@ export default function RootLayout({
                     <Link href="/">SSAJUN</Link>
                   </h1>
                   <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-                    <Link href="/" className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">Problems</Link>
-                    <Link href="/submissions" className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">Submissions</Link>
+                    <Link href="/" className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">문제 목록</Link>
+                    <Link href="/submissions" className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">제출 내역</Link>
                   </nav>
                 </div>
                 <div className="flex items-center space-x-4">

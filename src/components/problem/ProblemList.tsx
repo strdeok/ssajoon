@@ -22,7 +22,7 @@ export function ProblemList({ problems }: { problems: Problem[] }) {
         <input
           type="text"
           className="block w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
-          placeholder="Search problems by title or description..."
+          placeholder="문제 제목이나 설명으로 검색해보세요..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -31,8 +31,8 @@ export function ProblemList({ problems }: { problems: Problem[] }) {
       {filteredProblems.length === 0 ? (
         <div className="py-12 text-center text-zinc-500 dark:text-zinc-400 bg-white dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-white/5">
           <Search className="mx-auto h-12 w-12 mb-4 opacity-20" />
-          <p className="text-lg font-medium">No problems found</p>
-          <p className="text-sm">Try adjusting your search query.</p>
+          <p className="text-lg font-medium">검색된 문제가 없습니다</p>
+          <p className="text-sm">다른 검색어를 입력해보세요.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

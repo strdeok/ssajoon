@@ -13,7 +13,7 @@ export async function AuthNav() {
         href="/login"
         className="px-4 py-2 text-sm font-medium bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors"
       >
-        Sign In
+        로그인
       </Link>
     );
   }
@@ -32,7 +32,7 @@ export async function AuthNav() {
           className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
         >
           <LogOut className="w-4 h-4" />
-          <span>Logout</span>
+          <span>로그아웃</span>
         </button>
       </form>
     </div>
