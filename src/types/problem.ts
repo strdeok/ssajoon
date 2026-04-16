@@ -17,6 +17,7 @@ export interface ProblemTestcase {
 
 export interface Problem {
   id: string;
+  problem_no?: number;
   title: string;
   description: string;
   input_description: string;

@@ -60,7 +60,7 @@ export function ProblemList({ problems }: { problems: Problem[] }) {
                 
                 <div className="mt-6 flex items-center justify-between">
                   <span className="text-xs font-medium px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-full">
-                    ID: {problem.id}
+                    No. {problem.problem_no || problem.id}
                   </span>
                 </div>
               </div>

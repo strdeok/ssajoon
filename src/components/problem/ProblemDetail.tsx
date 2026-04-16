@@ -5,7 +5,7 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
     <div className="flex flex-col h-full bg-white dark:bg-zinc-900/50 rounded-xl overflow-auto custom-scrollbar">
       <div className="p-8 border-b border-zinc-200 dark:border-white/10 bg-white/90 dark:bg-zinc-900/80 sticky top-0 backdrop-blur-md z-10">
         <h1 className="text-3xl font-bold text-zinc-900 dark:text-white tracking-tight">
-          {problem.title}
+          {problem.problem_no ? `${problem.problem_no}. ${problem.title}` : problem.title}
         </h1>
       </div>
       

@@ -9,11 +9,11 @@ export default async function SubmissionsPage() {
   let submissions: any[] = [];
   
   if (user) {
-    const { data } = await supabase
-      .from("submissions")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
+      const { data } = await supabase
+        .from("submissions")
+        .select("*, problems(problem_no, title)")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
       
     if (data) submissions = data;
   }
@@ -48,7 +48,7 @@ export default async function SubmissionsPage() {
                 </td>
                 <td className="px-6 py-4 font-medium text-zinc-900 dark:text-white">
                   <Link href={`/problems/${sub.problem_id}`} className="hover:underline">
-                    {sub.problem_id}
+                    {sub.problems?.problem_no ? `${sub.problems.problem_no}번` : sub.problem_id}
                   </Link>
                 </td>
                 <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400 uppercase tracking-wider font-medium">
