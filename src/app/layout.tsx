@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+import { AuthNav } from "@/components/layout/AuthNav";
+import Link from "next/link";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,24 +21,31 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} min-h-screen bg-background text-foreground flex flex-col antialiased selection:bg-blue-500/30 selection:text-blue-200`}>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <header className="sticky top-0 z-50 w-full border-b border-zinc-200 dark:border-white/10 bg-white/80 dark:bg-[#09090b]/80 backdrop-blur-xl">
-          <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-            <a href="/" className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
-              SSAJUN
-            </a>
-            <nav className="flex space-x-6 text-sm font-medium text-zinc-400">
-              <a href="/" className="hover:text-black dark:hover:text-white transition-colors">Problems</a>
-              <a href="/submissions" className="hover:text-black dark:hover:text-white transition-colors">Submissions</a>
-            </nav>
-            <div className="ml-4 flex items-center border-l border-zinc-200 dark:border-zinc-800 pl-4">
-              <ThemeSwitcher />
-            </div>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <div className="flex flex-col min-h-screen">
+            {/* Header */}
+            <header className="h-16 border-b border-zinc-200 dark:border-white/5 bg-white dark:bg-[#09090b] flex items-center shadow-sm">
+              <div className="w-full max-w-7xl mx-auto px-4 flex items-center justify-between">
+                <div className="flex items-center space-x-8">
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    <Link href="/">SSAJUN</Link>
+                  </h1>
+                  <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+                    <Link href="/" className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">Problems</Link>
+                    <Link href="/submissions" className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">Submissions</Link>
+                  </nav>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <ThemeSwitcher />
+                  <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-2"></div>
+                  <AuthNav />
+                </div>
+              </div>
+            </header>
+            <main className="flex-1 flex flex-col">
+              {children}
+            </main>
           </div>
-        </header>
-        <main className="flex-1 flex flex-col">
-          {children}
-        </main>
         </ThemeProvider>
       </body>
     </html>

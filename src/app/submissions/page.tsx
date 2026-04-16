@@ -1,19 +1,22 @@
-import { Submission } from "@/types/submission";
-import { headers } from "next/headers";
+import { createClient } from "@/utils/supabase/server";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
-
-async function getSubmissions() {
-  const host = (await headers()).get("host") || "localhost:3000";
-  const protocol = host.includes("localhost") ? "http" : "https";
-  const res = await fetch(`${protocol}://${host}/api/submissions`, {
-    cache: "no-store", 
-  });
-  if (!res.ok) return [];
-  return res.json() as Promise<Submission[]>;
-}
+import Link from "next/link";
 
 export default async function SubmissionsPage() {
-  const submissions = await getSubmissions();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  let submissions: any[] = [];
+  
+  if (user) {
+    const { data } = await supabase
+      .from("submissions")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+      
+    if (data) submissions = data;
+  }
 
   return (
     <div className="container mx-auto px-6 pt-12 pb-24">
@@ -41,10 +44,12 @@ export default async function SubmissionsPage() {
             {submissions.map((sub) => (
               <tr key={sub.id} className="hover:bg-zinc-50 dark:hover:bg-white/[0.02] transition-colors">
                 <td className="px-6 py-4 font-mono text-sm text-zinc-500 text-zinc-500 font-medium">
-                  {sub.id}
+                  {sub.id.substring(0, 8)}
                 </td>
                 <td className="px-6 py-4 font-medium text-zinc-900 dark:text-white">
-                  {sub.problemId}
+                  <Link href={`/problems/${sub.problem_id}`} className="hover:underline">
+                    {sub.problem_id}
+                  </Link>
                 </td>
                 <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400 uppercase tracking-wider font-medium">
                   {sub.language || "unknown"}
@@ -72,7 +77,7 @@ export default async function SubmissionsPage() {
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
-                  {new Date(sub.createdAt).toLocaleString()}
+                  {new Date(sub.created_at).toLocaleString()}
                 </td>
               </tr>
             ))}
@@ -80,7 +85,7 @@ export default async function SubmissionsPage() {
             {submissions.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-6 py-12 text-center text-zinc-500">
-                  No submissions yet. Go solve a problem!
+                  {user ? "No submissions yet. Go solve a problem!" : "Please login to view your submissions."}
                 </td>
               </tr>
             )}

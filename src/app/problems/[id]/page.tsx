@@ -4,18 +4,29 @@ import { use, useEffect, useState, useRef } from "react";
 import { ProblemDetail } from "@/components/problem/ProblemDetail";
 import { CodeEditor } from "@/components/editor/CodeEditor";
 import { ResultViewer } from "@/components/submission/ResultViewer";
+import {
+  TestResultViewer,
+  TestResult,
+} from "@/components/submission/TestResultViewer";
 import { useSubmissionStore } from "@/store/submissionStore";
-import { Play, Send } from "lucide-react";
+import { Play, Send, Loader2 } from "lucide-react";
 import { Problem } from "@/types/problem";
 
-export default function ProblemPage({ params }: { params: Promise<{ id: string }> }) {
+export default function ProblemPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const [problem, setProblem] = useState<Problem | null>(null);
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("python");
   const [isLoading, setIsLoading] = useState(true);
-  
-  const { submissionId, status, setSubmissionId, setStatus, reset } = useSubmissionStore();
+  const [testResults, setTestResults] = useState<TestResult[] | null>(null);
+  const [isTesting, setIsTesting] = useState(false);
+
+  const { submissionId, status, setSubmissionId, setStatus, reset } =
+    useSubmissionStore();
 
   const pollingTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -26,7 +37,7 @@ export default function ProblemPage({ params }: { params: Promise<{ id: string }
         setProblem(data);
         setIsLoading(false);
       });
-      
+
     // Reset submission store on unmount or problem change
     return () => reset();
   }, [id, reset]);
@@ -55,7 +66,7 @@ export default function ProblemPage({ params }: { params: Promise<{ id: string }
 
   const handleSubmit = async () => {
     if (!code.trim()) return;
-    
+
     reset(); // Clear previous result
     setStatus("PENDING");
 
@@ -66,13 +77,38 @@ export default function ProblemPage({ params }: { params: Promise<{ id: string }
         body: JSON.stringify({ problemId: id, code, language }),
       });
       const data = await res.json();
-      
+
       if (data.submissionId) {
         setSubmissionId(data.submissionId);
       }
     } catch (err) {
       console.error(err);
       setStatus(null);
+    }
+  };
+
+  const handleRunCode = async () => {
+    if (!code.trim()) return;
+
+    setIsTesting(true);
+    setTestResults(null);
+    reset(); // Optionally clear submission results when running a test
+
+    try {
+      const res = await fetch("/api/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ problemId: id, code, language }),
+      });
+      const data = await res.json();
+
+      if (data.results) {
+        setTestResults(data.results);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsTesting(false);
     }
   };
 
@@ -92,14 +128,14 @@ export default function ProblemPage({ params }: { params: Promise<{ id: string }
       <div className="flex-1 lg:w-1/2 flex flex-col min-h-0 bg-white dark:bg-[#09090b] rounded-xl overflow-hidden shadow-2xl border border-zinc-200 dark:border-white/5">
         <ProblemDetail problem={problem} />
       </div>
-      
+
       {/* Right panel */}
       <div className="flex-1 lg:w-1/2 flex flex-col min-h-0 gap-4">
         {/* Editor wrapper */}
         <div className="flex-1 min-h-0 relative group">
-          <CodeEditor 
-            value={code} 
-            onChange={(val) => setCode(val || "")} 
+          <CodeEditor
+            value={code}
+            onChange={(val) => setCode(val || "")}
             language={language}
           />
         </div>
@@ -108,7 +144,10 @@ export default function ProblemPage({ params }: { params: Promise<{ id: string }
         <div className="flex flex-col gap-4">
           <div className="flex justify-between items-center bg-white dark:bg-zinc-900/50 p-4 rounded-xl border border-zinc-200 dark:border-white/5 backdrop-blur-md shadow-sm">
             <div className="flex items-center space-x-2">
-              <label htmlFor="language-select" className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+              <label
+                htmlFor="language-select"
+                className="text-sm font-medium text-zinc-500 dark:text-zinc-400"
+              >
                 Language
               </label>
               <select
@@ -122,16 +161,31 @@ export default function ProblemPage({ params }: { params: Promise<{ id: string }
                 <option value="c">C</option>
               </select>
             </div>
-            <button
-              onClick={handleSubmit}
-              disabled={status === "PENDING" || !code.trim()}
-              className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:from-zinc-300 disabled:to-zinc-300 dark:disabled:from-zinc-700 dark:disabled:to-zinc-700 text-white px-6 py-2.5 rounded-lg font-medium transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0"
-            >
-              <Send className="w-4 h-4" />
-              <span>Submit Code</span>
-            </button>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={handleRunCode}
+                disabled={isTesting || !code.trim()}
+                className="flex items-center space-x-2 bg-zinc-200 hover:bg-zinc-300 disabled:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:disabled:bg-zinc-900 text-zinc-900 dark:text-white px-5 py-2.5 rounded-lg font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isTesting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Play className="w-4 h-4" />
+                )}
+                <span>Run Code</span>
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={status === "PENDING" || !code.trim()}
+                className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:from-zinc-300 disabled:to-zinc-300 dark:disabled:from-zinc-700 dark:disabled:to-zinc-700 text-white px-6 py-2.5 rounded-lg font-medium transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0"
+              >
+                <Send className="w-4 h-4" />
+                <span>Submit Code</span>
+              </button>
+            </div>
           </div>
-          
+
+          <TestResultViewer results={testResults} />
           <ResultViewer />
         </div>
       </div>
