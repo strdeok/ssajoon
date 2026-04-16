@@ -114,9 +114,28 @@ export default function ProblemPage({
 
   if (isLoading || !problem) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="animate-pulse text-zinc-500 font-medium tracking-widest text-lg">
-          LOADING WORKSPACE...
+      <div className="flex-1 flex flex-col lg:flex-row h-[calc(100vh-64px)] overflow-hidden bg-zinc-50 dark:bg-black p-4 gap-4">
+        {/* Left panel skeleton */}
+        <div className="flex-1 lg:w-1/2 flex flex-col min-h-0 bg-white dark:bg-[#09090b] rounded-xl overflow-hidden shadow-2xl border border-zinc-200 dark:border-white/5 p-8">
+          <div className="h-10 w-3/4 bg-zinc-200 dark:bg-zinc-800 rounded-lg animate-pulse mb-10"></div>
+          <div className="space-y-6">
+            <div className="h-6 w-32 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse mb-4"></div>
+            <div className="space-y-3">
+              <div className="h-4 w-full bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
+              <div className="h-4 w-11/12 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
+              <div className="h-4 w-full bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
+              <div className="h-4 w-4/5 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
+            </div>
+            
+            <div className="h-6 w-24 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse mt-10 mb-4"></div>
+            <div className="h-24 w-full bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse"></div>
+          </div>
+        </div>
+
+        {/* Right panel skeleton */}
+        <div className="flex-1 lg:w-1/2 flex flex-col min-h-0 gap-4">
+          <div className="flex-1 bg-zinc-100 dark:bg-zinc-900/50 rounded-xl animate-pulse border border-zinc-200 dark:border-white/5"></div>
+          <div className="h-20 bg-white dark:bg-zinc-900/50 rounded-xl animate-pulse border border-zinc-200 dark:border-white/5"></div>
         </div>
       </div>
     );
@@ -179,8 +198,12 @@ export default function ProblemPage({
                 disabled={status === "PENDING" || !code.trim()}
                 className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:from-zinc-300 disabled:to-zinc-300 dark:disabled:from-zinc-700 dark:disabled:to-zinc-700 text-white px-6 py-2.5 rounded-lg font-medium transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0"
               >
-                <Send className="w-4 h-4" />
-                <span>Submit Code</span>
+                {status === "PENDING" ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+                <span>{status === "PENDING" ? "Evaluating..." : "Submit Code"}</span>
               </button>
             </div>
           </div>
