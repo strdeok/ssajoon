@@ -26,7 +26,7 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
             입력
           </h2>
           <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-6 rounded-xl border border-zinc-200 dark:border-white/5">
-            {problem.input_desc}
+            {problem.input_description}
           </div>
         </section>
 
@@ -36,27 +36,27 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
             출력
           </h2>
           <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-6 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap">
-            {problem.output_desc}
+            {problem.output_description}
           </div>
         </section>
 
-        {problem.testCases && problem.testCases.length > 0 && (
+        {problem.problem_examples && problem.problem_examples.length > 0 && (
           <section>
             <h2 className="text-lg font-semibold text-emerald-600 dark:text-emerald-400 mb-4 flex items-center">
               <span className="w-2 h-2 rounded-full bg-emerald-500 mr-3" />
               샘플 테스트 케이스
             </h2>
             <div className="space-y-4">
-              {problem.testCases.map((tc, idx) => (
+              {problem.problem_examples.map((tc, idx) => (
                 <div key={idx} className="bg-zinc-50 dark:bg-black/20 rounded-xl border border-zinc-200 dark:border-white/5 overflow-hidden">
                   <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-zinc-200 dark:divide-white/5">
                     <div className="p-4">
                       <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Input {idx + 1}</div>
-                      <pre className="font-mono text-sm text-zinc-800 dark:text-zinc-300 whitespace-pre-wrap">{tc.input || " "}</pre>
+                      <pre className="font-mono text-sm text-zinc-800 dark:text-zinc-300 whitespace-pre-wrap">{tc.input_text || " "}</pre>
                     </div>
                     <div className="p-4">
                       <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Output {idx + 1}</div>
-                      <pre className="font-mono text-sm text-zinc-800 dark:text-zinc-300 whitespace-pre-wrap">{tc.output}</pre>
+                      <pre className="font-mono text-sm text-zinc-800 dark:text-zinc-300 whitespace-pre-wrap">{tc.output_text}</pre>
                     </div>
                   </div>
                 </div>

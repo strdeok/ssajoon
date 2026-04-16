@@ -7,17 +7,20 @@ export async function GET(
 ) {
   const { id } = await params;
   const supabase = await createClient();
+  
   const { data: problem, error } = await supabase.from("problems").select("*").eq("id", id).single();
 
   if (error || !problem) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // Map snake_case to camelCase for the frontend
-  if (problem.test_cases) {
-    problem.testCases = problem.test_cases;
-    delete problem.test_cases;
-  }
+  const { data: examples } = await supabase
+    .from("problem_examples")
+    .select("*")
+    .eq("problem_id", id)
+    .order("example_order", { ascending: true });
+
+  problem.problem_examples = examples || [];
 
   return NextResponse.json(problem);
 }

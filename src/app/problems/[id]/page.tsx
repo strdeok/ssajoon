@@ -157,8 +157,8 @@ export default function ProblemPage({
                 className="bg-zinc-100 dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block px-3 py-2 outline-none transition-all cursor-pointer"
               >
                 <option value="python">Python</option>
-                <option value="java">Java</option>
-                <option value="c">C</option>
+                <option value="java">Java 17</option>
+                <option value="cpp">C++</option>
               </select>
             </div>
             <div className="flex items-center space-x-3">

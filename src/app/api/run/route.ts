@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { problems } from "@/mocks/problems";
 import { runCode } from "@/lib/runner";
+import { createClient } from "@/utils/supabase/server";
 
 export async function POST(request: Request) {
   try {
@@ -10,26 +10,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Bad Request" }, { status: 400 });
     }
 
-    const problem = problems.find((p) => p.id === problemId);
-    if (!problem) {
-      return NextResponse.json({ error: "Problem not found" }, { status: 404 });
+    const supabase = await createClient();
+    
+    // Fetch examples for "Run Code"
+    const { data: testCases, error } = await supabase
+      .from("problem_examples")
+      .select("*")
+      .eq("problem_id", problemId)
+      .order("example_order", { ascending: true });
+
+    if (error || !testCases) {
+      return NextResponse.json({ error: "Examples not found" }, { status: 404 });
     }
 
-    const testCases = problem.testCases || [];
-    
     const results = [];
 
     for (const tc of testCases) {
-      const runnerRes = await runCode(language, code, tc.input);
+      const runnerRes = await runCode(language, code, tc.input_text);
 
       // Clean up stdout spacing
       const actualRaw = runnerRes.passed ? runnerRes.stdout : runnerRes.stderr || runnerRes.error || "Exception";
       
-      const passed = runnerRes.passed && actualRaw.trim() === tc.output.trim();
+      const passed = runnerRes.passed && actualRaw.trim() === tc.output_text.trim();
 
       results.push({
-        input: tc.input,
-        expectedOutput: tc.output,
+        input: tc.input_text,
+        expectedOutput: tc.output_text,
         actualOutput: actualRaw,
         passed,
       });
@@ -40,3 +46,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+

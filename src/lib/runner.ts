@@ -92,7 +92,7 @@ export async function runCode(
       await fs.writeFile(filePath, code);
       
       try {
-        const compileRes = await spawnWithTimeout("javac", ["Main.java"], "", tmpDir);
+        const compileRes = await spawnWithTimeout("javac", ["--release", "17", "Main.java"], "", tmpDir);
         if (compileRes.code !== 0) {
           return { stdout: "", stderr: compileRes.stderr, passed: false, error: "Compilation Error" };
         }

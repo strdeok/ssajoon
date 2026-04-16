@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       .insert({
         user_id: user.id,
         problem_id: problemId,
-        code,
+        source_code: code,
         language,
         status: "PENDING",
       })
@@ -36,30 +36,53 @@ export async function POST(request: Request) {
 
     // Background execution
     (async () => {
-      // Background threads need to re-initialize an anon client since cookies might not persist in bg context natively easily,
-      // but in Next.js Server Actions/Routes, local supabase instance is fine. Wait, better to construct anon client or Service role key.
-      // But Since RLS allows Auth'd User to UPDATE their submissions, and this context technically still has cookies, it might work.
       const bgSupabase = await createClient(); 
 
-      const { data: problem } = await bgSupabase.from("problems").select("test_cases").eq("id", problemId).single();
+      const { data: testCases } = await bgSupabase
+        .from("problem_testcases")
+        .select("*")
+        .eq("problem_id", problemId)
+        .order("testcase_order", { ascending: true });
       
       let finalStatus = "WA";
+      let totalExecutionTime = 0;
 
-      if (problem && problem.test_cases) {
+      if (testCases && testCases.length > 0) {
         let allPassed = true;
-        for (const tc of problem.test_cases) {
-          const res = await runCode(language, code, tc.input);
+        for (const tc of testCases) {
+          const startTime = Date.now();
+          const res = await runCode(language, code, tc.input_text);
+          const execution_time_ms = Date.now() - startTime;
+          totalExecutionTime += execution_time_ms;
+
           const actualOutput = res.passed ? res.stdout : res.stderr || res.error || "";
           
-          if (!res.passed || actualOutput.trim() !== tc.output.trim()) {
-            allPassed = false;
-            break;
+          let tcResultStr = "WA";
+          if (!res.passed) {
+             tcResultStr = "RE"; // Runtime or Compilation Error
+             allPassed = false;
+          } else if (actualOutput.trim() === tc.expected_output.trim()) {
+             tcResultStr = "AC";
+          } else {
+             allPassed = false;
           }
+
+          await bgSupabase.from("submission_testcase_results").insert({
+            submission_id: submission.id,
+            testcase_id: tc.id,
+            result: tcResultStr,
+            execution_time_ms,
+            error_message: !res.passed ? actualOutput : null,
+          });
         }
         finalStatus = allPassed ? "AC" : "WA";
       }
 
-      await bgSupabase.from("submissions").update({ status: finalStatus }).eq("id", submission.id);
+      await bgSupabase.from("submissions").update({ 
+        status: finalStatus,
+        execution_time_ms: totalExecutionTime > 0 ? Math.round(totalExecutionTime / (testCases?.length || 1)) : 0,
+        judged_at: new Date().toISOString()
+      }).eq("id", submission.id);
     })();
 
     return NextResponse.json({ submissionId: submission.id }, { status: 201 });
