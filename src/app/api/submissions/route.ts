@@ -89,7 +89,7 @@ export async function POST(request: Request) {
     if (insertError || !insertedSubmission) {
       console.error("Submission DB Insert Error:", insertError);
       return NextResponse.json(
-        { success: false, message: "제출 기록을 저장하는 데 실패했습니다." },
+        { success: false, message: "제출 기록을 저장하는 데 실패했습니다.", errorDetails: insertError },
         { status: 500 }
       );
     }
