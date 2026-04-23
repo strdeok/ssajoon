@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
-import { CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
 export default async function SubmissionsPage() {
@@ -13,7 +13,7 @@ export default async function SubmissionsPage() {
         .from("submissions")
         .select("*, problems(problem_no, title)")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+        .order("submitted_at", { ascending: false });
       
     if (data) submissions = data;
   }
@@ -56,28 +56,44 @@ export default async function SubmissionsPage() {
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center space-x-2">
-                    {sub.status === "AC" && (
-                      <span className="flex items-center text-green-400 bg-green-500/10 px-3 py-1 rounded-full text-sm font-medium">
+                    {(sub.status === "PENDING" || sub.status === "QUEUED") && (
+                      <span className="flex items-center text-zinc-500 bg-zinc-500/10 px-3 py-1 rounded-full text-sm font-medium">
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        채점 대기 중
+                      </span>
+                    )}
+                    {sub.status === "RUNNING" && (
+                      <span className="flex items-center text-blue-500 bg-blue-500/10 px-3 py-1 rounded-full text-sm font-medium">
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        채점 중
+                      </span>
+                    )}
+                    {(sub.status === "AC" || sub.result === "AC") && (
+                      <span className="flex items-center text-green-500 bg-green-500/10 px-3 py-1 rounded-full text-sm font-medium">
                         <CheckCircle className="w-4 h-4 mr-2" />
                         맞았습니다!!
                       </span>
                     )}
-                    {sub.status === "WA" && (
-                      <span className="flex items-center text-red-400 bg-red-500/10 px-3 py-1 rounded-full text-sm font-medium">
+                    {(["WA", "CE", "RE", "TLE", "MLE"].includes(sub.status) || ["WA", "CE", "RE", "TLE", "MLE"].includes(sub.result)) && (
+                      <span className="flex items-center text-red-500 bg-red-500/10 px-3 py-1 rounded-full text-sm font-medium">
                         <XCircle className="w-4 h-4 mr-2" />
-                        틀렸습니다
+                        {(sub.result || sub.status) === "WA" ? "틀렸습니다" : 
+                         (sub.result || sub.status) === "CE" ? "컴파일 에러" :
+                         (sub.result || sub.status) === "RE" ? "런타임 에러" :
+                         (sub.result || sub.status) === "TLE" ? "시간 초과" :
+                         (sub.result || sub.status) === "MLE" ? "메모리 초과" : "오답"}
                       </span>
                     )}
-                    {sub.status === "PENDING" && (
-                      <span className="flex items-center text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full text-sm font-medium">
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        채점 중
+                    {(sub.status === "ERROR" || sub.status === "FAILED") && (
+                      <span className="flex items-center text-orange-500 bg-orange-500/10 px-3 py-1 rounded-full text-sm font-medium">
+                        <AlertCircle className="w-4 h-4 mr-2" />
+                        채점 실패
                       </span>
                     )}
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
-                  {new Date(sub.created_at).toLocaleString()}
+                  {new Date(sub.submitted_at).toLocaleString()}
                 </td>
               </tr>
             ))}
