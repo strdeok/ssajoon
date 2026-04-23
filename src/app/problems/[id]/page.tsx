@@ -12,6 +12,7 @@ import { useSubmissionStore } from "@/store/submissionStore";
 import { Play, Send, Loader2 } from "lucide-react";
 import { Problem } from "@/types/problem";
 import { createClient } from "@/utils/supabase/client";
+import { SubmissionStatusListener } from "@/components/submission/SubmissionStatusListener";
 
 export default function ProblemPage({
   params,
@@ -30,7 +31,7 @@ export default function ProblemPage({
   const { submissionId, status, setSubmissionId, setStatus, reset } =
     useSubmissionStore();
 
-  const pollingTimer = useRef<NodeJS.Timeout | null>(null);
+
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -51,27 +52,7 @@ export default function ProblemPage({
     return () => reset();
   }, [id, reset]);
 
-  // Polling Effect
-  useEffect(() => {
-    if (submissionId && status === "PENDING") {
-      pollingTimer.current = setInterval(async () => {
-        try {
-          const res = await fetch(`/api/result?id=${submissionId}`);
-          const data = await res.json();
-          if (data.status !== "PENDING") {
-            setStatus(data.status);
-            if (pollingTimer.current) clearInterval(pollingTimer.current);
-          }
-        } catch (err) {
-          console.error(err);
-        }
-      }, 500); // Poll every 500ms
-    }
 
-    return () => {
-      if (pollingTimer.current) clearInterval(pollingTimer.current);
-    };
-  }, [submissionId, status, setStatus]);
 
   const handleSubmit = async () => {
     if (!code.trim()) {
@@ -239,6 +220,7 @@ export default function ProblemPage({
 
           <TestResultViewer results={testResults} />
           <ResultViewer />
+          <SubmissionStatusListener submissionId={submissionId} />
         </div>
       </div>
     </div>

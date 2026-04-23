@@ -1,4 +1,4 @@
-export type SubmissionStatus = "PENDING" | "AC" | "WA" | "CE" | "RE" | "TLE" | "MLE";
+export type SubmissionStatus = "PENDING" | "QUEUED" | "RUNNING" | "AC" | "WA" | "CE" | "RE" | "TLE" | "MLE" | "DONE" | "FAILED" | "ERROR";
 
 export interface Submission {
   id: string; // uuid
@@ -26,4 +26,7 @@ export interface SubmissionTestcaseResult {
 
 export interface JudgeResult {
   status: SubmissionStatus;
+  result?: string;
+  execution_time_ms?: number;
+  memory_kb?: number;
 }
