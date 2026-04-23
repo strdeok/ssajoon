@@ -7,14 +7,14 @@ export default async function SubmissionsPage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   let submissions: any[] = [];
-  
+
   if (user) {
-      const { data } = await supabase
-        .from("submissions")
-        .select("*, problems(problem_no, title)")
-        .eq("user_id", user.id)
-        .order("submitted_at", { ascending: false });
-      
+    const { data, error } = await supabase
+      .from("submissions")
+      .select("*, problems(id, title)")
+      .eq("user_id", user.id)
+      .order("submitted_at", { ascending: false });
+
     if (data) submissions = data;
   }
 
@@ -77,11 +77,11 @@ export default async function SubmissionsPage() {
                     {(["WA", "CE", "RE", "TLE", "MLE"].includes(sub.status) || ["WA", "CE", "RE", "TLE", "MLE"].includes(sub.result)) && (
                       <span className="flex items-center text-red-500 bg-red-500/10 px-3 py-1 rounded-full text-sm font-medium">
                         <XCircle className="w-4 h-4 mr-2" />
-                        {(sub.result || sub.status) === "WA" ? "틀렸습니다" : 
-                         (sub.result || sub.status) === "CE" ? "컴파일 에러" :
-                         (sub.result || sub.status) === "RE" ? "런타임 에러" :
-                         (sub.result || sub.status) === "TLE" ? "시간 초과" :
-                         (sub.result || sub.status) === "MLE" ? "메모리 초과" : "오답"}
+                        {(sub.result || sub.status) === "WA" ? "틀렸습니다" :
+                          (sub.result || sub.status) === "CE" ? "컴파일 에러" :
+                            (sub.result || sub.status) === "RE" ? "런타임 에러" :
+                              (sub.result || sub.status) === "TLE" ? "시간 초과" :
+                                (sub.result || sub.status) === "MLE" ? "메모리 초과" : "오답"}
                       </span>
                     )}
                     {(sub.status === "ERROR" || sub.status === "FAILED") && (
@@ -97,7 +97,7 @@ export default async function SubmissionsPage() {
                 </td>
               </tr>
             ))}
-            
+
             {submissions.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-6 py-12 text-center text-zinc-500">
