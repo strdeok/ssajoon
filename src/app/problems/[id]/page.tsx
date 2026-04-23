@@ -26,6 +26,7 @@ export default function ProblemPage({
   const [isLoading, setIsLoading] = useState(true);
   const [testResults, setTestResults] = useState<TestResult[] | null>(null);
   const [isTesting, setIsTesting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [user, setUser] = useState<any>(null);
 
   const { submissionId, status, setSubmissionId, setStatus, reset } =
@@ -61,7 +62,7 @@ export default function ProblemPage({
     }
 
     reset(); // Clear previous result
-    setStatus("PENDING");
+    setIsSubmitting(true);
 
     try {
       // 프론트에서 외부 API를 직접 호출하지 않고, 우리 Next.js 서버 라우트를 거침
@@ -80,6 +81,8 @@ export default function ProblemPage({
 
       alert(data.message || "코드가 성공적으로 제출되었습니다!");
 
+      setStatus("PENDING");
+
       if (data.submissionId || data.id) {
         setSubmissionId(data.submissionId || data.id);
       } else {
@@ -87,8 +90,10 @@ export default function ProblemPage({
       }
     } catch (err: any) {
       console.error("제출 에러:", err);
-      alert(err.message || "제출 중 네트워크 오류가 발생했습니다.");
+      alert(err.message || "제출 중 오류가 발생했습니다.");
       setStatus(null);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -223,6 +228,17 @@ export default function ProblemPage({
           <SubmissionStatusListener submissionId={submissionId} />
         </div>
       </div>
+
+      {/* 제출 로딩 오버레이 */}
+      {isSubmitting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-zinc-900 p-8 rounded-2xl shadow-2xl flex flex-col items-center space-y-4 border border-zinc-200 dark:border-white/10">
+            <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+            <p className="text-lg font-bold text-zinc-800 dark:text-zinc-100">코드 제출 중...</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">잠시만 기다려주세요</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

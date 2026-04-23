@@ -120,10 +120,10 @@ export async function POST(request: Request) {
     }
 
     if (!orchestratorRes.ok) {
-      // 오류 발생 시 DB 기록 상태를 ERROR로 업데이트
+      // 오류 발생 시 DB 기록 삭제
       await supabase
         .from("submissions")
-        .update({ status: "ERROR" })
+        .delete()
         .eq("id", insertedSubmission.id);
 
       return NextResponse.json(
