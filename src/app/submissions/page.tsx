@@ -15,6 +15,10 @@ export default async function SubmissionsPage() {
       .eq("user_id", user.id)
       .order("submitted_at", { ascending: false });
 
+    console.log("submissions data:", data);
+    console.log("submissions error:", error);
+    console.log("current user id:", user.id);
+
     if (data) submissions = data;
   }
 
