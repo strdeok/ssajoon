@@ -15,10 +15,6 @@ export default async function SubmissionsPage() {
       .eq("user_id", user.id)
       .order("submitted_at", { ascending: false });
 
-    console.log("submissions data:", data);
-    console.log("submissions error:", error);
-    console.log("current user id:", user.id);
-
     if (data) submissions = data;
   }
 
@@ -48,7 +44,7 @@ export default async function SubmissionsPage() {
             {submissions.map((sub) => (
               <tr key={sub.id} className="hover:bg-zinc-50 dark:hover:bg-white/[0.02] transition-colors">
                 <td className="px-6 py-4 font-mono text-sm text-zinc-500 text-zinc-500 font-medium">
-                  {sub.id.substring(0, 8)}
+                  {sub.problems?.problem_no ? `${sub.problems.problem_no}번` : sub.problem_id}
                 </td>
                 <td className="px-6 py-4 font-medium text-zinc-900 dark:text-white">
                   <Link href={`/problems/${sub.problem_id}`} className="hover:underline">
