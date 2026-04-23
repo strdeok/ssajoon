@@ -1,68 +1,188 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { Problem } from "@/types/problem";
+import { createClient } from "@/utils/supabase/client";
+import { Loader2, FileText, Clock } from "lucide-react";
 
 export function ProblemDetail({ problem }: { problem: Problem }) {
+  // 1. 탭 상태 관리
+  const [activeTab, setActiveTab] = useState<"description" | "submissions">("description");
+  
+  // 2. 데이터 상태 관리
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [isUserLoaded, setIsUserLoaded] = useState(false);
+
+  // 3. 페이지 최초 렌더 시 로그인 유저 확인
+  useEffect(() => {
+    async function loadUser() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      setIsUserLoaded(true);
+    }
+    loadUser();
+  }, []);
+
+  // 4. "내 제출 코드" 탭 활성화 시 데이터 패칭
+  useEffect(() => {
+    if (activeTab === "submissions" && user) {
+      loadSubmissions();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, user, problem.id]);
+
+  const loadSubmissions = async () => {
+    setLoadingSubmissions(true);
+    const supabase = createClient();
+    
+    // DB에서 내 제출 내역 조회 (problem_id와 user_id 필터)
+    const { data, error } = await supabase
+      .from("submissions")
+      .select("*")
+      .eq("problem_id", problem.id)
+      .eq("user_id", user.id)
+      .order("submitted_at", { ascending: false });
+
+    if (!error && data) {
+      setSubmissions(data);
+    } else {
+      console.error("Failed to load submissions", error);
+    }
+    setLoadingSubmissions(false);
+  };
+
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-zinc-900/50 rounded-xl overflow-auto custom-scrollbar">
-      <div className="p-8 border-b border-zinc-200 dark:border-white/10 bg-white/90 dark:bg-zinc-900/80 sticky top-0 backdrop-blur-md z-10">
-        <h1 className="text-3xl font-bold text-zinc-900 dark:text-white tracking-tight">
-          {problem.problem_no ? `${problem.problem_no}. ${problem.title}` : problem.title}
-        </h1>
+    <div className="flex flex-col h-full bg-white dark:bg-zinc-900/50 rounded-xl overflow-hidden">
+      {/* 상단 헤더 및 탭 영역 */}
+      <div className="border-b border-zinc-200 dark:border-white/10 bg-white/90 dark:bg-zinc-900/80 sticky top-0 backdrop-blur-md z-10">
+        <div className="p-8 pb-4">
+          <h1 className="text-3xl font-bold text-zinc-900 dark:text-white tracking-tight">
+            {problem.problem_no ? `${problem.problem_no}. ${problem.title}` : problem.title}
+          </h1>
+        </div>
+        
+        {/* 탭 네비게이션 */}
+        <div className="flex px-8 space-x-6">
+          <button
+            onClick={() => setActiveTab("description")}
+            className={`pb-4 text-sm font-medium transition-colors relative flex items-center space-x-2 cursor-pointer disabled:cursor-not-allowed ${
+              activeTab === "description"
+                ? "text-blue-600 dark:text-blue-400"
+                : "text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+            }`}
+          >
+            <FileText className="w-4 h-4" />
+            <span>문제 설명</span>
+            {activeTab === "description" && (
+              <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 dark:bg-blue-400 rounded-t-full" />
+            )}
+          </button>
+          
+          <button
+            onClick={() => setActiveTab("submissions")}
+            className={`pb-4 text-sm font-medium transition-colors relative flex items-center space-x-2 cursor-pointer disabled:cursor-not-allowed ${
+              activeTab === "submissions"
+                ? "text-blue-600 dark:text-blue-400"
+                : "text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+            }`}
+          >
+            <Clock className="w-4 h-4" />
+            <span>내 제출 코드</span>
+            {activeTab === "submissions" && (
+              <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 dark:bg-blue-400 rounded-t-full" />
+            )}
+          </button>
+        </div>
       </div>
       
-      <div className="p-8 space-y-10">
-        <section>
-          <h2 className="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-4 flex items-center">
-            <span className="w-2 h-2 rounded-full bg-blue-500 mr-3" />
-            문제 설명
-          </h2>
-          <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-6 rounded-xl border border-zinc-200 dark:border-white/5">
-            {problem.description}
-          </div>
-        </section>
+      {/* 탭별 하단 컨텐츠 렌더링 영역 */}
+      <div className="flex-1 overflow-auto custom-scrollbar">
+        {activeTab === "description" ? (
+          <div className="p-8 space-y-10">
+            {/* 5. 기존 문제 설명 렌더링 */}
+            <section>
+              <h2 className="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-4 flex items-center">
+                <span className="w-2 h-2 rounded-full bg-blue-500 mr-3" />
+                문제 설명
+              </h2>
+              <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-6 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap">
+                {problem.description}
+              </div>
+            </section>
 
-        <section>
-          <h2 className="text-lg font-semibold text-purple-600 dark:text-purple-400 mb-4 flex items-center">
-            <span className="w-2 h-2 rounded-full bg-purple-500 mr-3" />
-            입력
-          </h2>
-          <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-6 rounded-xl border border-zinc-200 dark:border-white/5">
-            {problem.input_description}
-          </div>
-        </section>
+            <section>
+              <h2 className="text-lg font-semibold text-purple-600 dark:text-purple-400 mb-4 flex items-center">
+                <span className="w-2 h-2 rounded-full bg-purple-500 mr-3" />
+                입력
+              </h2>
+              <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-6 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap">
+                {problem.input_description}
+              </div>
+            </section>
 
-        <section>
-          <h2 className="text-lg font-semibold text-pink-600 dark:text-pink-400 mb-4 flex items-center">
-            <span className="w-2 h-2 rounded-full bg-pink-500 mr-3" />
-            출력
-          </h2>
-          <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-6 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap">
-            {problem.output_description}
+            <section>
+              <h2 className="text-lg font-semibold text-pink-600 dark:text-pink-400 mb-4 flex items-center">
+                <span className="w-2 h-2 rounded-full bg-pink-500 mr-3" />
+                출력
+              </h2>
+              <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-6 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap">
+                {problem.output_description}
+              </div>
+            </section>
           </div>
-        </section>
-
-        {problem.problem_examples && problem.problem_examples.length > 0 && (
-          <section>
-            <h2 className="text-lg font-semibold text-emerald-600 dark:text-emerald-400 mb-4 flex items-center">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 mr-3" />
-              샘플 테스트 케이스
-            </h2>
-            <div className="space-y-4">
-              {problem.problem_examples.map((tc, idx) => (
-                <div key={idx} className="bg-zinc-50 dark:bg-black/20 rounded-xl border border-zinc-200 dark:border-white/5 overflow-hidden">
-                  <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-zinc-200 dark:divide-white/5">
-                    <div className="p-4">
-                      <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Input {idx + 1}</div>
-                      <pre className="font-mono text-sm text-zinc-800 dark:text-zinc-300 whitespace-pre-wrap">{tc.input_text || " "}</pre>
+        ) : (
+          <div className="p-8">
+            {/* 6. 제출 내역 렌더링 영역 */}
+            {!isUserLoaded ? (
+              <div className="flex justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>
+            ) : !user ? (
+              <div className="text-center py-12 bg-zinc-50 dark:bg-black/20 rounded-xl border border-zinc-200 dark:border-white/5">
+                <p className="text-zinc-500 dark:text-zinc-400">로그인 후 제출 내역을 확인할 수 있습니다.</p>
+              </div>
+            ) : loadingSubmissions ? (
+              <div className="flex justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>
+            ) : submissions.length === 0 ? (
+              <div className="text-center py-12 bg-zinc-50 dark:bg-black/20 rounded-xl border border-zinc-200 dark:border-white/5">
+                <p className="text-zinc-500 dark:text-zinc-400">이 문제에 대한 제출 내역이 없습니다.</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {submissions.map((sub) => {
+                  // AC(정답) 계열인지 실패 계열인지 판단
+                  const isSuccess = sub.status === 'AC' || sub.result === 'AC' || sub.status === 'SUCCESS';
+                  return (
+                    <div key={sub.id} className="bg-zinc-50 dark:bg-black/20 rounded-xl border border-zinc-200 dark:border-white/5 overflow-hidden">
+                      <div className="p-4 border-b border-zinc-200 dark:border-white/5 flex justify-between items-center bg-white/50 dark:bg-zinc-900/50">
+                        <div className="flex items-center space-x-4">
+                          <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${
+                            isSuccess 
+                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' 
+                              : 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400'
+                          }`}>
+                            {sub.status || sub.result || "PENDING"}
+                          </span>
+                          <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                            {sub.language}
+                          </span>
+                        </div>
+                        <div className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                          {new Date(sub.submitted_at).toLocaleString('ko-KR')}
+                        </div>
+                      </div>
+                      <div className="p-4 overflow-x-auto">
+                        <pre className="text-sm font-mono text-zinc-800 dark:text-zinc-300 leading-relaxed">
+                          {sub.source_code}
+                        </pre>
+                      </div>
                     </div>
-                    <div className="p-4">
-                      <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Output {idx + 1}</div>
-                      <pre className="font-mono text-sm text-zinc-800 dark:text-zinc-300 whitespace-pre-wrap">{tc.output_text}</pre>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

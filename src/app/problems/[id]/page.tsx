@@ -11,6 +11,7 @@ import {
 import { useSubmissionStore } from "@/store/submissionStore";
 import { Play, Send, Loader2 } from "lucide-react";
 import { Problem } from "@/types/problem";
+import { createClient } from "@/utils/supabase/client";
 
 export default function ProblemPage({
   params,
@@ -24,6 +25,7 @@ export default function ProblemPage({
   const [isLoading, setIsLoading] = useState(true);
   const [testResults, setTestResults] = useState<TestResult[] | null>(null);
   const [isTesting, setIsTesting] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
   const { submissionId, status, setSubmissionId, setStatus, reset } =
     useSubmissionStore();
@@ -31,6 +33,13 @@ export default function ProblemPage({
   const pollingTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    const fetchUser = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    fetchUser();
+
     fetch(`/api/problems/${id}`)
       .then((res) => res.json())
       .then((data) => {
@@ -65,24 +74,39 @@ export default function ProblemPage({
   }, [submissionId, status, setStatus]);
 
   const handleSubmit = async () => {
-    if (!code.trim()) return;
+    if (!code.trim()) {
+      alert("제출할 코드를 작성해주세요.");
+      return;
+    }
 
     reset(); // Clear previous result
     setStatus("PENDING");
 
     try {
-      const res = await fetch("/api/submit", {
+      // 프론트에서 외부 API를 직접 호출하지 않고, 우리 Next.js 서버 라우트를 거침
+      const res = await fetch("/api/submissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ problemId: id, code, language }),
+        body: JSON.stringify({ problemId: id, language, sourceCode: code }),
       });
+      
       const data = await res.json();
+      console.log("Next.js 서버 제출 응답:", data);
 
-      if (data.submissionId) {
-        setSubmissionId(data.submissionId);
+      if (!res.ok) {
+        throw new Error(data.message || "제출 실패: 서버 오류");
       }
-    } catch (err) {
-      console.error(err);
+
+      alert(data.message || "코드가 성공적으로 제출되었습니다!");
+
+      if (data.submissionId || data.id) {
+        setSubmissionId(data.submissionId || data.id);
+      } else {
+        setStatus("AC");
+      }
+    } catch (err: any) {
+      console.error("제출 에러:", err);
+      alert(err.message || "제출 중 네트워크 오류가 발생했습니다.");
       setStatus(null);
     }
   };
@@ -181,10 +205,15 @@ export default function ProblemPage({
               </select>
             </div>
             <div className="flex items-center space-x-3">
+              {!user && (
+                <span className="text-sm text-red-500 dark:text-red-400 font-medium mr-2">
+                  로그인 후 실행/제출 가능
+                </span>
+              )}
               <button
                 onClick={handleRunCode}
-                disabled={isTesting || !code.trim()}
-                className="flex items-center space-x-2 bg-zinc-200 hover:bg-zinc-300 disabled:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:disabled:bg-zinc-900 text-zinc-900 dark:text-white px-5 py-2.5 rounded-lg font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isTesting || !code.trim() || !user}
+                className="flex items-center space-x-2 bg-zinc-200 hover:bg-zinc-300 disabled:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:disabled:bg-zinc-900 text-zinc-900 dark:text-white px-5 py-2.5 rounded-lg font-medium transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isTesting ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -195,8 +224,8 @@ export default function ProblemPage({
               </button>
               <button
                 onClick={handleSubmit}
-                disabled={status === "PENDING" || !code.trim()}
-                className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:from-zinc-300 disabled:to-zinc-300 dark:disabled:from-zinc-700 dark:disabled:to-zinc-700 text-white px-6 py-2.5 rounded-lg font-medium transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0"
+                disabled={status === "PENDING" || !code.trim() || !user}
+                className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:from-zinc-300 disabled:to-zinc-300 dark:disabled:from-zinc-700 dark:disabled:to-zinc-700 text-white px-6 py-2.5 rounded-lg font-medium transition-all duration-300 shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0"
               >
                 {status === "PENDING" ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
