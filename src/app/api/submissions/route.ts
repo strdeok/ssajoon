@@ -73,7 +73,28 @@ export async function POST(request: Request) {
       );
     }
 
-    // 4. 외부 오케스트레이터 채점 서버로 Proxy 전송
+    // 4. 우리 DB에 제출 기록(PENDING) 생성
+    const { data: insertedSubmission, error: insertError } = await supabase
+      .from("submissions")
+      .insert({
+        user_id: user.id,
+        problem_id: problemId,
+        language: language,
+        source_code: sourceCode,
+        status: "PENDING", // 아직 채점 중
+      })
+      .select()
+      .single();
+
+    if (insertError || !insertedSubmission) {
+      console.error("Submission DB Insert Error:", insertError);
+      return NextResponse.json(
+        { success: false, message: "제출 기록을 저장하는 데 실패했습니다." },
+        { status: 500 }
+      );
+    }
+
+    // 5. 외부 오케스트레이터 채점 서버로 Proxy 전송
     // 환경변수 적용: ORCHESTRATORURL
     const orchestratorUrl = process.env.ORCHESTRATORURL;
     
@@ -88,41 +109,34 @@ export async function POST(request: Request) {
     const orchestratorRes = await fetch(orchestratorUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ problemId, language, sourceCode }),
+      body: JSON.stringify({ submissionId: insertedSubmission.id }),
     });
 
-    const orchestratorData = await orchestratorRes.json();
+    let orchestratorData;
+    try {
+      orchestratorData = await orchestratorRes.json();
+    } catch (e) {
+      orchestratorData = { message: "Invalid JSON response from orchestrator" };
+    }
 
     if (!orchestratorRes.ok) {
+      // 오류 발생 시 DB 기록 상태를 ERROR로 업데이트
+      await supabase
+        .from("submissions")
+        .update({ status: "ERROR" })
+        .eq("id", insertedSubmission.id);
+
       return NextResponse.json(
         { success: false, message: orchestratorData.message || "외부 채점 서버 연동 에러가 발생했습니다." },
         { status: orchestratorRes.status }
       );
     }
 
-    // 5. 서버 제한 검증과 외부 API 호출이 성공하면 우리 DB에도 제출 기록(PENDING) 생성
-    const { data: insertedSubmission, error: insertError } = await supabase
-      .from("submissions")
-      .insert({
-        user_id: user.id,
-        problem_id: problemId,
-        language: language,
-        source_code: sourceCode,
-        status: "PENDING", // 아직 채점 중
-      })
-      .select()
-      .single();
-
-    if (insertError) {
-      console.error("Submission DB Insert Error:", insertError);
-      // DB 기록에 실패하더라도 외부 채점은 들어갔으므로 에러 던지지 않고 일단 진행합니다.
-    }
-
     // 6. 결과 반환
     return NextResponse.json({
       success: true,
       message: "제출이 완료되었습니다.",
-      submissionId: orchestratorData.submissionId || insertedSubmission?.id,
+      submissionId: insertedSubmission.id,
     });
 
   } catch (error: any) {

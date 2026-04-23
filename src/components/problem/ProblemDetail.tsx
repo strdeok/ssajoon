@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Problem } from "@/types/problem";
 import { createClient } from "@/utils/supabase/client";
-import { Loader2, FileText, Clock } from "lucide-react";
+import { Loader2, FileText, Clock, Copy, Check } from "lucide-react";
 
 export function ProblemDetail({ problem }: { problem: Problem }) {
   // 1. 탭 상태 관리
@@ -14,6 +14,13 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isUserLoaded, setIsUserLoaded] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopy = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   // 3. 페이지 최초 렌더 시 로그인 유저 확인
   useEffect(() => {
@@ -132,6 +139,54 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
                 {problem.output_description}
               </div>
             </section>
+
+            {/* 샘플 테스트케이스 (예제) */}
+            {problem.problem_examples && problem.problem_examples.length > 0 && (
+              <section>
+                <h2 className="text-lg font-semibold text-emerald-600 dark:text-emerald-400 mb-4 flex items-center">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 mr-3" />
+                  예제 테스트케이스
+                </h2>
+                <div className="space-y-6">
+                  {problem.problem_examples.map((example, index) => (
+                    <div key={example.id} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* 예제 입력 */}
+                      <div>
+                        <h3 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                          예제 입력 {index + 1}
+                        </h3>
+                        <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-4 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap font-mono text-sm relative group min-h-[80px]">
+                          {example.input_text}
+                          <button 
+                            onClick={() => handleCopy(example.input_text, `in-${example.id}`)}
+                            className="absolute top-3 right-3 p-1.5 bg-white dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-zinc-900 dark:hover:text-white shadow-sm"
+                            title="복사"
+                          >
+                            {copiedId === `in-${example.id}` ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+                      {/* 예제 출력 */}
+                      <div>
+                        <h3 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                          예제 출력 {index + 1}
+                        </h3>
+                        <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-4 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap font-mono text-sm relative group min-h-[80px]">
+                          {example.output_text}
+                          <button 
+                            onClick={() => handleCopy(example.output_text, `out-${example.id}`)}
+                            className="absolute top-3 right-3 p-1.5 bg-white dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-zinc-900 dark:hover:text-white shadow-sm"
+                            title="복사"
+                          >
+                            {copiedId === `out-${example.id}` ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         ) : (
           <div className="p-8">
