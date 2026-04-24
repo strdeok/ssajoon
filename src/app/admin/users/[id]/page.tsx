@@ -35,18 +35,20 @@ export default async function AdminUserDetailPage({
   }
 
   // 2. 제출 요약 정보
-  // 전체 제출 수
+  // 전체 제출 수 (삭제된 제출 제외 - 활성 제출만)
   const { count: totalSubmissions } = await supabaseAdmin
     .from('submissions')
     .select('*', { count: 'exact', head: true })
-    .eq('user_id', id);
+    .eq('user_id', id)
+    .eq('is_deleted', false);
 
-  // 정답(AC) 수
+  // 정답(AC) 수 (삭제된 제출 제외)
   const { count: acSubmissions } = await supabaseAdmin
     .from('submissions')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', id)
-    .eq('result', 'AC');
+    .eq('result', 'AC')
+    .eq('is_deleted', false);
 
   // 3. 문제 풀이 히스토리 (페이지네이션 및 그룹화)
   const currentPage = parseInt(historyPage || "1", 10) || 1;
@@ -65,8 +67,10 @@ export default async function AdminUserDetailPage({
       memory_kb,
       failed_testcase_order,
       source_code,
+      is_deleted,
       problems!inner (title)
     `, { count: 'exact' })
+    // 관리자 화면에서는 soft delete 된 제출도 확인 가능하도록 계속 표시 (필터 제거)
     .eq('user_id', id);
 
   if (problemSearch && problemSearch.trim() !== '') {
@@ -107,6 +111,7 @@ export default async function AdminUserDetailPage({
         memory_kb: sub.memory_kb,
         failed_testcase_order: sub.failed_testcase_order,
         source_code: sub.source_code,
+        is_deleted: sub.is_deleted,  // 삭제 여부 포함 (관리자 화면에서 표시)
         problems: sub.problems
       });
     });

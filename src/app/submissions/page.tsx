@@ -19,15 +19,16 @@ export default async function SubmissionsPage({
   let totalCount = 0;
 
   if (user) {
-    // 전체 개수 조회
+    // 전체 개수 조회 (soft delete 된 제출 제외)
     const { count } = await supabase
       .from("submissions")
       .select("*", { count: "exact", head: true })
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      .eq("is_deleted", false);
 
     totalCount = count || 0;
 
-    // 현재 페이지 데이터 조회
+    // 현재 페이지 데이터 조회 (soft delete 된 제출 제외)
     const from = (currentPage - 1) * pageSize;
     const to = from + pageSize - 1;
 
@@ -35,6 +36,7 @@ export default async function SubmissionsPage({
       .from("submissions")
       .select("*, problems(id, title)")
       .eq("user_id", user.id)
+      .eq("is_deleted", false)
       .order("submitted_at", { ascending: false })
       .range(from, to);
 

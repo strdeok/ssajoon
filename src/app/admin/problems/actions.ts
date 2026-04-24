@@ -10,11 +10,41 @@ export async function deleteProblem(id: number) {
   await requireAdmin();
   const supabaseAdmin = createAdminClient();
 
-  const { error } = await supabaseAdmin.from('problems').delete().eq('id', id);
+  const now = new Date().toISOString();
+
+  // 1. 하위 submissions soft delete (문제 삭제 시 연쇄)
+  const { error: subError } = await supabaseAdmin
+    .from('submissions')
+    .update({ is_deleted: true, deleted_at: now })
+    .eq('problem_id', id)
+    .eq('is_deleted', false);
+  if (subError) console.error('Problem submissions soft delete error:', subError);
+
+  // 2. 하위 problem_examples soft delete
+  const { error: exError } = await supabaseAdmin
+    .from('problem_examples')
+    .update({ is_deleted: true, deleted_at: now })
+    .eq('problem_id', id)
+    .eq('is_deleted', false);
+  if (exError) console.error('Problem examples soft delete error:', exError);
+
+  // 3. 하위 problem_testcases soft delete
+  const { error: tcError } = await supabaseAdmin
+    .from('problem_testcases')
+    .update({ is_deleted: true, deleted_at: now })
+    .eq('problem_id', id)
+    .eq('is_deleted', false);
+  if (tcError) console.error('Problem testcases soft delete error:', tcError);
+
+  // 4. 부모 problems soft delete (최종)
+  const { error } = await supabaseAdmin
+    .from('problems')
+    .update({ is_deleted: true, deleted_at: now })
+    .eq('id', id);
 
   if (error) {
-    console.error("문제 삭제 실패:", error);
-    throw new Error("문제 삭제에 실패했습니다.");
+    console.error('Problem soft delete error:', error);
+    throw new Error('문제 삭제에 실패했습니다.');
   }
 
   revalidatePath('/admin/problems');

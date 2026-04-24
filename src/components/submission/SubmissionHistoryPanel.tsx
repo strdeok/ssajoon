@@ -34,12 +34,13 @@ export function SubmissionHistoryPanel({ problemId, userId }: SubmissionHistoryP
       const supabase = createClient();
       
       try {
-        // source_code를 제외한 요약 정보만 조회 (Lazy fetch 준비)
+        // source_code를 제외한 요약 정보만 조회 (soft delete 된 제출 제외)
         const { data, error: fetchError } = await supabase
           .from("submissions")
           .select("id, language, status, result, execution_time_ms, memory_kb, submitted_at, failed_testcase_order")
           .eq("problem_id", problemId)
           .eq("user_id", userId)
+          .eq("is_deleted", false)  // soft delete 방어
           .order("submitted_at", { ascending: false });
 
         if (fetchError) {

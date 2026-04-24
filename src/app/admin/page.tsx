@@ -9,8 +9,10 @@ export default async function AdminDashboardPage() {
   
   // 간단한 통계 데이터 조회 (RLS 우회를 위해 Admin 클라이언트 사용)
   const { count: userCount } = await supabaseAdmin.from('users').select('*', { count: 'exact', head: true }).eq('is_deleted', false);
-  const { count: problemCount } = await supabaseAdmin.from('problems').select('*', { count: 'exact', head: true });
-  const { count: submissionCount } = await supabaseAdmin.from('submissions').select('*', { count: 'exact', head: true });
+  // 활성 문제 수 (삭제된 문제 제외)
+  const { count: problemCount } = await supabaseAdmin.from('problems').select('*', { count: 'exact', head: true }).eq('is_deleted', false);
+  // 전체 제출 수 (삭제된 제출 제외)
+  const { count: submissionCount } = await supabaseAdmin.from('submissions').select('*', { count: 'exact', head: true }).eq('is_deleted', false);
 
   return (
     <div className="space-y-8">

@@ -9,10 +9,12 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // 일반 사용자에게는 soft delete 된 제출을 노출하지 않는다.
   const { data: submissions, error } = await supabase
     .from("submissions")
     .select("*")
     .eq("user_id", user.id)
+    .eq("is_deleted", false)  // soft delete 방어
     .order("submitted_at", { ascending: false });
 
   if (error) {

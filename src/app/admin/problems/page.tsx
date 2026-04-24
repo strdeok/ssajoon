@@ -10,9 +10,10 @@ export default async function AdminProblemsPage() {
   if (!admin) redirect("/");
 
   const supabaseAdmin = createAdminClient();
+  // 관리자는 soft delete 된 문제도 볼 수 있도록 전체 조회
   const { data: problems } = await supabaseAdmin
     .from('problems')
-    .select('id, title, category, difficulty, created_at')
+    .select('id, title, category, difficulty, created_at, is_deleted')
     .order('id', { ascending: false });
 
   return (
@@ -40,13 +41,14 @@ export default async function AdminProblemsPage() {
                 <th className="px-6 py-4 font-semibold">카테고리</th>
                 <th className="px-6 py-4 font-semibold">제목</th>
                 <th className="px-6 py-4 font-semibold">난이도</th>
+                <th className="px-6 py-4 font-semibold">상태</th>
                 <th className="px-6 py-4 font-semibold">생성일</th>
                 <th className="px-6 py-4 font-semibold text-right">관리</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800 text-sm text-zinc-700 dark:text-zinc-300">
               {problems?.map(problem => (
-                <tr key={problem.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors">
+                <tr key={problem.id} className={`hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors ${problem.is_deleted ? 'opacity-50' : ''}`}>
                   <td className="px-6 py-4 font-medium text-zinc-900 dark:text-zinc-100">{problem.id}</td>
                   <td className="px-6 py-4">{problem.category || '-'}</td>
                   <td className="px-6 py-4 font-medium">{problem.title}</td>
@@ -55,27 +57,46 @@ export default async function AdminProblemsPage() {
                       {problem.difficulty || 'N/A'}
                     </span>
                   </td>
+                  <td className="px-6 py-4">
+                    {problem.is_deleted ? (
+                      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400">
+                        삭제됨
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                        활성
+                      </span>
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-zinc-500 dark:text-zinc-500">
                     {new Date(problem.created_at).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' })}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      <Link 
-                        href={`/admin/problems/${problem.id}/edit`}
-                        className="p-2 text-zinc-500 hover:text-blue-600 dark:hover:text-blue-400 bg-zinc-100 dark:bg-zinc-800 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-colors"
-                        title="수정"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Link>
+                      {/* soft delete 된 문제는 수정 버튼을 숨김 */}
+                      {!problem.is_deleted && (
+                        <Link
+                          href={`/admin/problems/${problem.id}/edit`}
+                          className="p-2 text-zinc-500 hover:text-blue-600 dark:hover:text-blue-400 bg-zinc-100 dark:bg-zinc-800 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-colors"
+                          title="수정"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Link>
+                      )}
+                      {/* soft delete 된 문제는 이미 삭제되었으니 버튼 비활성화 */}
                       <form action={async () => {
                         "use server";
                         await deleteProblem(problem.id);
                       }}>
-                        <button 
+                        <button
                           type="submit"
-                          className="p-2 text-zinc-500 hover:text-red-600 dark:hover:text-red-400 bg-zinc-100 dark:bg-zinc-800 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
-                          title="삭제"
-                          // 브라우저 기본 confirm은 서버 컴포넌트에서 쓰기 어려우므로 클라이언트 폼 래퍼를 권장하지만, 임시로 단순 서버 액션 사용
+                          disabled={problem.is_deleted}
+                          className={`p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg transition-colors ${
+                            problem.is_deleted
+                              ? 'text-zinc-300 dark:text-zinc-600 cursor-not-allowed'
+                              : 'text-zinc-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 cursor-pointer'
+                          }`}
+                          title={problem.is_deleted ? '이미 삭제된 문제' : '삭제'}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

@@ -3,7 +3,12 @@ import { createClient } from "@/utils/supabase/server";
 
 export async function GET() {
   const supabase = await createClient();
-  const { data: problems, error } = await supabase.from("problems").select("*").order("id", { ascending: true });
+  // 일반 사용자에게는 soft delete 된 문제를 노출하지 않는다.
+  const { data: problems, error } = await supabase
+    .from("problems")
+    .select("*")
+    .eq("is_deleted", false)
+    .order("id", { ascending: true });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

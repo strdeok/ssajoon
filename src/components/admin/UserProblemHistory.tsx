@@ -16,6 +16,7 @@ export type SubmissionHistoryItem = {
   memory_kb: number | null;
   failed_testcase_order?: number | null;
   source_code: string | null;
+  is_deleted?: boolean;  // soft delete 여부 (관리자 화면에서 표시)
   problems: { title: string } | null;
 };
 
@@ -45,7 +46,9 @@ function SubmissionItemRow({ submission }: { submission: SubmissionHistoryItem }
       : 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400 border-red-200 dark:border-red-500/20';
 
   return (
-    <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden bg-white dark:bg-zinc-900 transition-colors">
+    <div className={`border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden bg-white dark:bg-zinc-900 transition-colors ${
+      submission.is_deleted ? 'opacity-50' : ''
+    }`}>
       <div 
         className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
         onClick={() => setIsOpen(!isOpen)}
@@ -54,6 +57,12 @@ function SubmissionItemRow({ submission }: { submission: SubmissionHistoryItem }
           <span className={`px-2.5 py-1 text-xs font-bold rounded-full border ${badgeClass} whitespace-nowrap`}>
             {resultText}
           </span>
+          {/* 삭제된 제출 표시 */}
+          {submission.is_deleted && (
+            <span className="px-2 py-0.5 text-xs font-bold rounded bg-zinc-200 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">
+              삭제된 제출
+            </span>
+          )}
           <span className="text-xs font-mono text-zinc-500">
             {new Date(submission.submitted_at).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}
           </span>
