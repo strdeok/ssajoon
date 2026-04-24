@@ -36,7 +36,6 @@ export async function softDeleteUser(userId: string) {
 
   // 업데이트 실패 시 에러를 던진다.
   if (error) {
-    console.error("사용자 소프트 탈퇴 실패:", error);
     throw new Error("사용자 탈퇴 처리에 실패했습니다.");
   }
 
@@ -58,7 +57,6 @@ export async function restoreUser(userId: string) {
     .eq("id", userId);
 
   if (error) {
-    console.error("사용자 복구 실패:", error);
     throw new Error("사용자 복구 처리에 실패했습니다.");
   }
 

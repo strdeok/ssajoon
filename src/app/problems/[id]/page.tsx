@@ -76,7 +76,6 @@ export default function ProblemPage({
       });
       
       const data = await res.json();
-      console.log("Next.js 서버 제출 응답:", data);
 
       if (!res.ok) {
         throw new Error(data.message || "제출 실패: 서버 오류");
@@ -90,7 +89,6 @@ export default function ProblemPage({
         setStatus("AC");
       }
     } catch (err: any) {
-      console.error("제출 에러:", err);
       setSubmitError(err.message || "제출 중 오류가 발생했습니다.");
       setStatus(null);
     } finally {
@@ -118,7 +116,7 @@ export default function ProblemPage({
         setTestResults(data.results);
       }
     } catch (err) {
-      console.error(err);
+      // 실행 오류 시 별도 처리 없이 무시
     } finally {
       setIsTesting(false);
     }

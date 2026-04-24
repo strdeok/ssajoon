@@ -52,7 +52,6 @@ export function SubmissionCodeItem({ submission }: SubmissionCodeItemProps) {
           setSourceCode(data.source_code);
         }
       } catch (err: any) {
-        console.error("코드 조회 실패:", err);
         setError("코드를 불러오는데 실패했습니다.");
       } finally {
         setIsLoading(false);

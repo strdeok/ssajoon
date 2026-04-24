@@ -63,7 +63,6 @@ export function SubmissionHistoryPanel({ problemId, userId }: SubmissionHistoryP
           setExpandedLanguages({ [langs[0]]: true });
         }
       } catch (err: any) {
-        console.error("제출 내역 조회 실패:", err);
         setError("제출 내역을 불러오는 중 오류가 발생했습니다.");
       } finally {
         setIsLoading(false);

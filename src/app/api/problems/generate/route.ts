@@ -92,8 +92,7 @@ export async function POST(request: Request) {
       .eq("id", user.id);
 
     if (updateError) {
-      // 심각한 에러는 아니므로 로깅만 수행
-      console.error("Failed to update user limits", updateError);
+      // 카운트 업데이트 실패 시 무시 (문제 생성은 완료됨)
     }
 
     // 7. 성공 시 결과 반환
@@ -105,7 +104,6 @@ export async function POST(request: Request) {
     });
 
   } catch (error) {
-    console.error("Generate API Error:", error);
     return NextResponse.json(
       { success: false, message: "서버 내부 오류가 발생했습니다.", code: "SERVER_ERROR" },
       { status: 500 }

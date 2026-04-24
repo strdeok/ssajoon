@@ -44,24 +44,19 @@ export default function ClientForm({ initialNickname, userEmail }: ClientFormPro
       return;
     }
 
-    console.log("[탈퇴] 클릭 시점 — 탈퇴 요청 시작");
     setIsWithdrawing(true);
     setWithdrawMessage(null);
 
     try {
-      // 서버 액션 호출
       const result = await withdrawAccount();
 
-      // 서버 액션이 에러 결과를 반환한 경우 (redirect 없이 돌아온 경우)
       if (result && !result.success) {
-        console.error("[탈퇴] 실패:", result.message);
         setWithdrawMessage({ type: "error", text: result.message });
         setIsWithdrawing(false);
         return;
       }
 
       // redirect()가 throw되지 않고 결과가 반환된 경우의 fallback
-      console.log("[탈퇴] 성공 — 리다이렉트 fallback 실행");
       router.push("/");
       router.refresh();
     } catch (err) {
@@ -69,14 +64,11 @@ export default function ClientForm({ initialNickname, userEmail }: ClientFormPro
 
       // NEXT_REDIRECT는 Next.js redirect()가 throw하는 정상적인 신호
       // 반드시 rethrow 해야 프레임워크가 실제 리다이렉트를 처리함
-      // return으로 끝내면 리다이렉트가 실행되지 않음
       if (error?.digest?.startsWith("NEXT_REDIRECT")) {
-        console.log("[탈퇴] 성공 — NEXT_REDIRECT rethrow → 리다이렉트 실행");
-        throw err; // 반드시 rethrow
+        throw err;
       }
 
       // 그 외 실제 에러만 처리
-      console.error("[탈퇴] 예외 발생:", error);
       setWithdrawMessage({ type: "error", text: "탈퇴 처리 중 오류가 발생했습니다. 다시 시도해주세요." });
       setIsWithdrawing(false);
     }

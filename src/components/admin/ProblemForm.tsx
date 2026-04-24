@@ -93,12 +93,10 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
       // rethrow해야 Next.js 프레임워크가 실제 리다이렉트를 처리함
       // catch 후 return/무시하면 리다이렉트가 실행되지 않음
       if (err?.digest?.startsWith("NEXT_REDIRECT")) {
-        console.log("[문제 저장] 성공 — NEXT_REDIRECT rethrow → 리다이렉트 실행");
-        throw err; // 반드시 rethrow
+        throw err;
       }
 
       // 실제 오류(DB 에러 등)만 처리
-      console.error("[문제 저장 실패]", err);
       const userMessage = formData.id
         ? "문제 수정에 실패했습니다. 입력값을 확인해주세요."
         : "문제 생성에 실패했습니다. 입력값을 확인해주세요.";

@@ -32,7 +32,6 @@ export function SubmissionStatusListener({ submissionId }: SubmissionStatusListe
           filter: `id=eq.${submissionId}`,
         },
         (payload) => {
-          console.log("Realtime UPDATE received:", payload);
           const newRow = payload.new;
 
           if (newRow) {
@@ -53,7 +52,6 @@ export function SubmissionStatusListener({ submissionId }: SubmissionStatusListe
         }
       )
       .subscribe(async (status) => {
-        console.log(`Supabase Realtime status for ${channelName}:`, status);
         
         // Race condition 방지: 구독 성공 직후 최신 상태를 한 번 긁어온다.
         if (status === "SUBSCRIBED") {
@@ -64,9 +62,8 @@ export function SubmissionStatusListener({ submissionId }: SubmissionStatusListe
             .single();
 
           if (error) {
-            console.error("초기 상태 fetch 에러:", error);
+            // 초기 상태 fetch 실패 시 무시 (Realtime으로 추후 갱신됨)
           } else if (data) {
-            console.log("SUBSCRIBED 직후 초기 상태 반영:", data);
             
             if (data.status) {
               setStatus(data.status as SubmissionStatus);
@@ -85,7 +82,6 @@ export function SubmissionStatusListener({ submissionId }: SubmissionStatusListe
 
     // Cleanup: 언마운트되거나 submissionId가 바뀔 때 구독 취소
     return () => {
-      console.log(`Unsubscribing from ${channelName}`);
       supabase.removeChannel(channel);
     };
   }, [submissionId, setStatus, setResult]);
