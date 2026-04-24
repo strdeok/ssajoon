@@ -52,8 +52,35 @@ export function SubmissionStatusListener({ submissionId }: SubmissionStatusListe
           }
         }
       )
-      .subscribe((status) => {
+      .subscribe(async (status) => {
         console.log(`Supabase Realtime status for ${channelName}:`, status);
+        
+        // Race condition 방지: 구독 성공 직후 최신 상태를 한 번 긁어온다.
+        if (status === "SUBSCRIBED") {
+          const { data, error } = await supabase
+            .from("submissions")
+            .select("id, status, result, fail_order, execution_time_ms, memory_kb")
+            .eq("id", submissionId)
+            .single();
+
+          if (error) {
+            console.error("초기 상태 fetch 에러:", error);
+          } else if (data) {
+            console.log("SUBSCRIBED 직후 초기 상태 반영:", data);
+            
+            if (data.status) {
+              setStatus(data.status as SubmissionStatus);
+            }
+            
+            setResult({
+              status: data.status as SubmissionStatus,
+              result: data.result,
+              execution_time_ms: data.execution_time_ms,
+              memory_kb: data.memory_kb,
+              fail_order: data.fail_order,
+            });
+          }
+        }
       });
 
     // Cleanup: 언마운트되거나 submissionId가 바뀔 때 구독 취소
