@@ -27,6 +27,7 @@ export default function ProblemPage({
   const [testResults, setTestResults] = useState<TestResult[] | null>(null);
   const [isTesting, setIsTesting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
 
   const { submissionId, status, setSubmissionId, setStatus, reset } =
@@ -56,8 +57,9 @@ export default function ProblemPage({
 
 
   const handleSubmit = async () => {
+    setSubmitError(null);
     if (!code.trim()) {
-      alert("제출할 코드를 작성해주세요.");
+      setSubmitError("제출할 코드를 작성해주세요.");
       return;
     }
 
@@ -65,7 +67,6 @@ export default function ProblemPage({
     setIsSubmitting(true);
 
     try {
-      // 프론트에서 외부 API를 직접 호출하지 않고, 우리 Next.js 서버 라우트를 거침
       const res = await fetch("/api/submissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -79,8 +80,6 @@ export default function ProblemPage({
         throw new Error(data.message || "제출 실패: 서버 오류");
       }
 
-      alert(data.message || "코드가 성공적으로 제출되었습니다!");
-
       setStatus("PENDING");
 
       if (data.submissionId || data.id) {
@@ -90,7 +89,7 @@ export default function ProblemPage({
       }
     } catch (err: any) {
       console.error("제출 에러:", err);
-      alert(err.message || "제출 중 오류가 발생했습니다.");
+      setSubmitError(err.message || "제출 중 오류가 발생했습니다.");
       setStatus(null);
     } finally {
       setIsSubmitting(false);
@@ -98,6 +97,7 @@ export default function ProblemPage({
   };
 
   const handleRunCode = async () => {
+    setSubmitError(null);
     if (!code.trim()) return;
 
     setIsTesting(true);
@@ -121,6 +121,17 @@ export default function ProblemPage({
       setIsTesting(false);
     }
   };
+
+  // 에디터 테두리 상태 계산
+  const isPending = status === "PENDING" || status === "QUEUED" || status === "RUNNING";
+  const finalStatus = result?.result || status;
+  const isSuccess = finalStatus === "AC" || finalStatus === "SUCCESS";
+  const isFail = finalStatus && !isSuccess && !isPending;
+
+  let editorBorderClass = "border-transparent";
+  if (isSuccess) editorBorderClass = "border-emerald-500 ring-4 ring-emerald-500/20";
+  else if (isFail) editorBorderClass = "border-red-500 ring-4 ring-red-500/20";
+  else if (isPending) editorBorderClass = "border-blue-500 ring-4 ring-blue-500/20";
 
   if (isLoading || !problem) {
     return (
@@ -161,10 +172,16 @@ export default function ProblemPage({
       {/* Right panel */}
       <div className="flex-1 lg:w-1/2 flex flex-col min-h-0 gap-4">
         {/* Editor wrapper */}
-        <div className="flex-1 min-h-0 relative group">
+        <div className={`flex-1 min-h-0 relative group rounded-xl border-2 transition-all duration-300 ${editorBorderClass} overflow-hidden`}>
           <CodeEditor
             value={code}
-            onChange={(val) => setCode(val || "")}
+            onChange={(val) => {
+              setCode(val || "");
+              if (status || submitError) {
+                reset();
+                setSubmitError(null);
+              }
+            }}
             language={language}
           />
         </div>
@@ -191,6 +208,11 @@ export default function ProblemPage({
               </select>
             </div>
             <div className="flex items-center space-x-3">
+              {submitError && (
+                <span className="text-sm text-red-500 dark:text-red-400 font-medium mr-2 animate-pulse">
+                  {submitError}
+                </span>
+              )}
               {!user && (
                 <span className="text-sm text-red-500 dark:text-red-400 font-medium mr-2">
                   로그인 후 실행/제출 가능
@@ -229,16 +251,6 @@ export default function ProblemPage({
         </div>
       </div>
 
-      {/* 제출 로딩 오버레이 */}
-      {isSubmitting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-zinc-900 p-8 rounded-2xl shadow-2xl flex flex-col items-center space-y-4 border border-zinc-200 dark:border-white/10">
-            <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
-            <p className="text-lg font-bold text-zinc-800 dark:text-zinc-100">코드 제출 중...</p>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">잠시만 기다려주세요</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
