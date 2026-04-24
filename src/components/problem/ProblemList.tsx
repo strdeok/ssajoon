@@ -58,10 +58,15 @@ export function ProblemList({ problems }: { problems: Problem[] }) {
                   <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-blue-400 transform group-hover:translate-x-1 transition-all flex-shrink-0 ml-2 mt-2" />
                 </div>
                 
-                <div className="mt-6 flex items-center justify-between">
+                <div className="mt-6 flex items-center gap-2">
                   <span className="text-xs font-medium px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-full">
                     No. {problem.problem_no || problem.id}
                   </span>
+                  {problem.difficulty && (
+                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20">
+                      {problem.difficulty}
+                    </span>
+                  )}
                 </div>
               </div>
             </Link>

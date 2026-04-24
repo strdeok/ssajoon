@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Problem } from "@/types/problem";
 import { createClient } from "@/utils/supabase/client";
-import { Loader2, FileText, Clock, Copy, Check } from "lucide-react";
+import { Loader2, FileText, Clock, Copy, Check, Cpu } from "lucide-react";
 import { SubmissionHistoryPanel } from "@/components/submission/SubmissionHistoryPanel";
 
 export function ProblemDetail({ problem }: { problem: Problem }) {
@@ -37,10 +37,15 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
     <div className="flex flex-col h-full bg-white dark:bg-zinc-900/50 rounded-xl overflow-hidden">
       {/* 상단 헤더 및 탭 영역 */}
       <div className="border-b border-zinc-200 dark:border-white/10 bg-white/90 dark:bg-zinc-900/80 sticky top-0 backdrop-blur-md z-10">
-        <div className="p-8 pb-4">
+        <div className="p-8 pb-4 flex items-center gap-4 flex-wrap">
           <h1 className="text-3xl font-bold text-zinc-900 dark:text-white tracking-tight">
             {problem.problem_no ? `${problem.problem_no}. ${problem.title}` : problem.title}
           </h1>
+          {problem.difficulty && (
+            <span className="px-3 py-1 rounded-full text-sm font-bold bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 shadow-sm cursor-default">
+              {problem.difficulty}
+            </span>
+          )}
         </div>
         
         {/* 탭 네비게이션 */}
@@ -81,6 +86,25 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
       <div className="flex-1 overflow-auto custom-scrollbar">
         {activeTab === "description" ? (
           <div className="p-8 space-y-10">
+            {/* 제약사항 */}
+            {(problem.time_limit_ms != null || problem.memory_limit_mb != null) && (
+              <section className="flex flex-wrap gap-6 items-center bg-zinc-50 dark:bg-black/20 p-5 rounded-xl border border-zinc-200 dark:border-white/5">
+                <h2 className="text-sm font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mr-2">제약사항</h2>
+                {problem.time_limit_ms != null && (
+                  <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300 font-medium text-sm bg-white dark:bg-zinc-800/50 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-sm">
+                    <Clock className="w-4 h-4 text-blue-500" />
+                    시간 제한: {problem.time_limit_ms}ms
+                  </div>
+                )}
+                {problem.memory_limit_mb != null && (
+                  <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300 font-medium text-sm bg-white dark:bg-zinc-800/50 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-sm">
+                    <Cpu className="w-4 h-4 text-purple-500" />
+                    메모리 제한: {problem.memory_limit_mb}MB
+                  </div>
+                )}
+              </section>
+            )}
+
             {/* 5. 기존 문제 설명 렌더링 */}
             <section>
               <h2 className="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-4 flex items-center">
