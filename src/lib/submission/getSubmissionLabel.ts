@@ -8,13 +8,13 @@ export interface SubmissionLabelInfo {
 }
 
 /**
- * 제출 상태(status)와 결과(result), 실패 순서(fail_order)를 조합하여
+ * 제출 상태(status)와 결과(result), 실패 순서(failed_testcase_order)를 조합하여
  * UI에 표시될 정확한 한글 라벨과 상태 메타데이터를 반환합니다.
  */
 export function getSubmissionLabel(
   status: string | null | undefined,
   result: string | null | undefined,
-  failOrder?: number | null
+  failedTestcaseOrder?: number | null
 ): SubmissionLabelInfo {
   // 채점 중으로 간주할 status 목록을 정의한다.
   const pendingStatuses = ["PENDING", "QUEUED", "RUNNING"];
@@ -63,8 +63,8 @@ export function getSubmissionLabel(
 
     switch (finalState) {
       case "WA":
-        text = failOrder
-          ? `${failOrder}번 테스트케이스에서 틀렸습니다`
+        text = failedTestcaseOrder
+          ? `${failedTestcaseOrder}번 테스트케이스에서 틀렸습니다`
           : "오답입니다";
         break;
       case "CE":

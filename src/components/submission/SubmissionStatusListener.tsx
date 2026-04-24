@@ -47,7 +47,7 @@ export function SubmissionStatusListener({ submissionId }: SubmissionStatusListe
               result: newRow.result,
               execution_time_ms: newRow.execution_time_ms,
               memory_kb: newRow.memory_kb,
-              fail_order: newRow.fail_order, // fail_order 추가
+              failed_testcase_order: newRow.failed_testcase_order, // fail_order -> failed_testcase_order
             });
           }
         }
@@ -59,7 +59,7 @@ export function SubmissionStatusListener({ submissionId }: SubmissionStatusListe
         if (status === "SUBSCRIBED") {
           const { data, error } = await supabase
             .from("submissions")
-            .select("id, status, result, fail_order, execution_time_ms, memory_kb")
+            .select("id, status, result, failed_testcase_order, execution_time_ms, memory_kb")
             .eq("id", submissionId)
             .single();
 
@@ -77,7 +77,7 @@ export function SubmissionStatusListener({ submissionId }: SubmissionStatusListe
               result: data.result,
               execution_time_ms: data.execution_time_ms,
               memory_kb: data.memory_kb,
-              fail_order: data.fail_order,
+              failed_testcase_order: data.failed_testcase_order,
             });
           }
         }

@@ -124,8 +124,8 @@ export default function ProblemPage({
     }
   };
 
-  // 에디터 테두리 및 인라인 메시지 상태 계산
-  const { text: resultText, isSuccess, isFail, isPending, colorClass } = getSubmissionLabel(status, result?.result, result?.fail_order);
+  // UI 상태 계산 로직 통합
+  const { text: resultText, isSuccess, isFail, isPending, colorClass } = getSubmissionLabel(status, result?.result, result?.failed_testcase_order);
 
   let editorBorderClass = "border-transparent";
   if (isSuccess) editorBorderClass = "border-emerald-500 ring-4 ring-emerald-500/20";

@@ -13,7 +13,7 @@ interface SubmissionSummary {
   execution_time_ms: number | null;
   memory_kb: number | null;
   submitted_at: string;
-  fail_order?: number | null;
+  failed_testcase_order?: number | null;
 }
 
 interface SubmissionCodeItemProps {
@@ -66,7 +66,7 @@ export function SubmissionCodeItem({ submission }: SubmissionCodeItemProps) {
   const { text: resultText, isSuccess, isPending, colorClass } = getSubmissionLabel(
     submission.status,
     submission.result,
-    submission.fail_order
+    submission.failed_testcase_order
   );
 
   const badgeClass = isSuccess 

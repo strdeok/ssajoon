@@ -9,7 +9,7 @@ export function ResultViewer() {
 
   if (!status && !submissionId) return null;
 
-  const { text: resultText, isSuccess, isFail, isPending, isError, colorClass } = getSubmissionLabel(status, result?.result, result?.fail_order);
+  const { text: resultText, isSuccess, isFail, isPending, isError, colorClass } = getSubmissionLabel(status, result?.result, result?.failed_testcase_order);
 
   return (
     <div className="mt-4 p-6 rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900/50 backdrop-blur-md shadow-lg transition-all duration-300">

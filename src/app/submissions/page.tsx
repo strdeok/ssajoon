@@ -71,7 +71,7 @@ export default async function SubmissionsPage({
                 const { text: resultText, isSuccess, isPending, colorClass } = getSubmissionLabel(
                   sub.status,
                   sub.result,
-                  sub.fail_order
+                  sub.failed_testcase_order
                 );
 
                 const badgeClass = isSuccess 
