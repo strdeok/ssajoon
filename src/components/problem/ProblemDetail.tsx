@@ -151,8 +151,10 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
                         <h3 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
                           예제 입력 {index + 1}
                         </h3>
-                        <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-4 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap font-mono text-sm relative group min-h-[80px]">
-                          {example.input_text}
+                        <div className="relative group">
+                          <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-4 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap font-mono text-sm min-h-[80px] max-h-[300px] overflow-y-auto custom-scrollbar">
+                            {example.input_text}
+                          </div>
                           <button 
                             onClick={() => handleCopy(example.input_text, `in-${example.id}`)}
                             className="absolute top-3 right-3 p-1.5 bg-white dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-zinc-900 dark:hover:text-white shadow-sm"
@@ -167,8 +169,10 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
                         <h3 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
                           예제 출력 {index + 1}
                         </h3>
-                        <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-4 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap font-mono text-sm relative group min-h-[80px]">
-                          {example.output_text}
+                        <div className="relative group">
+                          <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-4 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap font-mono text-sm min-h-[80px] max-h-[300px] overflow-y-auto custom-scrollbar">
+                            {example.output_text}
+                          </div>
                           <button 
                             onClick={() => handleCopy(example.output_text, `out-${example.id}`)}
                             className="absolute top-3 right-3 p-1.5 bg-white dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-zinc-900 dark:hover:text-white shadow-sm"

@@ -93,7 +93,7 @@ export default async function AdminUsersPage({
                     )}
                   </td>
                   <td className="px-6 py-4 text-zinc-500">
-                    {new Date(user.created_at).toLocaleDateString()}
+                    {new Date(user.created_at).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' })}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <Link 

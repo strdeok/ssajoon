@@ -55,7 +55,7 @@ function SubmissionItemRow({ submission }: { submission: SubmissionHistoryItem }
             {resultText}
           </span>
           <span className="text-xs font-mono text-zinc-500">
-            {new Date(submission.submitted_at).toLocaleString('ko-KR')}
+            {new Date(submission.submitted_at).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}
           </span>
           <span className="text-xs font-semibold uppercase text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded">
             {submission.language}

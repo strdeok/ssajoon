@@ -56,7 +56,7 @@ export default async function AdminProblemsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-zinc-500 dark:text-zinc-500">
-                    {new Date(problem.created_at).toLocaleDateString()}
+                    {new Date(problem.created_at).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' })}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">

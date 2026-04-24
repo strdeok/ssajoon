@@ -102,7 +102,7 @@ export default async function SubmissionsPage({
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
-                      {new Date(sub.submitted_at).toLocaleString('ko-KR')}
+                      {new Date(sub.submitted_at).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}
                     </td>
                   </tr>
                 );

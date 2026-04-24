@@ -192,12 +192,12 @@ export default async function AdminUserDetailPage({
             <div className="mt-8 space-y-3 pt-6 border-t border-zinc-200 dark:border-zinc-800">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-zinc-500 flex items-center gap-2"><Calendar className="w-4 h-4" /> 가입일</span>
-                <span className="text-zinc-900 dark:text-white font-medium">{new Date(user.created_at).toLocaleDateString()}</span>
+                <span className="text-zinc-900 dark:text-white font-medium">{new Date(user.created_at).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' })}</span>
               </div>
               {user.deleted_at && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-zinc-500 flex items-center gap-2"><XCircle className="w-4 h-4" /> 탈퇴일</span>
-                  <span className="text-red-600 dark:text-red-400 font-medium">{new Date(user.deleted_at).toLocaleDateString()}</span>
+                  <span className="text-red-600 dark:text-red-400 font-medium">{new Date(user.deleted_at).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' })}</span>
                 </div>
               )}
             </div>

@@ -87,7 +87,7 @@ export function SubmissionCodeItem({ submission }: SubmissionCodeItemProps) {
           </span>
           <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300 flex items-center gap-1.5">
             <Calendar className="w-3.5 h-3.5 text-zinc-400" />
-            {new Date(submission.submitted_at).toLocaleString('ko-KR')}
+            {new Date(submission.submitted_at).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}
           </span>
         </div>
         

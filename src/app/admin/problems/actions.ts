@@ -1,15 +1,16 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { requireAdmin } from "@/lib/auth/isAdmin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function deleteProblem(id: number) {
   await requireAdmin();
-  const supabase = await createClient();
+  const supabaseAdmin = createAdminClient();
 
-  const { error } = await supabase.from('problems').delete().eq('id', id);
+  const { error } = await supabaseAdmin.from('problems').delete().eq('id', id);
 
   if (error) {
     console.error("문제 삭제 실패:", error);
@@ -22,7 +23,7 @@ export async function deleteProblem(id: number) {
 
 export async function saveProblem(formData: any) {
   await requireAdmin();
-  const supabase = await createClient();
+  const supabaseAdmin = createAdminClient();
 
   const { id, title, category, difficulty, description, input_description, output_description, time_limit_ms, memory_limit_mb, examples, testcases } = formData;
 
@@ -41,7 +42,7 @@ export async function saveProblem(formData: any) {
 
   if (problemId) {
     // Update existing
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from('problems')
       .update(problemData)
       .eq('id', problemId);
@@ -49,12 +50,12 @@ export async function saveProblem(formData: any) {
     if (updateError) throw new Error(`문제 업데이트 실패: ${updateError.message}`);
 
     // 기존 예제 및 테스트케이스 일괄 삭제 후 재삽입
-    await supabase.from('problem_examples').delete().eq('problem_id', problemId);
-    await supabase.from('problem_testcases').delete().eq('problem_id', problemId);
+    await supabaseAdmin.from('problem_examples').delete().eq('problem_id', problemId);
+    await supabaseAdmin.from('problem_testcases').delete().eq('problem_id', problemId);
 
   } else {
     // Insert new
-    const { data: newProblem, error: insertError } = await supabase
+    const { data: newProblem, error: insertError } = await supabaseAdmin
       .from('problems')
       .insert([problemData])
       .select()
@@ -72,7 +73,7 @@ export async function saveProblem(formData: any) {
       input_text: ex.input_text,
       output_text: ex.output_text,
     }));
-    const { error: exError } = await supabase.from('problem_examples').insert(examplesToInsert);
+    const { error: exError } = await supabaseAdmin.from('problem_examples').insert(examplesToInsert);
     if (exError) throw new Error(`예제 삽입 실패: ${exError.message}`);
   }
 
@@ -85,7 +86,7 @@ export async function saveProblem(formData: any) {
       expected_output: tc.expected_output,
       is_hidden: true, // 숨김 테스트케이스로 관리
     }));
-    const { error: tcError } = await supabase.from('problem_testcases').insert(testcasesToInsert);
+    const { error: tcError } = await supabaseAdmin.from('problem_testcases').insert(testcasesToInsert);
     if (tcError) throw new Error(`테스트케이스 삽입 실패: ${tcError.message}`);
   }
 
