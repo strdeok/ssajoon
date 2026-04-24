@@ -12,6 +12,7 @@ export interface Submission {
   memory_kb?: number;
   submitted_at: string;
   judged_at?: string;
+  fail_order?: number;
 }
 
 export interface SubmissionTestcaseResult {
@@ -29,4 +30,5 @@ export interface JudgeResult {
   result?: string;
   execution_time_ms?: number;
   memory_kb?: number;
+  fail_order?: number;
 }

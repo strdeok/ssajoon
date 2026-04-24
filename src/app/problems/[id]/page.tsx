@@ -122,7 +122,7 @@ export default function ProblemPage({
     }
   };
 
-  // 에디터 테두리 상태 계산
+  // 에디터 테두리 및 인라인 메시지 상태 계산
   const isPending = status === "PENDING" || status === "QUEUED" || status === "RUNNING";
   const finalStatus = result?.result || status;
   const isSuccess = finalStatus === "AC" || finalStatus === "SUCCESS";
@@ -132,6 +132,27 @@ export default function ProblemPage({
   if (isSuccess) editorBorderClass = "border-emerald-500 ring-4 ring-emerald-500/20";
   else if (isFail) editorBorderClass = "border-red-500 ring-4 ring-red-500/20";
   else if (isPending) editorBorderClass = "border-blue-500 ring-4 ring-blue-500/20";
+
+  let resultText = "";
+  if (isPending) {
+    resultText = status === "RUNNING" ? "채점 중입니다..." : "채점 대기 중입니다...";
+  } else if (isSuccess) {
+    resultText = "정답입니다";
+  } else if (isFail) {
+    if (finalStatus === "WA") {
+      resultText = result?.fail_order ? `${result.fail_order}번 테스트케이스에서 틀렸습니다` : "오답입니다";
+    } else if (finalStatus === "CE") {
+      resultText = "컴파일 에러입니다";
+    } else if (finalStatus === "RE") {
+      resultText = "런타임 에러입니다";
+    } else if (finalStatus === "TLE") {
+      resultText = "시간 초과입니다";
+    } else if (finalStatus === "MLE") {
+      resultText = "메모리 초과입니다";
+    } else {
+      resultText = "채점에 실패했습니다";
+    }
+  }
 
   if (isLoading || !problem) {
     return (
@@ -208,6 +229,11 @@ export default function ProblemPage({
               </select>
             </div>
             <div className="flex items-center space-x-3">
+              {resultText && !submitError && (
+                <span className={`text-sm font-bold mr-2 ${isSuccess ? 'text-emerald-500' : isFail ? 'text-red-500' : 'text-blue-500 animate-pulse'}`}>
+                  {resultText}
+                </span>
+              )}
               {submitError && (
                 <span className="text-sm text-red-500 dark:text-red-400 font-medium mr-2 animate-pulse">
                   {submitError}

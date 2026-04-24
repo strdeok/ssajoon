@@ -44,7 +44,7 @@ export function ResultViewer() {
         {isSuccess && (
           <>
             <CheckCircle className="w-6 h-6 text-green-500" />
-            <span className="text-green-500 font-bold text-lg">맞았습니다!!</span>
+            <span className="text-green-500 font-bold text-lg">정답입니다</span>
           </>
         )}
         
@@ -52,11 +52,11 @@ export function ResultViewer() {
           <>
             <XCircle className="w-6 h-6 text-red-500" />
             <span className="text-red-500 font-bold text-lg">
-              {finalStatus === "WA" ? "틀렸습니다" : 
-               finalStatus === "CE" ? "컴파일 에러" : 
-               finalStatus === "RE" ? "런타임 에러" : 
-               finalStatus === "TLE" ? "시간 초과" : 
-               finalStatus === "MLE" ? "메모리 초과" : "오답"}
+              {finalStatus === "WA" ? (result?.fail_order ? `${result.fail_order}번 테스트케이스에서 틀렸습니다` : "오답입니다") : 
+               finalStatus === "CE" ? "컴파일 에러입니다" : 
+               finalStatus === "RE" ? "런타임 에러입니다" : 
+               finalStatus === "TLE" ? "시간 초과입니다" : 
+               finalStatus === "MLE" ? "메모리 초과입니다" : "채점에 실패했습니다"}
             </span>
           </>
         )}

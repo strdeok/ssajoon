@@ -47,6 +47,7 @@ export function SubmissionStatusListener({ submissionId }: SubmissionStatusListe
               result: newRow.result,
               execution_time_ms: newRow.execution_time_ms,
               memory_kb: newRow.memory_kb,
+              fail_order: newRow.fail_order, // fail_order 추가
             });
           }
         }
