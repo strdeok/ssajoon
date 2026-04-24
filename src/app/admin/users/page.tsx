@@ -1,27 +1,55 @@
-import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isAdmin } from "@/lib/auth/isAdmin";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { UserX, UserCheck, Shield } from "lucide-react";
+import { UserSearch } from "@/components/admin/UserSearch";
+import { Pagination } from "@/components/common/Pagination";
 
-export default async function AdminUsersPage() {
+export default async function AdminUsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; search?: string }>;
+}) {
   const admin = await isAdmin();
   if (!admin) redirect("/");
 
+  const { page, search } = await searchParams;
+  const currentPage = parseInt(page || "1", 10) || 1;
+  const pageSize = 10;
+  
   const supabaseAdmin = createAdminClient();
   
-  // Fetch users using service role to bypass RLS
-  const { data: users, error } = await supabaseAdmin
+  // 기본 쿼리 생성
+  let query = supabaseAdmin
     .from('users')
-    .select('id, nickname, role, is_deleted, created_at')
-    .order('created_at', { ascending: false });
+    .select('id, nickname, role, is_deleted, created_at', { count: 'exact' });
+
+  // 검색어가 있을 경우 필터 추가 (닉네임 기준)
+  if (search && search.trim() !== '') {
+    query = query.ilike('nickname', `%${search.trim()}%`);
+  }
+
+  // 페이징 및 정렬 적용
+  const from = (currentPage - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data: users, count, error } = await query
+    .order('created_at', { ascending: false })
+    .range(from, to);
+
+  const totalCount = count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">사용자 관리</h1>
-        <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-1">플랫폼 가입 사용자 목록 및 상태를 관리합니다.</p>
+        <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-1">플랫폼 가입 사용자 목록 및 상태를 관리합니다. (총 {totalCount}명)</p>
+      </div>
+
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <UserSearch placeholder="유저 닉네임 검색..." />
       </div>
 
       <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
@@ -80,7 +108,7 @@ export default async function AdminUsersPage() {
               {(!users || users.length === 0) && (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-zinc-500 dark:text-zinc-400">
-                    가입한 사용자가 없습니다.
+                    {search ? `'${search}'에 해당하는 사용자가 없습니다.` : "가입한 사용자가 없습니다."}
                   </td>
                 </tr>
               )}
@@ -88,6 +116,8 @@ export default async function AdminUsersPage() {
           </table>
         </div>
       </div>
+
+      <Pagination totalPages={totalPages} currentPage={currentPage} pageParamName="page" />
     </div>
   );
 }

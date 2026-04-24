@@ -1,20 +1,26 @@
-import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isAdmin } from "@/lib/auth/isAdmin";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, User, Calendar, Shield, Activity, XCircle, CheckCircle, Clock } from "lucide-react";
 import { softDeleteUser, restoreUser } from "../actions";
+import { ProblemSearch } from "@/components/admin/ProblemSearch";
+import { UserProblemHistory, GroupedProblemHistory } from "@/components/admin/UserProblemHistory";
+import { Pagination } from "@/components/common/Pagination";
 
 export default async function AdminUserDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ historyPage?: string; problemSearch?: string }>;
 }) {
   const admin = await isAdmin();
   if (!admin) redirect("/");
 
   const { id } = await params;
+  const { historyPage, problemSearch } = await searchParams;
+  
   const supabaseAdmin = createAdminClient();
 
   // 1. 유저 기본 정보 (RLS 우회)
@@ -42,8 +48,11 @@ export default async function AdminUserDetailPage({
     .eq('user_id', id)
     .eq('result', 'AC');
 
-  // 최근 제출 목록 (최대 10개)
-  const { data: recentSubmissions } = await supabaseAdmin
+  // 3. 문제 풀이 히스토리 (페이지네이션 및 그룹화)
+  const currentPage = parseInt(historyPage || "1", 10) || 1;
+  const pageSize = 20; // 페이지당 20건의 제출 기록
+
+  let historyQuery = supabaseAdmin
     .from('submissions')
     .select(`
       id, 
@@ -52,11 +61,58 @@ export default async function AdminUserDetailPage({
       status, 
       result, 
       submitted_at,
-      problems (title)
-    `)
-    .eq('user_id', id)
+      execution_time_ms,
+      memory_kb,
+      failed_testcase_order,
+      source_code,
+      problems!inner (title)
+    `, { count: 'exact' })
+    .eq('user_id', id);
+
+  if (problemSearch && problemSearch.trim() !== '') {
+    historyQuery = historyQuery.ilike('problems.title', `%${problemSearch.trim()}%`);
+  }
+
+  const from = (currentPage - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data: submissionsData, count: historyCount } = await historyQuery
     .order('submitted_at', { ascending: false })
-    .limit(10);
+    .range(from, to);
+
+  const totalHistoryCount = historyCount || 0;
+  const totalHistoryPages = Math.ceil(totalHistoryCount / pageSize);
+
+  // 문제 단위로 그룹화
+  const groupedMap = new Map<number, GroupedProblemHistory>();
+  
+  if (submissionsData) {
+    submissionsData.forEach((sub: any) => {
+      const pId = sub.problem_id;
+      if (!groupedMap.has(pId)) {
+        groupedMap.set(pId, {
+          problem_id: pId,
+          title: sub.problems?.title || `문제 #${pId}`,
+          submissions: []
+        });
+      }
+      groupedMap.get(pId)!.submissions.push({
+        id: sub.id,
+        problem_id: pId,
+        language: sub.language,
+        status: sub.status,
+        result: sub.result,
+        submitted_at: sub.submitted_at,
+        execution_time_ms: sub.execution_time_ms,
+        memory_kb: sub.memory_kb,
+        failed_testcase_order: sub.failed_testcase_order,
+        source_code: sub.source_code,
+        problems: sub.problems
+      });
+    });
+  }
+
+  const groupedData = Array.from(groupedMap.values());
 
   return (
     <div className="space-y-8">
@@ -112,7 +168,7 @@ export default async function AdminUserDetailPage({
             <div className="space-y-4 text-center">
               <div>
                 <h2 className="text-xl font-bold text-zinc-900 dark:text-white">{user.nickname || '이름 없음'}</h2>
-                <p className="text-sm font-mono text-zinc-500 mt-1">{user.id}</p>
+                <p className="text-sm font-mono text-zinc-500 mt-1">{String(user.id).substring(0, 8)}...</p>
               </div>
               
               <div className="flex justify-center gap-2">
@@ -164,40 +220,23 @@ export default async function AdminUserDetailPage({
           </div>
         </div>
 
-        {/* 활동 내역 */}
+        {/* 풀은 문제 히스토리 영역 */}
         <div className="col-span-1 lg:col-span-2 space-y-6">
           <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm">
-            <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-6 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-purple-500" /> 최근 제출 기록 (최대 10건)
-            </h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+              <h3 className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                <Clock className="w-5 h-5 text-purple-500" /> 풀은 문제 히스토리
+              </h3>
+              <ProblemSearch placeholder="문제 이름 검색..." />
+            </div>
             
-            {(!recentSubmissions || recentSubmissions.length === 0) ? (
-              <div className="text-center py-12 text-zinc-500">제출 기록이 없습니다.</div>
-            ) : (
-              <div className="space-y-4">
-                {recentSubmissions.map((sub: any) => {
-                  const isAC = sub.result === 'AC';
-                  return (
-                    <div key={sub.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 gap-4">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`px-2 py-0.5 rounded text-xs font-bold ${isAC ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400'}`}>
-                            {sub.result || sub.status}
-                          </span>
-                          <span className="text-xs font-mono text-zinc-500 uppercase">{sub.language}</span>
-                        </div>
-                        <Link href={`/problems/${sub.problem_id}`} className="text-sm font-medium text-zinc-900 dark:text-white hover:underline">
-                          {sub.problems?.title || `문제 #${sub.problem_id}`}
-                        </Link>
-                      </div>
-                      <div className="text-xs text-zinc-500 text-right">
-                        {new Date(sub.submitted_at).toLocaleString('ko-KR')}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            <UserProblemHistory groupedData={groupedData} />
+
+            <Pagination 
+              totalPages={totalHistoryPages} 
+              currentPage={currentPage} 
+              pageParamName="historyPage" 
+            />
           </div>
         </div>
       </div>
