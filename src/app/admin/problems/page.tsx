@@ -1,9 +1,10 @@
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isAdmin } from "@/lib/auth/isAdmin";
 import Link from "next/link";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit } from "lucide-react";
 import { redirect } from "next/navigation";
 import { deleteProblem } from "./actions";
+import { DeleteProblemButton } from "@/components/admin/DeleteProblemButton";
 
 export default async function AdminProblemsPage() {
   const admin = await isAdmin();
@@ -88,18 +89,10 @@ export default async function AdminProblemsPage() {
                         "use server";
                         await deleteProblem(problem.id);
                       }}>
-                        <button
-                          type="submit"
+                        <DeleteProblemButton
                           disabled={problem.is_deleted}
-                          className={`p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg transition-colors ${
-                            problem.is_deleted
-                              ? 'text-zinc-300 dark:text-zinc-600 cursor-not-allowed'
-                              : 'text-zinc-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 cursor-pointer'
-                          }`}
                           title={problem.is_deleted ? '이미 삭제된 문제' : '삭제'}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        />
                       </form>
                     </div>
                   </td>

@@ -1,38 +1,37 @@
+// 제출 내역 페이지 로딩 스켈레톤
 export default function SubmissionsLoading() {
   return (
-    <div className="container mx-auto px-6 pt-12 pb-24">
+    <div className="container mx-auto px-6 pt-12 pb-24 max-w-6xl">
       <div className="mb-12">
-        <div className="h-12 w-64 bg-zinc-200 dark:bg-zinc-800 rounded-lg animate-pulse mb-4"></div>
-        <div className="h-6 w-96 max-w-full bg-zinc-200 dark:bg-zinc-800 rounded-lg animate-pulse"></div>
+        <div className="h-12 w-36 bg-zinc-200 dark:bg-zinc-800 rounded-lg animate-pulse mb-4" />
+        <div className="h-5 w-72 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
       </div>
-      
-      <div className="bg-white dark:bg-[#09090b] rounded-2xl border border-zinc-200 dark:border-white/5 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left text-zinc-500 dark:text-zinc-400">
-            <thead className="text-xs text-zinc-700 uppercase bg-zinc-50 dark:bg-zinc-900/50 dark:text-zinc-400">
-              <tr>
-                <th className="px-6 py-4">제출 ID</th>
-                <th className="px-6 py-4">상태</th>
-                <th className="px-6 py-4">언어</th>
-                <th className="px-6 py-4">실행 시간</th>
-                <th className="px-6 py-4">메모리</th>
-                <th className="px-6 py-4">제출 시각</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[1, 2, 3, 4, 5].map((i) => (
-                <tr key={i} className="border-b border-zinc-100 dark:border-white/5">
-                  <td className="px-6 py-4"><div className="h-4 w-20 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div></td>
-                  <td className="px-6 py-4"><div className="h-6 w-16 bg-zinc-200 dark:bg-zinc-800 rounded-full animate-pulse"></div></td>
-                  <td className="px-6 py-4"><div className="h-4 w-12 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div></td>
-                  <td className="px-6 py-4"><div className="h-4 w-16 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div></td>
-                  <td className="px-6 py-4"><div className="h-4 w-16 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div></td>
-                  <td className="px-6 py-4"><div className="h-4 w-24 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div></td>
-                </tr>
+
+      <div className="bg-white dark:bg-[#09090b] rounded-2xl border border-zinc-200 dark:border-white/5 shadow-sm overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-zinc-200 dark:border-zinc-800">
+              {["ID", "문제", "언어", "결과", "시간", "메모리", "제출 시각"].map((h) => (
+                <th key={h} className="px-6 py-4 text-left">
+                  <div className="h-4 w-14 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse" />
+                </th>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <tr key={i}>
+                <td className="px-6 py-4"><div className="h-4 w-16 bg-zinc-100 dark:bg-zinc-800 rounded animate-pulse" /></td>
+                <td className="px-6 py-4"><div className="h-4 w-36 bg-zinc-100 dark:bg-zinc-800 rounded animate-pulse" /></td>
+                <td className="px-6 py-4"><div className="h-6 w-14 bg-zinc-100 dark:bg-zinc-800 rounded-full animate-pulse" /></td>
+                <td className="px-6 py-4"><div className="h-6 w-16 bg-zinc-100 dark:bg-zinc-800 rounded-full animate-pulse" /></td>
+                <td className="px-6 py-4"><div className="h-4 w-14 bg-zinc-100 dark:bg-zinc-800 rounded animate-pulse" /></td>
+                <td className="px-6 py-4"><div className="h-4 w-14 bg-zinc-100 dark:bg-zinc-800 rounded animate-pulse" /></td>
+                <td className="px-6 py-4"><div className="h-4 w-32 bg-zinc-100 dark:bg-zinc-800 rounded animate-pulse" /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

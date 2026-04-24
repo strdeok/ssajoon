@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/auth/isAdmin";
-import Link from "next/link";
-import { LayoutDashboard, Users, BookOpen } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
+import { AdminNav } from "@/components/admin/AdminNav";
 
 export default async function AdminLayout({
   children,
@@ -25,31 +25,8 @@ export default async function AdminLayout({
           </h2>
         </div>
         
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          <Link 
-            href="/admin"
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900 transition-colors"
-          >
-            <LayoutDashboard className="w-4 h-4" />
-            대시보드 홈
-          </Link>
-          
-          <Link 
-            href="/admin/problems"
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900 transition-colors"
-          >
-            <BookOpen className="w-4 h-4" />
-            문제 관리
-          </Link>
-          
-          <Link 
-            href="/admin/users"
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900 transition-colors"
-          >
-            <Users className="w-4 h-4" />
-            사용자 관리
-          </Link>
-        </nav>
+        {/* 클라이언트 네비게이션: 활성 링크 표시 포함 */}
+        <AdminNav />
       </aside>
 
       {/* 관리자 메인 컨텐츠 영역 */}

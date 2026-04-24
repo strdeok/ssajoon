@@ -7,6 +7,7 @@ import { softDeleteUser, restoreUser } from "../actions";
 import { ProblemSearch } from "@/components/admin/ProblemSearch";
 import { UserProblemHistory, GroupedProblemHistory } from "@/components/admin/UserProblemHistory";
 import { Pagination } from "@/components/common/Pagination";
+import { UserActionButton } from "@/components/admin/UserActionButton";
 
 export default async function AdminUserDetailPage({
   params,
@@ -133,7 +134,7 @@ export default async function AdminUserDetailPage({
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">사용자 상세 정보</h1>
         </div>
         
-        {/* 소프트 삭제 버튼 (서버 액션) */}
+        {/* 소프트 삭제 버튼 (Server Action + 로딩 상태 지원) */}
         <form action={async () => {
           "use server";
           if (user.is_deleted) {
@@ -142,21 +143,7 @@ export default async function AdminUserDetailPage({
             await softDeleteUser(user.id);
           }
         }}>
-          {user.is_deleted ? (
-            <button 
-              type="submit"
-              className="px-4 py-2 bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-lg font-medium hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
-            >
-              계정 복구하기
-            </button>
-          ) : (
-            <button 
-              type="submit"
-              className="px-4 py-2 bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400 rounded-lg font-medium hover:bg-red-200 dark:hover:bg-red-500/20 transition-colors"
-            >
-              강제 탈퇴 처리
-            </button>
-          )}
+          <UserActionButton isDeleted={user.is_deleted} />
         </form>
       </div>
 
