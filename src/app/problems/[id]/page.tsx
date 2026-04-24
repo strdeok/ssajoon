@@ -30,7 +30,7 @@ export default function ProblemPage({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
 
-  const { submissionId, status, setSubmissionId, setStatus, reset } =
+  const { submissionId, status, result, setSubmissionId, setStatus, reset } =
     useSubmissionStore();
 
 
