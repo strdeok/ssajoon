@@ -16,7 +16,7 @@ interface SubmissionSummary {
 }
 
 interface SubmissionHistoryPanelProps {
-  problemId: string;
+  problemId: number;
   userId: string;
 }
 
