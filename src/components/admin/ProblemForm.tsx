@@ -89,9 +89,16 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
       // redirect occurs in server action, but just in case
       router.push('/admin/problems');
     } catch (err: any) {
-      // 개발 환경에서만 콘솔에 상세 에러 출력 (UI에는 노출하지 않음)
+      // NEXT_REDIRECT는 서버 액션이 redirect()를 호출할 때 throw하는 정상 신호
+      // rethrow해야 Next.js 프레임워크가 실제 리다이렉트를 처리함
+      // catch 후 return/무시하면 리다이렉트가 실행되지 않음
+      if (err?.digest?.startsWith("NEXT_REDIRECT")) {
+        console.log("[문제 저장] 성공 — NEXT_REDIRECT rethrow → 리다이렉트 실행");
+        throw err; // 반드시 rethrow
+      }
+
+      // 실제 오류(DB 에러 등)만 처리
       console.error("[문제 저장 실패]", err);
-      // 사용자에게는 친화적인 메시지만 표시
       const userMessage = formData.id
         ? "문제 수정에 실패했습니다. 입력값을 확인해주세요."
         : "문제 생성에 실패했습니다. 입력값을 확인해주세요.";

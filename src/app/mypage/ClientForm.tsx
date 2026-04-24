@@ -60,20 +60,22 @@ export default function ClientForm({ initialNickname, userEmail }: ClientFormPro
         return;
       }
 
-      // 성공 시 서버에서 redirect("/")가 실행되므로 여기에 도달하지 않음
-      // 만약 redirect가 동작하지 않는 경우를 대비한 fallback
-      console.log("[탈퇴] 성공 — 리다이렉트 대기 중");
+      // redirect()가 throw되지 않고 결과가 반환된 경우의 fallback
+      console.log("[탈퇴] 성공 — 리다이렉트 fallback 실행");
       router.push("/");
       router.refresh();
     } catch (err) {
-      // Next.js의 redirect()는 NEXT_REDIRECT 에러를 throw하므로 정상 동작
-      // 그 외의 에러만 처리
       const error = err as any;
+
+      // NEXT_REDIRECT는 Next.js redirect()가 throw하는 정상적인 신호
+      // 반드시 rethrow 해야 프레임워크가 실제 리다이렉트를 처리함
+      // return으로 끝내면 리다이렉트가 실행되지 않음
       if (error?.digest?.startsWith("NEXT_REDIRECT")) {
-        // redirect에 의한 정상 종료 — 별도 처리 불필요
-        console.log("[탈퇴] 성공 — 리다이렉트 실행됨");
-        return;
+        console.log("[탈퇴] 성공 — NEXT_REDIRECT rethrow → 리다이렉트 실행");
+        throw err; // 반드시 rethrow
       }
+
+      // 그 외 실제 에러만 처리
       console.error("[탈퇴] 예외 발생:", error);
       setWithdrawMessage({ type: "error", text: "탈퇴 처리 중 오류가 발생했습니다. 다시 시도해주세요." });
       setIsWithdrawing(false);
