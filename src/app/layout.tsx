@@ -9,7 +9,7 @@ import Link from "next/link";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "SSAJUN - Algorithm Platform",
+  title: "SSAJOON - Algorithm Platform",
   description: "Premium Algorithm Problem Solving Platform",
 };
 
@@ -28,7 +28,7 @@ export default function RootLayout({
               <div className="w-full max-w-7xl mx-auto px-4 flex items-center justify-between">
                 <div className="flex items-center space-x-8">
                   <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                    <Link href="/">SSAJUN</Link>
+                    <Link href="/">SSAJOON</Link>
                   </h1>
                   <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
                     <Link href="/" className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">문제 목록</Link>
