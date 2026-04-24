@@ -11,7 +11,7 @@ export default async function SubmissionsPage({
   const { page } = await searchParams;
   const currentPage = parseInt(page || "1", 10) || 1;
   const pageSize = 10;
-  
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -74,8 +74,8 @@ export default async function SubmissionsPage({
                   sub.failed_testcase_order
                 );
 
-                const badgeClass = isSuccess 
-                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20' 
+                const badgeClass = isSuccess
+                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20'
                   : isPending
                     ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border-blue-200 dark:border-blue-500/20 animate-pulse'
                     : 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400 border-red-200 dark:border-red-500/20';
@@ -83,7 +83,7 @@ export default async function SubmissionsPage({
                 return (
                   <tr key={sub.id} className="hover:bg-zinc-50 dark:hover:bg-white/[0.02] transition-colors">
                     <td className="px-6 py-4 font-mono text-sm text-zinc-500 font-medium">
-                      {String(sub.id).substring(0, 8)}...
+                      {String(sub.id).substring(0, 8)}
                     </td>
                     <td className="px-6 py-4 font-medium text-zinc-900 dark:text-white">
                       <Link href={`/problems/${sub.problem_id}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors line-clamp-1">
@@ -124,7 +124,7 @@ export default async function SubmissionsPage({
       {totalPages > 1 && (
         <div className="flex justify-center items-center mt-8 gap-4">
           {currentPage > 1 ? (
-            <Link 
+            <Link
               href={`/submissions?page=${currentPage - 1}`}
               className="px-4 py-2 text-sm font-medium bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-zinc-700 dark:text-zinc-300"
             >
@@ -141,7 +141,7 @@ export default async function SubmissionsPage({
           </div>
 
           {currentPage < totalPages ? (
-            <Link 
+            <Link
               href={`/submissions?page=${currentPage + 1}`}
               className="px-4 py-2 text-sm font-medium bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-zinc-700 dark:text-zinc-300"
             >

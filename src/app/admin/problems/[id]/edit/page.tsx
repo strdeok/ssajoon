@@ -1,7 +1,7 @@
 import { isAdmin } from "@/lib/auth/isAdmin";
 import { redirect } from "next/navigation";
 import { ProblemForm } from "@/components/admin/ProblemForm";
-import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 
 export default async function EditProblemPage({
   params,
@@ -12,9 +12,9 @@ export default async function EditProblemPage({
   if (!admin) redirect("/");
 
   const { id } = await params;
-  const supabase = await createClient();
+  const supabaseAdmin = createAdminClient();
 
-  const { data: problem, error } = await supabase
+  const { data: problem, error } = await supabaseAdmin
     .from("problems")
     .select(`
       *,

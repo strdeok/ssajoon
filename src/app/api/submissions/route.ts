@@ -62,12 +62,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // 3. 5분 내 3회 이상 제출 시 차단
-    if (count !== null && count >= 3) {
+    // 3. 5분 내 10회 이상 제출 시 차단
+    if (count !== null && count >= 10) {
       return NextResponse.json(
         { 
           success: false, 
-          message: "최근 5분간 3회를 초과하여 제출할 수 없습니다. 잠시 후 다시 시도해주세요." 
+          message: "최근 5분간 10회를 초과하여 제출할 수 없습니다. 잠시 후 다시 시도해주세요." 
         },
         { status: 429 } // 429 Too Many Requests
       );

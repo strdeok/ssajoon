@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { isAdmin } from "@/lib/auth/isAdmin";
 import Link from "next/link";
 import { Plus, Edit, Trash2 } from "lucide-react";
@@ -9,8 +9,8 @@ export default async function AdminProblemsPage() {
   const admin = await isAdmin();
   if (!admin) redirect("/");
 
-  const supabase = await createClient();
-  const { data: problems } = await supabase
+  const supabaseAdmin = createAdminClient();
+  const { data: problems } = await supabaseAdmin
     .from('problems')
     .select('id, title, category, difficulty, created_at')
     .order('id', { ascending: false });
