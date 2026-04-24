@@ -32,7 +32,7 @@ export function getSubmissionLabel(
   let colorClass = "text-zinc-500"; // 기본 컬러
 
   if (isPending) {
-    text = status === "RUNNING" ? "채점 중입니다..." : "채점 대기 중입니다...";
+    text = status === "RUNNING" ? "채점 중" : "채점 대기 중";
     colorClass = "text-blue-500 animate-pulse";
   } else if (isSuccess) {
     text = "정답입니다";

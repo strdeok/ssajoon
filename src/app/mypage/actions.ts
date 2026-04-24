@@ -57,7 +57,7 @@ export async function withdrawAccount() {
   try {
     // 소프트 탈퇴: 닉네임 변경으로 식별 불가 처리
     await supabase.from("users").update({
-      nickname: `탈퇴한 사용자 (${user.id.substring(0, 6)})`,
+      nickname: `탈퇴한 사용자 (${String(user.id).substring(0, 6)})`,
     }).eq("id", user.id);
     
     await supabase.auth.updateUser({

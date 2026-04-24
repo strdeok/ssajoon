@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { isAdmin } from "@/lib/auth/isAdmin";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -8,10 +9,10 @@ export default async function AdminUsersPage() {
   const admin = await isAdmin();
   if (!admin) redirect("/");
 
-  const supabase = await createClient();
+  const supabaseAdmin = createAdminClient();
   
-  // Fetch users
-  const { data: users, error } = await supabase
+  // Fetch users using service role to bypass RLS
+  const { data: users, error } = await supabaseAdmin
     .from('users')
     .select('id, nickname, role, is_deleted, created_at')
     .order('created_at', { ascending: false });
@@ -40,7 +41,7 @@ export default async function AdminUsersPage() {
               {users?.map(user => (
                 <tr key={user.id} className={`hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors ${user.is_deleted ? 'opacity-50' : ''}`}>
                   <td className="px-6 py-4 font-medium text-zinc-900 dark:text-zinc-100">{user.nickname || '이름 없음'}</td>
-                  <td className="px-6 py-4 font-mono text-xs text-zinc-500">{user.id.substring(0, 8)}...</td>
+                  <td className="px-6 py-4 font-mono text-xs text-zinc-500">{String(user.id).substring(0, 8)}...</td>
                   <td className="px-6 py-4">
                     {user.role === 'ADMIN' ? (
                       <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400 rounded-md text-xs font-bold">

@@ -83,7 +83,7 @@ export default async function SubmissionsPage({
                 return (
                   <tr key={sub.id} className="hover:bg-zinc-50 dark:hover:bg-white/[0.02] transition-colors">
                     <td className="px-6 py-4 font-mono text-sm text-zinc-500 font-medium">
-                      {sub.id.substring(0, 8)}...
+                      {String(sub.id).substring(0, 8)}...
                     </td>
                     <td className="px-6 py-4 font-medium text-zinc-900 dark:text-white">
                       <Link href={`/problems/${sub.problem_id}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors line-clamp-1">

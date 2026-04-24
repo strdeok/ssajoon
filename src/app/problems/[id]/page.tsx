@@ -66,6 +66,7 @@ export default function ProblemPage({
 
     reset(); // Clear previous result
     setIsSubmitting(true);
+    setStatus("PENDING"); // 낙관적 업데이트: 클릭 즉시 채점 대기 중 상태로 변경
 
     try {
       const res = await fetch("/api/submissions", {
