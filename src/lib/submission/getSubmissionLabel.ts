@@ -16,32 +16,56 @@ export function getSubmissionLabel(
   result: string | null | undefined,
   failOrder?: number | null
 ): SubmissionLabelInfo {
+  // 채점 중으로 간주할 status 목록을 정의한다.
   const pendingStatuses = ["PENDING", "QUEUED", "RUNNING"];
-  const isPending = pendingStatuses.includes(status || "");
-  
-  // result가 있으면 우선적으로 사용하고, 없으면 status를 사용.
-  // 단, result === 'DONE'이거나 status === 'DONE'일 때, result 값이 없다면 단순 완료 상태일 수 있음.
-  // 하지만 채점 시스템에서는 result 필드에 AC, WA 등이 들어오는 것이 원칙이므로, result 값을 최우선 해석.
-  const finalState = result && result !== "DONE" ? result : status;
 
+  // result가 실제 채점 결과인지 먼저 판단한다.
+  const hasFinalResult = !!result && result !== "DONE";
+
+  // 최종 해석 상태를 정한다.
+  // result가 있으면 result를 최우선으로 사용하고, 없으면 status를 사용한다.
+  const finalState = hasFinalResult ? result : status;
+
+  // 최종 결과가 있으면 더 이상 pending으로 보지 않는다.
+  const isPending = !hasFinalResult && pendingStatuses.includes(status || "");
+
+  // 성공 여부를 계산한다.
   const isSuccess = finalState === "AC" || finalState === "SUCCESS";
+
+  // 서버 에러성 상태를 계산한다.
   const isError = finalState === "FAILED" || finalState === "ERROR";
-  const isFail = !!finalState && !isSuccess && !isPending && !isError && finalState !== "DONE";
 
+  // 실패 여부를 계산한다.
+  const isFail =
+    !!finalState &&
+    !isSuccess &&
+    !isPending &&
+    !isError &&
+    finalState !== "DONE";
+
+  // 기본 표시값을 초기화한다.
   let text = "";
-  let colorClass = "text-zinc-500"; // 기본 컬러
+  let colorClass = "text-zinc-500";
 
+  // 채점 대기/진행 상태를 처리한다.
   if (isPending) {
     text = status === "RUNNING" ? "채점 중" : "채점 대기 중";
     colorClass = "text-blue-500 animate-pulse";
-  } else if (isSuccess) {
+  }
+  // 정답 상태를 처리한다.
+  else if (isSuccess) {
     text = "정답입니다";
     colorClass = "text-emerald-500";
-  } else if (isFail) {
+  }
+  // 실패 상태를 처리한다.
+  else if (isFail) {
     colorClass = "text-red-500";
+
     switch (finalState) {
       case "WA":
-        text = failOrder ? `${failOrder}번 테스트케이스에서 틀렸습니다` : "오답입니다";
+        text = failOrder
+          ? `${failOrder}번 테스트케이스에서 틀렸습니다`
+          : "오답입니다";
         break;
       case "CE":
         text = "컴파일 에러입니다";
@@ -63,13 +87,21 @@ export function getSubmissionLabel(
         break;
       default:
         text = "채점에 실패했습니다";
+        break;
     }
-  } else if (isError) {
+  }
+  // 서버 내부 실패 상태를 처리한다.
+  else if (isError) {
     colorClass = "text-orange-500";
     text = "채점 실패 (서버 에러)";
-  } else if (status === "DONE") {
-    // 혹시라도 status가 DONE인데 result가 매핑되지 않은 예외 상황 방어
+  }
+  // DONE인데 result가 비어 있는 예외 상황을 처리한다.
+  else if (status === "DONE") {
     text = "채점 완료 (결과 미상)";
+  }
+  // 그 외 예외 상황을 처리한다.
+  else {
+    text = "결과 확인 중";
   }
 
   return {
