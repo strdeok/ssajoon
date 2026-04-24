@@ -13,6 +13,7 @@ interface SubmissionSummary {
   execution_time_ms: number | null;
   memory_kb: number | null;
   submitted_at: string;
+  fail_order?: number | null;
 }
 
 interface SubmissionHistoryPanelProps {
@@ -36,7 +37,7 @@ export function SubmissionHistoryPanel({ problemId, userId }: SubmissionHistoryP
         // source_code를 제외한 요약 정보만 조회 (Lazy fetch 준비)
         const { data, error: fetchError } = await supabase
           .from("submissions")
-          .select("id, language, status, result, execution_time_ms, memory_kb, submitted_at")
+          .select("id, language, status, result, execution_time_ms, memory_kb, submitted_at, fail_order")
           .eq("problem_id", problemId)
           .eq("user_id", userId)
           .order("submitted_at", { ascending: false });

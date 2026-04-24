@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { ChevronDown, ChevronUp, Loader2, Clock, HardDrive, Calendar } from "lucide-react";
+import { getSubmissionLabel } from "@/lib/submission/getSubmissionLabel";
 
 interface SubmissionSummary {
   id: string;
@@ -12,6 +13,7 @@ interface SubmissionSummary {
   execution_time_ms: number | null;
   memory_kb: number | null;
   submitted_at: string;
+  fail_order?: number | null;
 }
 
 interface SubmissionCodeItemProps {
@@ -61,12 +63,16 @@ export function SubmissionCodeItem({ submission }: SubmissionCodeItemProps) {
   };
 
   // 상태 뱃지 스타일링
-  const currentStatus = submission.status || submission.result || "PENDING";
-  const isSuccess = currentStatus === 'AC' || currentStatus === 'SUCCESS';
+  const { text: resultText, isSuccess, isPending, colorClass } = getSubmissionLabel(
+    submission.status,
+    submission.result,
+    submission.fail_order
+  );
+
   const badgeClass = isSuccess 
     ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20' 
-    : currentStatus === "PENDING"
-      ? 'bg-zinc-100 text-zinc-700 dark:bg-zinc-500/10 dark:text-zinc-400 border-zinc-200 dark:border-zinc-500/20'
+    : isPending
+      ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border-blue-200 dark:border-blue-500/20 animate-pulse'
       : 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400 border-red-200 dark:border-red-500/20';
 
   return (
@@ -77,7 +83,7 @@ export function SubmissionCodeItem({ submission }: SubmissionCodeItemProps) {
       >
         <div className="flex items-center space-x-3 w-full md:w-auto">
           <span className={`px-2.5 py-1 text-xs font-bold rounded-full border ${badgeClass}`}>
-            {currentStatus}
+            {resultText}
           </span>
           <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300 flex items-center gap-1.5">
             <Calendar className="w-3.5 h-3.5 text-zinc-400" />

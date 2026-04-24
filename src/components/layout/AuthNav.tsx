@@ -1,11 +1,23 @@
 import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
 import { signout } from "@/app/login/actions";
-import { LogOut, UserCircle } from "lucide-react";
+import { LogOut, UserCircle, Settings } from "lucide-react";
 
 export async function AuthNav() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  let userRole = "USER";
+  if (user) {
+    const { data: userData } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    if (userData) {
+      userRole = userData.role;
+    }
+  }
 
   if (!user) {
     return (
@@ -20,6 +32,16 @@ export async function AuthNav() {
 
   return (
     <div className="flex items-center space-x-4">
+      {userRole === "ADMIN" && (
+        <Link 
+          href="/admin" 
+          className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-bold bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-900 rounded-md hover:bg-zinc-700 dark:hover:bg-white transition-colors cursor-pointer shadow-sm"
+        >
+          <Settings className="w-3.5 h-3.5" />
+          <span>관리자 페이지</span>
+        </Link>
+      )}
+      
       {/* 닉네임을 클릭 가능한 링크로 변경 */}
       <Link href="/mypage" className="flex items-center space-x-2 text-sm text-zinc-600 dark:text-zinc-400 font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer group">
         <UserCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />

@@ -2,23 +2,14 @@
 
 import { useSubmissionStore } from "@/store/submissionStore";
 import { Loader2, CheckCircle, XCircle, AlertCircle, Clock, HardDrive } from "lucide-react";
+import { getSubmissionLabel } from "@/lib/submission/getSubmissionLabel";
 
 export function ResultViewer() {
   const { status, submissionId, result } = useSubmissionStore();
 
   if (!status && !submissionId) return null;
 
-  // 상태 판별
-  const isPending = status === "PENDING" || status === "QUEUED";
-  const isRunning = status === "RUNNING";
-  const isError = status === "FAILED" || status === "ERROR";
-  
-  // result 객체가 있고 그 안에 상태(result 필드)가 있다면 그것을 우선하거나 
-  // status 자체를 기반으로 정답 여부 판단
-  const finalStatus = result?.result || status;
-  
-  const isSuccess = finalStatus === "AC";
-  const isFail = ["WA", "CE", "RE", "TLE", "MLE"].includes(finalStatus as string);
+  const { text: resultText, isSuccess, isFail, isPending, isError, colorClass } = getSubmissionLabel(status, result?.result, result?.fail_order);
 
   return (
     <div className="mt-4 p-6 rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900/50 backdrop-blur-md shadow-lg transition-all duration-300">
@@ -29,35 +20,22 @@ export function ResultViewer() {
       <div className="flex items-center space-x-3 mb-4">
         {isPending && (
           <>
-            <Loader2 className="w-6 h-6 text-zinc-500 animate-spin" />
-            <span className="text-zinc-500 font-medium text-lg animate-pulse">채점 대기 중...</span>
+            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+            <span className={`font-medium text-lg animate-pulse ${colorClass}`}>{resultText}</span>
           </>
         )}
         
-        {isRunning && (
-          <>
-            <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
-            <span className="text-blue-500 font-medium text-lg animate-pulse">채점 중...</span>
-          </>
-        )}
-
         {isSuccess && (
           <>
             <CheckCircle className="w-6 h-6 text-green-500" />
-            <span className="text-green-500 font-bold text-lg">정답입니다</span>
+            <span className={`font-bold text-lg ${colorClass}`}>{resultText}</span>
           </>
         )}
         
         {isFail && (
           <>
             <XCircle className="w-6 h-6 text-red-500" />
-            <span className="text-red-500 font-bold text-lg">
-              {finalStatus === "WA" ? (result?.fail_order ? `${result.fail_order}번 테스트케이스에서 틀렸습니다` : "오답입니다") : 
-               finalStatus === "CE" ? "컴파일 에러입니다" : 
-               finalStatus === "RE" ? "런타임 에러입니다" : 
-               finalStatus === "TLE" ? "시간 초과입니다" : 
-               finalStatus === "MLE" ? "메모리 초과입니다" : "채점에 실패했습니다"}
-            </span>
+            <span className={`font-bold text-lg ${colorClass}`}>{resultText}</span>
           </>
         )}
 

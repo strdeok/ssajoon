@@ -1,14 +1,16 @@
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { BookOpen, Users, Activity } from "lucide-react";
 import Link from "next/link";
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
+  const supabaseAdmin = createAdminClient();
   
-  // 간단한 통계 데이터 조회 (예시)
-  const { count: userCount } = await supabase.from('users').select('*', { count: 'exact', head: true });
-  const { count: problemCount } = await supabase.from('problems').select('*', { count: 'exact', head: true });
-  const { count: submissionCount } = await supabase.from('submissions').select('*', { count: 'exact', head: true });
+  // 간단한 통계 데이터 조회 (RLS 우회를 위해 Admin 클라이언트 사용)
+  const { count: userCount } = await supabaseAdmin.from('users').select('*', { count: 'exact', head: true }).eq('is_deleted', false);
+  const { count: problemCount } = await supabaseAdmin.from('problems').select('*', { count: 'exact', head: true });
+  const { count: submissionCount } = await supabaseAdmin.from('submissions').select('*', { count: 'exact', head: true });
 
   return (
     <div className="space-y-8">
