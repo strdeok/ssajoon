@@ -4,14 +4,13 @@ import { useState, useEffect } from "react";
 import { Problem } from "@/types/problem";
 import { createClient } from "@/utils/supabase/client";
 import { Loader2, FileText, Clock, Copy, Check } from "lucide-react";
+import { SubmissionHistoryPanel } from "@/components/submission/SubmissionHistoryPanel";
 
 export function ProblemDetail({ problem }: { problem: Problem }) {
   // 1. 탭 상태 관리
   const [activeTab, setActiveTab] = useState<"description" | "submissions">("description");
   
   // 2. 데이터 상태 관리
-  const [submissions, setSubmissions] = useState<any[]>([]);
-  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isUserLoaded, setIsUserLoaded] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -33,34 +32,7 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
     loadUser();
   }, []);
 
-  // 4. "내 제출 코드" 탭 활성화 시 데이터 패칭
-  useEffect(() => {
-    if (activeTab === "submissions" && user) {
-      loadSubmissions();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, user, problem.id]);
-
-  const loadSubmissions = async () => {
-    setLoadingSubmissions(true);
-    const supabase = createClient();
-    
-    // DB에서 내 제출 내역 조회 (problem_id와 user_id 필터)
-    const { data, error } = await supabase
-      .from("submissions")
-      .select("*")
-      .eq("problem_id", problem.id)
-      .eq("user_id", user.id)
-      .order("submitted_at", { ascending: false });
-
-    if (!error && data) {
-      setSubmissions(data);
-    } else {
-      console.error("Failed to load submissions", error);
-    }
-    setLoadingSubmissions(false);
-  };
-
+  // 4. 불필요해진 loadSubmissions 로직 제거
   return (
     <div className="flex flex-col h-full bg-white dark:bg-zinc-900/50 rounded-xl overflow-hidden">
       {/* 상단 헤더 및 탭 영역 */}
@@ -197,45 +169,8 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
               <div className="text-center py-12 bg-zinc-50 dark:bg-black/20 rounded-xl border border-zinc-200 dark:border-white/5">
                 <p className="text-zinc-500 dark:text-zinc-400">로그인 후 제출 내역을 확인할 수 있습니다.</p>
               </div>
-            ) : loadingSubmissions ? (
-              <div className="flex justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>
-            ) : submissions.length === 0 ? (
-              <div className="text-center py-12 bg-zinc-50 dark:bg-black/20 rounded-xl border border-zinc-200 dark:border-white/5">
-                <p className="text-zinc-500 dark:text-zinc-400">이 문제에 대한 제출 내역이 없습니다.</p>
-              </div>
             ) : (
-              <div className="space-y-6">
-                {submissions.map((sub) => {
-                  // AC(정답) 계열인지 실패 계열인지 판단
-                  const isSuccess = sub.status === 'AC' || sub.result === 'AC' || sub.status === 'SUCCESS';
-                  return (
-                    <div key={sub.id} className="bg-zinc-50 dark:bg-black/20 rounded-xl border border-zinc-200 dark:border-white/5 overflow-hidden">
-                      <div className="p-4 border-b border-zinc-200 dark:border-white/5 flex justify-between items-center bg-white/50 dark:bg-zinc-900/50">
-                        <div className="flex items-center space-x-4">
-                          <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${
-                            isSuccess 
-                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' 
-                              : 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400'
-                          }`}>
-                            {sub.status || sub.result || "PENDING"}
-                          </span>
-                          <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
-                            {sub.language}
-                          </span>
-                        </div>
-                        <div className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                          {new Date(sub.submitted_at).toLocaleString('ko-KR')}
-                        </div>
-                      </div>
-                      <div className="p-4 overflow-x-auto">
-                        <pre className="text-sm font-mono text-zinc-800 dark:text-zinc-300 leading-relaxed">
-                          {sub.source_code}
-                        </pre>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <SubmissionHistoryPanel problemId={problem.id} userId={user.id} />
             )}
           </div>
         )}
