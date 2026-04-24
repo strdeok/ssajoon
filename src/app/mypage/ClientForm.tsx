@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2, AlertCircle, CheckCircle2, UserX } from "lucide-react";
 import { updateProfile, withdrawAccount } from "./actions";
+import { useRouter } from "next/navigation";
 
 interface ClientFormProps {
   initialNickname: string;
@@ -10,10 +11,13 @@ interface ClientFormProps {
 }
 
 export default function ClientForm({ initialNickname, userEmail }: ClientFormProps) {
+  const router = useRouter();
   const [nickname, setNickname] = useState(initialNickname);
   const [isSaving, setIsSaving] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error", text: string } | null>(null);
+  // 탈퇴 처리 결과 메시지 (별도 상태로 관리)
+  const [withdrawMessage, setWithdrawMessage] = useState<{ type: "success" | "error", text: string } | null>(null);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,14 +39,45 @@ export default function ClientForm({ initialNickname, userEmail }: ClientFormPro
   };
 
   const handleWithdraw = async () => {
+    // 탈퇴 확인 다이얼로그
     if (!window.confirm("정말 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없으며 제출한 모든 내역의 식별이 불가능해집니다.")) {
       return;
     }
 
+    console.log("[탈퇴] 클릭 시점 — 탈퇴 요청 시작");
     setIsWithdrawing(true);
-    await withdrawAccount();
-    // 성공 시 redirect 되므로 false 처리가 필요 없음
-    setIsWithdrawing(false);
+    setWithdrawMessage(null);
+
+    try {
+      // 서버 액션 호출
+      const result = await withdrawAccount();
+
+      // 서버 액션이 에러 결과를 반환한 경우 (redirect 없이 돌아온 경우)
+      if (result && !result.success) {
+        console.error("[탈퇴] 실패:", result.message);
+        setWithdrawMessage({ type: "error", text: result.message });
+        setIsWithdrawing(false);
+        return;
+      }
+
+      // 성공 시 서버에서 redirect("/")가 실행되므로 여기에 도달하지 않음
+      // 만약 redirect가 동작하지 않는 경우를 대비한 fallback
+      console.log("[탈퇴] 성공 — 리다이렉트 대기 중");
+      router.push("/");
+      router.refresh();
+    } catch (err) {
+      // Next.js의 redirect()는 NEXT_REDIRECT 에러를 throw하므로 정상 동작
+      // 그 외의 에러만 처리
+      const error = err as any;
+      if (error?.digest?.startsWith("NEXT_REDIRECT")) {
+        // redirect에 의한 정상 종료 — 별도 처리 불필요
+        console.log("[탈퇴] 성공 — 리다이렉트 실행됨");
+        return;
+      }
+      console.error("[탈퇴] 예외 발생:", error);
+      setWithdrawMessage({ type: "error", text: "탈퇴 처리 중 오류가 발생했습니다. 다시 시도해주세요." });
+      setIsWithdrawing(false);
+    }
   };
 
   return (
@@ -108,13 +143,26 @@ export default function ClientForm({ initialNickname, userEmail }: ClientFormPro
           회원 탈퇴 시 모든 세션이 로그아웃되며, 게시한 질문이나 제출 코드 등의 정보는 '탈퇴한 사용자'로 변경되어 식별할 수 없게 됩니다.
         </p>
         <button
+          type="button"
           onClick={handleWithdraw}
           disabled={isWithdrawing}
           className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white px-6 py-2.5 rounded-lg font-medium transition-all duration-300 cursor-pointer disabled:cursor-not-allowed"
         >
           {isWithdrawing && <Loader2 className="w-4 h-4 animate-spin" />}
-          <span>회원 탈퇴</span>
+          <span>{isWithdrawing ? "탈퇴 처리 중..." : "회원 탈퇴"}</span>
         </button>
+
+        {/* 탈퇴 처리 결과 메시지 표시 */}
+        {withdrawMessage && (
+          <div className={`mt-4 flex items-center space-x-2 text-sm font-medium ${
+            withdrawMessage.type === 'error' 
+              ? 'text-red-600 dark:text-red-400' 
+              : 'text-emerald-600 dark:text-emerald-400'
+          }`}>
+            <AlertCircle className="w-4 h-4" />
+            <span>{withdrawMessage.text}</span>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -89,8 +89,13 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
       // redirect occurs in server action, but just in case
       router.push('/admin/problems');
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || "문제 저장에 실패했습니다.");
+      // 개발 환경에서만 콘솔에 상세 에러 출력 (UI에는 노출하지 않음)
+      console.error("[문제 저장 실패]", err);
+      // 사용자에게는 친화적인 메시지만 표시
+      const userMessage = formData.id
+        ? "문제 수정에 실패했습니다. 입력값을 확인해주세요."
+        : "문제 생성에 실패했습니다. 입력값을 확인해주세요.";
+      setError(userMessage);
       setIsSubmitting(false);
     }
   };
