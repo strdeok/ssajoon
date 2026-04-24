@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { isAdmin } from "@/lib/auth/isAdmin";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -14,10 +15,10 @@ export default async function AdminUserDetailPage({
   if (!admin) redirect("/");
 
   const { id } = await params;
-  const supabase = await createClient();
+  const supabaseAdmin = createAdminClient();
 
-  // 1. 유저 기본 정보
-  const { data: user, error } = await supabase
+  // 1. 유저 기본 정보 (RLS 우회)
+  const { data: user, error } = await supabaseAdmin
     .from('users')
     .select('*')
     .eq('id', id)
@@ -29,20 +30,20 @@ export default async function AdminUserDetailPage({
 
   // 2. 제출 요약 정보
   // 전체 제출 수
-  const { count: totalSubmissions } = await supabase
+  const { count: totalSubmissions } = await supabaseAdmin
     .from('submissions')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', id);
 
   // 정답(AC) 수
-  const { count: acSubmissions } = await supabase
+  const { count: acSubmissions } = await supabaseAdmin
     .from('submissions')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', id)
     .eq('result', 'AC');
 
   // 최근 제출 목록 (최대 10개)
-  const { data: recentSubmissions } = await supabase
+  const { data: recentSubmissions } = await supabaseAdmin
     .from('submissions')
     .select(`
       id, 
