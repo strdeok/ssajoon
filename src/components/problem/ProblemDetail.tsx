@@ -36,7 +36,7 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
   /** 탭 전환 시 expanded 상태도 초기화 */
   const handleTabChange = (tab: "description" | "submissions") => {
     if (tab === "description") {
-      setIsSubmissionExpanded(false); // 문제 설명으로 돌아오면 항상 초기화
+      setIsSubmissionExpanded(false);
     }
     setActiveTab(tab);
   };
@@ -51,14 +51,33 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
     loadUser();
   }, []);
 
-  // ─── 예제 목록 계산 ─────────────────────────────────────────
-  // problem_testcases(is_hidden=false) 우선, 없으면 problem_examples fallback
-  const publicTestcases = problem.problem_testcases?.filter(t => !t.is_hidden) ?? [];
-  const examples = problem.problem_examples ?? [];
-  const exampleList =
-    publicTestcases.length > 0
-      ? publicTestcases.map(t => ({ id: t.id, input: t.input_text, output: t.expected_output }))
-      : examples.map(e => ({ id: e.id, input: e.input_text, output: e.output_text }));
+  // ─── 공개 테스트케이스 (problem_testcases 테이블 직접 조회) ─────────────────
+  // problem_testcases 는 problems 와 별개 테이블 (problem_id FK).
+  // API 응답에 embedded 된 값에 의존하지 않고 클라이언트에서 직접 fetch.
+  const [publicTestcases, setPublicTestcases] = useState<{
+    id: string;
+    input_text: string;
+    expected_output: string;
+    testcase_order: number;
+  }[]>([]);
+
+  useEffect(() => {
+    async function fetchPublicTestcases() {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("problem_testcases")
+        .select("id, input_text, expected_output, testcase_order")
+        .eq("problem_id", problem.id)   // FK: problem_testcases.problem_id → problems.id
+        .eq("is_hidden", false)          // 공개 케이스만
+        .eq("is_deleted", false)         // soft delete 제외
+        .order("testcase_order", { ascending: true }); // 순서대로
+
+      if (!error && data) {
+        setPublicTestcases(data);
+      }
+    }
+    fetchPublicTestcases();
+  }, [problem.id]);
 
   /**
    * 컨테이너 높이 클래스 동적 결정:
@@ -171,12 +190,12 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
               </section>
             )}
 
-            {/* 입력 설명 */}
+            {/* 입력 설명 (problems.input_description) */}
             {problem.input_description && (
               <section>
                 <h2 className="text-lg font-semibold text-purple-600 dark:text-purple-400 mb-4 flex items-center">
                   <span className="w-2 h-2 rounded-full bg-purple-500 mr-3" />
-                  입력
+                  입력 설명
                 </h2>
                 <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-6 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap">
                   {problem.input_description}
@@ -184,12 +203,12 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
               </section>
             )}
 
-            {/* 출력 설명 */}
+            {/* 출력 설명 (problems.output_description) */}
             {problem.output_description && (
               <section>
                 <h2 className="text-lg font-semibold text-pink-600 dark:text-pink-400 mb-4 flex items-center">
                   <span className="w-2 h-2 rounded-full bg-pink-500 mr-3" />
-                  출력
+                  출력 설명
                 </h2>
                 <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-6 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap">
                   {problem.output_description}
@@ -197,56 +216,50 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
               </section>
             )}
 
-            {/* 예제 입출력:
-                problem_testcases(is_hidden=false) 우선, 없으면 problem_examples fallback */}
-            {exampleList.length > 0 && (
-              <section>
-                <h2 className="text-lg font-semibold text-emerald-600 dark:text-emerald-400 mb-4 flex items-center">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 mr-3" />
-                  예제 (입출력)
-                </h2>
-                <div className="space-y-6">
-                  {exampleList.map((item, index) => (
-                    <div key={item.id} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* 예제 입력 */}
-                      <div>
-                        <h3 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                          입력 {index + 1}
-                        </h3>
-                        <div className="relative group">
-                          <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-4 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap font-mono text-sm min-h-[80px] max-h-[300px] overflow-y-auto custom-scrollbar">
-                            {item.input || "입력값이 없습니다."}
-                          </div>
-                          <button
-                            onClick={() => handleCopy(item.input, `in-${item.id}`)}
-                            className="absolute top-3 right-3 p-1.5 bg-white dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-zinc-900 dark:hover:text-white shadow-sm cursor-pointer"
-                            title="복사"
-                          >
-                            {copiedId === `in-${item.id}` ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
-                          </button>
+            {/* 입력 n / 출력 n: problem_testcases where is_hidden = false
+                섹션 제목 없이 입력1&출력1, 입력2&출력2... 형태로 반복 표시 */}
+            {publicTestcases.length > 0 && (
+              <section className="space-y-6">
+                {publicTestcases.map((tc, index) => (
+                  <div key={tc.id} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* 입력 n */}
+                    <div>
+                      <h3 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                        입력 {index + 1}
+                      </h3>
+                      <div className="relative group">
+                        <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-4 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap font-mono text-sm min-h-[80px] max-h-[300px] overflow-y-auto custom-scrollbar">
+                          {tc.input_text || "입력값이 없습니다."}
                         </div>
-                      </div>
-                      {/* 예제 출력 */}
-                      <div>
-                        <h3 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                          출력 {index + 1}
-                        </h3>
-                        <div className="relative group">
-                          <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-4 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap font-mono text-sm min-h-[80px] max-h-[300px] overflow-y-auto custom-scrollbar">
-                            {item.output || "기대 출력값이 없습니다."}
-                          </div>
-                          <button
-                            onClick={() => handleCopy(item.output, `out-${item.id}`)}
-                            className="absolute top-3 right-3 p-1.5 bg-white dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-zinc-900 dark:hover:text-white shadow-sm cursor-pointer"
-                            title="복사"
-                          >
-                            {copiedId === `out-${item.id}` ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => handleCopy(tc.input_text, `in-${tc.id}`)}
+                          className="absolute top-3 right-3 p-1.5 bg-white dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-zinc-900 dark:hover:text-white shadow-sm cursor-pointer"
+                          title="복사"
+                        >
+                          {copiedId === `in-${tc.id}` ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
                       </div>
                     </div>
-                  ))}
-                </div>
+                    {/* 출력 n */}
+                    <div>
+                      <h3 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                        출력 {index + 1}
+                      </h3>
+                      <div className="relative group">
+                        <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-4 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap font-mono text-sm min-h-[80px] max-h-[300px] overflow-y-auto custom-scrollbar">
+                          {tc.expected_output || "기대 출력값이 없습니다."}
+                        </div>
+                        <button
+                          onClick={() => handleCopy(tc.expected_output, `out-${tc.id}`)}
+                          className="absolute top-3 right-3 p-1.5 bg-white dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-zinc-900 dark:hover:text-white shadow-sm cursor-pointer"
+                          title="복사"
+                        >
+                          {copiedId === `out-${tc.id}` ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </section>
             )}
           </div>
