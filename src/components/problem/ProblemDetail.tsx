@@ -83,7 +83,7 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
       </div>
       
       {/* 탭별 하단 컨텐츠 렌더링 영역 */}
-      <div className="flex-1 lg:overflow-auto custom-scrollbar">
+      <div className="flex-1 min-h-0 lg:overflow-auto custom-scrollbar">
         {activeTab === "description" ? (
           <div className="p-8 space-y-10">
             {/* 제약사항 */}
@@ -143,56 +143,70 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
             )}
 
             {/* 공개 테스트케이스 (예제) */}
-            {problem.problem_testcases && problem.problem_testcases.filter(t => !t.is_hidden).length > 0 && (
-              <section>
-                <h2 className="text-lg font-semibold text-emerald-600 dark:text-emerald-400 mb-4 flex items-center">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 mr-3" />
-                  예제 (입출력)
-                </h2>
-                <div className="space-y-6">
-                  {problem.problem_testcases.filter(t => !t.is_hidden).map((testcase, index) => (
-                    <div key={testcase.id} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* 예제 입력 */}
-                      <div>
-                        <h3 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                          입력 {index + 1}
-                        </h3>
-                        <div className="relative group">
-                          <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-4 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap font-mono text-sm min-h-[80px] max-h-[300px] overflow-y-auto custom-scrollbar">
-                            {testcase.input_text || "입력값이 없습니다."}
+            {(() => {
+              const publicTestcases = problem.problem_testcases?.filter(t => !t.is_hidden) || [];
+              const examples = problem.problem_examples || [];
+              
+              const hasTestcases = publicTestcases.length > 0;
+              const hasExamples = examples.length > 0;
+              
+              if (!hasTestcases && !hasExamples) return null;
+              
+              const displayList = hasTestcases 
+                ? publicTestcases.map(t => ({ id: t.id, in: t.input_text, out: t.expected_output }))
+                : examples.map(e => ({ id: e.id, in: e.input_text, out: e.output_text }));
+
+              return (
+                <section>
+                  <h2 className="text-lg font-semibold text-emerald-600 dark:text-emerald-400 mb-4 flex items-center">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 mr-3" />
+                    예제 (입출력)
+                  </h2>
+                  <div className="space-y-6">
+                    {displayList.map((item, index) => (
+                      <div key={item.id} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* 예제 입력 */}
+                        <div>
+                          <h3 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                            입력 {index + 1}
+                          </h3>
+                          <div className="relative group">
+                            <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-4 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap font-mono text-sm min-h-[80px] max-h-[300px] overflow-y-auto custom-scrollbar">
+                              {item.in || "입력값이 없습니다."}
+                            </div>
+                            <button 
+                              onClick={() => handleCopy(item.in, `in-${item.id}`)}
+                              className="absolute top-3 right-3 p-1.5 bg-white dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-zinc-900 dark:hover:text-white shadow-sm"
+                              title="복사"
+                            >
+                              {copiedId === `in-${item.id}` ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
                           </div>
-                          <button 
-                            onClick={() => handleCopy(testcase.input_text, `in-${testcase.id}`)}
-                            className="absolute top-3 right-3 p-1.5 bg-white dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-zinc-900 dark:hover:text-white shadow-sm"
-                            title="복사"
-                          >
-                            {copiedId === `in-${testcase.id}` ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
-                          </button>
+                        </div>
+                        {/* 예제 출력 */}
+                        <div>
+                          <h3 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                            출력 {index + 1}
+                          </h3>
+                          <div className="relative group">
+                            <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-4 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap font-mono text-sm min-h-[80px] max-h-[300px] overflow-y-auto custom-scrollbar">
+                              {item.out || "기대 출력값이 없습니다."}
+                            </div>
+                            <button 
+                              onClick={() => handleCopy(item.out, `out-${item.id}`)}
+                              className="absolute top-3 right-3 p-1.5 bg-white dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-zinc-900 dark:hover:text-white shadow-sm"
+                              title="복사"
+                            >
+                              {copiedId === `out-${item.id}` ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
                         </div>
                       </div>
-                      {/* 예제 출력 */}
-                      <div>
-                        <h3 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                          출력 {index + 1}
-                        </h3>
-                        <div className="relative group">
-                          <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-4 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap font-mono text-sm min-h-[80px] max-h-[300px] overflow-y-auto custom-scrollbar">
-                            {testcase.expected_output || "기대 출력값이 없습니다."}
-                          </div>
-                          <button 
-                            onClick={() => handleCopy(testcase.expected_output, `out-${testcase.id}`)}
-                            className="absolute top-3 right-3 p-1.5 bg-white dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-zinc-900 dark:hover:text-white shadow-sm"
-                            title="복사"
-                          >
-                            {copiedId === `out-${testcase.id}` ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
+                    ))}
+                  </div>
+                </section>
+              );
+            })()}
           </div>
         ) : (
           <div className="p-8">
