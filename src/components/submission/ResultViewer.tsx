@@ -17,25 +17,56 @@ export function ResultViewer({ problem }: ResultViewerProps) {
 
   if (!status && !submissionId) return null;
 
-  const publicTestcaseCount = problem?.problem_testcases?.filter(t => !t.is_hidden).length || 0;
-  
+  // 공개 테스트케이스 수 계산 (히든 번호 보정용)
+  const publicTestcases = problem?.problem_testcases?.filter(t => !t.is_hidden) ?? [];
+  const publicTestcaseCount = publicTestcases.length;
+
   const { text: resultText, isSuccess, isFail, isPending, isError, colorClass } = getSubmissionLabel(
-    status, 
-    result?.result, 
+    status,
+    result?.result,
     result?.failed_testcase_order,
     publicTestcaseCount
   );
 
   const failedOrder = result?.failed_testcase_order;
-  // failedOrder가 있을 때 해당하는 테스트케이스 찾기
-  // 클라이언트의 testcase 목록은 0-index 기반 배열이며, order는 1-index일 가능성이 높음
-  // 그러나 API에서 testcase_order 순으로 정렬해서 가져오므로 배열 인덱스와 일치하는지 확인해야 함
-  // 여기서는 명시적으로 testcase_order와 일치하는 항목을 찾음
-  const failedTestcase = problem?.problem_testcases?.find(t => t.testcase_order === failedOrder);
 
-  // 화면에 표시할 번호 보정
-  const displayOrder = failedOrder 
-    ? (failedOrder > publicTestcaseCount ? failedOrder - publicTestcaseCount : failedOrder)
+  // [버그2 수정] failedTestcase를 찾을 때 problem_testcases 우선, 없으면 problem_examples fallback
+  // problem_testcases에서 testcase_order가 일치하는 항목 탐색
+  const failedTestcaseFromTC = problem?.problem_testcases?.find(
+    t => t.testcase_order === failedOrder
+  );
+
+  // problem_examples에서는 example_order가 일치하는 항목 탐색
+  const examples = problem?.problem_examples ?? [];
+  const failedExampleFromEx = examples.find(
+    (e, _) => e.example_order === failedOrder
+  );
+
+  // 모달에 사용할 테스트케이스 데이터: testcases 우선, 없으면 examples
+  // ProblemTestcase 타입과 형태를 맞춰서 통합
+  const failedTestcaseData: { id: string; input_text: string; expected_output: string; is_hidden: boolean } | null =
+    failedTestcaseFromTC
+      ? {
+          id: failedTestcaseFromTC.id,
+          input_text: failedTestcaseFromTC.input_text,
+          expected_output: failedTestcaseFromTC.expected_output,
+          is_hidden: failedTestcaseFromTC.is_hidden,
+        }
+      : failedExampleFromEx
+      ? {
+          id: failedExampleFromEx.id,
+          input_text: failedExampleFromEx.input_text,
+          expected_output: failedExampleFromEx.output_text, // examples는 output_text 컬럼
+          is_hidden: false, // examples는 항상 공개
+        }
+      : null;
+
+  // 화면에 표시할 보정된 번호
+  // 히든 테스트케이스의 경우: failedOrder - publicTestcaseCount
+  const displayOrder = failedOrder
+    ? failedOrder > publicTestcaseCount && publicTestcaseCount > 0
+      ? failedOrder - publicTestcaseCount
+      : failedOrder
     : 0;
 
   return (
@@ -92,12 +123,13 @@ export function ResultViewer({ problem }: ResultViewerProps) {
         </div>
       )}
 
-      {/* 틀린 테스트케이스 보기 버튼 */}
-      {isFail && result?.result === "WA" && failedTestcase && (
+      {/* [버그2 수정] 틀린 테스트케이스 보기 버튼:
+          WA이고 failedOrder가 있으며, testcases 또는 examples에서 해당 케이스를 찾은 경우에만 표시 */}
+      {isFail && result?.result === "WA" && failedOrder && failedTestcaseData && (
         <div className="mt-4 mb-2">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center justify-center w-full gap-2 px-4 py-2.5 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 rounded-xl text-sm font-bold transition-colors shadow-sm"
+            className="flex items-center justify-center w-full gap-2 px-4 py-2.5 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 rounded-xl text-sm font-bold transition-colors shadow-sm cursor-pointer"
           >
             <Eye className="w-4 h-4" />
             틀린 테스트케이스 보기
@@ -110,12 +142,12 @@ export function ResultViewer({ problem }: ResultViewerProps) {
       </div>
 
       {/* 실패한 테스트케이스 모달 */}
-      {failedTestcase && (
+      {failedTestcaseData && (
         <FailedTestcaseModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           failedOrder={displayOrder}
-          testcase={failedTestcase}
+          testcase={failedTestcaseData}
         />
       )}
     </div>

@@ -1,13 +1,21 @@
 "use client";
 
 import { X } from "lucide-react";
-import { ProblemTestcase } from "@/types/problem";
+
+// ProblemTestcase 타입에 직접 의존하지 않고 필요한 필드만 정의
+// 이로써 problem_testcases 와 problem_examples 양쪽에서 데이터를 넘길 수 있음
+interface TestcaseDisplayData {
+  id: string;
+  input_text: string;
+  expected_output: string;
+  is_hidden: boolean;
+}
 
 interface FailedTestcaseModalProps {
   isOpen: boolean;
   onClose: () => void;
   failedOrder: number;
-  testcase: ProblemTestcase;
+  testcase: TestcaseDisplayData;
 }
 
 export function FailedTestcaseModal({ isOpen, onClose, failedOrder, testcase }: FailedTestcaseModalProps) {
