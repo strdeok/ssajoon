@@ -34,7 +34,7 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
 
   // 4. 불필요해진 loadSubmissions 로직 제거
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-zinc-900/50 rounded-xl overflow-hidden">
+    <div className="flex flex-col lg:h-full h-auto bg-white dark:bg-zinc-900/50 rounded-xl lg:overflow-hidden">
       {/* 상단 헤더 및 탭 영역 */}
       <div className="border-b border-zinc-200 dark:border-white/10 bg-white/90 dark:bg-zinc-900/80 sticky top-0 backdrop-blur-md z-10">
         <div className="p-8 pb-4 flex items-center gap-4 flex-wrap">
@@ -83,7 +83,7 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
       </div>
       
       {/* 탭별 하단 컨텐츠 렌더링 영역 */}
-      <div className="flex-1 overflow-auto custom-scrollbar">
+      <div className="flex-1 lg:overflow-auto custom-scrollbar">
         {activeTab === "description" ? (
           <div className="p-8 space-y-10">
             {/* 제약사항 */}
@@ -105,80 +105,86 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
               </section>
             )}
 
-            {/* 5. 기존 문제 설명 렌더링 */}
-            <section>
-              <h2 className="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-4 flex items-center">
-                <span className="w-2 h-2 rounded-full bg-blue-500 mr-3" />
-                문제 설명
-              </h2>
-              <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-6 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap">
-                {problem.description}
-              </div>
-            </section>
+            {/* 5. 문제 설명 렌더링 */}
+            {problem.description && (
+              <section>
+                <h2 className="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-4 flex items-center">
+                  <span className="w-2 h-2 rounded-full bg-blue-500 mr-3" />
+                  문제 설명
+                </h2>
+                <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-6 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap">
+                  {problem.description}
+                </div>
+              </section>
+            )}
 
-            <section>
-              <h2 className="text-lg font-semibold text-purple-600 dark:text-purple-400 mb-4 flex items-center">
-                <span className="w-2 h-2 rounded-full bg-purple-500 mr-3" />
-                입력
-              </h2>
-              <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-6 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap">
-                {problem.input_description}
-              </div>
-            </section>
+            {problem.input_description && (
+              <section>
+                <h2 className="text-lg font-semibold text-purple-600 dark:text-purple-400 mb-4 flex items-center">
+                  <span className="w-2 h-2 rounded-full bg-purple-500 mr-3" />
+                  입력
+                </h2>
+                <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-6 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap">
+                  {problem.input_description}
+                </div>
+              </section>
+            )}
 
-            <section>
-              <h2 className="text-lg font-semibold text-pink-600 dark:text-pink-400 mb-4 flex items-center">
-                <span className="w-2 h-2 rounded-full bg-pink-500 mr-3" />
-                출력
-              </h2>
-              <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-6 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap">
-                {problem.output_description}
-              </div>
-            </section>
+            {problem.output_description && (
+              <section>
+                <h2 className="text-lg font-semibold text-pink-600 dark:text-pink-400 mb-4 flex items-center">
+                  <span className="w-2 h-2 rounded-full bg-pink-500 mr-3" />
+                  출력
+                </h2>
+                <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-6 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap">
+                  {problem.output_description}
+                </div>
+              </section>
+            )}
 
-            {/* 샘플 테스트케이스 (예제) */}
-            {problem.problem_examples && problem.problem_examples.length > 0 && (
+            {/* 공개 테스트케이스 (예제) */}
+            {problem.problem_testcases && problem.problem_testcases.filter(t => !t.is_hidden).length > 0 && (
               <section>
                 <h2 className="text-lg font-semibold text-emerald-600 dark:text-emerald-400 mb-4 flex items-center">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 mr-3" />
-                  예제 테스트케이스
+                  예제 (입출력)
                 </h2>
                 <div className="space-y-6">
-                  {problem.problem_examples.map((example, index) => (
-                    <div key={example.id} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {problem.problem_testcases.filter(t => !t.is_hidden).map((testcase, index) => (
+                    <div key={testcase.id} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* 예제 입력 */}
                       <div>
                         <h3 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                          예제 입력 {index + 1}
+                          입력 {index + 1}
                         </h3>
                         <div className="relative group">
                           <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-4 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap font-mono text-sm min-h-[80px] max-h-[300px] overflow-y-auto custom-scrollbar">
-                            {example.input_text}
+                            {testcase.input_text || "입력값이 없습니다."}
                           </div>
                           <button 
-                            onClick={() => handleCopy(example.input_text, `in-${example.id}`)}
+                            onClick={() => handleCopy(testcase.input_text, `in-${testcase.id}`)}
                             className="absolute top-3 right-3 p-1.5 bg-white dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-zinc-900 dark:hover:text-white shadow-sm"
                             title="복사"
                           >
-                            {copiedId === `in-${example.id}` ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                            {copiedId === `in-${testcase.id}` ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
                           </button>
                         </div>
                       </div>
                       {/* 예제 출력 */}
                       <div>
                         <h3 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
-                          예제 출력 {index + 1}
+                          출력 {index + 1}
                         </h3>
                         <div className="relative group">
                           <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-4 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap font-mono text-sm min-h-[80px] max-h-[300px] overflow-y-auto custom-scrollbar">
-                            {example.output_text}
+                            {testcase.expected_output || "기대 출력값이 없습니다."}
                           </div>
                           <button 
-                            onClick={() => handleCopy(example.output_text, `out-${example.id}`)}
+                            onClick={() => handleCopy(testcase.expected_output, `out-${testcase.id}`)}
                             className="absolute top-3 right-3 p-1.5 bg-white dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-zinc-900 dark:hover:text-white shadow-sm"
                             title="복사"
                           >
-                            {copiedId === `out-${example.id}` ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                            {copiedId === `out-${testcase.id}` ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
                           </button>
                         </div>
                       </div>

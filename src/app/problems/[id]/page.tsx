@@ -160,16 +160,19 @@ export default function ProblemPage({
   }
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row h-[calc(100vh-64px)] overflow-hidden bg-zinc-50 dark:bg-black p-4 gap-4">
+    <div className="flex-1 flex flex-col lg:flex-row lg:h-[calc(100vh-64px)] bg-zinc-50 dark:bg-black p-4 gap-4">
       {/* Left panel */}
-      <div className="flex-1 lg:w-1/2 flex flex-col min-h-0 bg-white dark:bg-[#09090b] rounded-xl overflow-hidden shadow-2xl border border-zinc-200 dark:border-white/5">
+      <div className="flex-1 lg:w-1/2 flex flex-col min-h-0 bg-white dark:bg-[#09090b] rounded-xl lg:overflow-hidden shadow-2xl border border-zinc-200 dark:border-white/5 relative">
         <ProblemDetail problem={problem} />
       </div>
 
       {/* Right panel */}
-      <div className="flex-1 lg:w-1/2 flex flex-col min-h-0 gap-4">
+      <div 
+        id="code-editor-section"
+        className="flex-1 lg:w-1/2 flex flex-col min-h-0 gap-4 relative scroll-mt-20"
+      >
         {/* Editor wrapper */}
-        <div className={`flex-1 min-h-0 relative group rounded-xl border-2 transition-all duration-300 ${editorBorderClass} overflow-hidden`}>
+        <div className={`min-h-[400px] lg:min-h-0 flex-1 relative group rounded-xl border-2 transition-all duration-300 ${editorBorderClass} lg:overflow-hidden`}>
           <CodeEditor
             value={code}
             onChange={(val) => {
@@ -184,8 +187,8 @@ export default function ProblemPage({
         </div>
 
         {/* Action bar and Results */}
-        <div className="flex flex-col gap-4">
-          <div className="flex justify-between items-center bg-white dark:bg-zinc-900/50 p-4 rounded-xl border border-zinc-200 dark:border-white/5 backdrop-blur-md shadow-sm">
+        <div className="flex flex-col gap-4 lg:relative sticky bottom-4 z-40">
+          <div className="flex flex-wrap lg:flex-nowrap justify-between items-center bg-white/95 dark:bg-zinc-900/95 p-4 rounded-xl border border-zinc-200 dark:border-white/10 backdrop-blur-xl shadow-2xl transition-all">
             <div className="flex items-center space-x-2">
               <label
                 htmlFor="language-select"
@@ -248,10 +251,20 @@ export default function ProblemPage({
           </div>
 
           <TestResultViewer results={testResults} />
-          <ResultViewer />
+          <ResultViewer problem={problem} />
           <SubmissionStatusListener submissionId={submissionId} />
         </div>
       </div>
+
+      {/* 좁은 화면용 '코드 작성으로 이동' 플로팅 버튼 */}
+      <button 
+        className="lg:hidden fixed top-24 right-6 z-50 bg-blue-600 text-white px-5 py-3 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] font-bold text-sm flex items-center gap-2 hover:bg-blue-700 transition-colors active:scale-95"
+        onClick={() => {
+          document.getElementById('code-editor-section')?.scrollIntoView({ behavior: 'smooth' });
+        }}
+      >
+        <span>↓ 코드 작성</span>
+      </button>
 
     </div>
   );

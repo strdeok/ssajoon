@@ -14,7 +14,8 @@ export interface SubmissionLabelInfo {
 export function getSubmissionLabel(
   status: string | null | undefined,
   result: string | null | undefined,
-  failedTestcaseOrder?: number | null
+  failedTestcaseOrder?: number | null,
+  publicTestcaseCount: number = 0 // 추가: 히든 테스트케이스 번호 보정용 공개 테스트케이스 수
 ): SubmissionLabelInfo {
   // 채점 중으로 간주할 status 목록을 정의한다.
   const pendingStatuses = ["PENDING", "QUEUED", "RUNNING"];
@@ -63,9 +64,16 @@ export function getSubmissionLabel(
 
     switch (finalState) {
       case "WA":
-        text = failedTestcaseOrder
-          ? `${failedTestcaseOrder}번 테스트케이스에서 틀렸습니다`
-          : "오답입니다";
+        if (failedTestcaseOrder) {
+          // 공개 테스트케이스 수를 기준으로 번호 보정 (히든 테스트케이스 실패 시)
+          const isHiddenFail = failedTestcaseOrder > publicTestcaseCount;
+          const displayOrder = isHiddenFail ? failedTestcaseOrder - publicTestcaseCount : failedTestcaseOrder;
+          const labelPrefix = isHiddenFail ? "히든 " : "";
+          
+          text = `${labelPrefix}${displayOrder}번 테스트케이스에서 틀렸습니다`;
+        } else {
+          text = "오답입니다";
+        }
         break;
       case "CE":
         text = "컴파일 에러입니다";

@@ -21,15 +21,25 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // soft delete 되지 않은 예제만 표시
+  // soft delete 되지 않은 예제 표시 (기존 유지, 하위 호환성)
   const { data: examples } = await supabase
     .from("problem_examples")
     .select("*")
     .eq("problem_id", id)
-    .eq("is_deleted", false)  // soft delete 방어
+    .eq("is_deleted", false)
     .order("example_order", { ascending: true });
 
   problem.problem_examples = examples || [];
+
+  // 문제의 테스트케이스 조회 (틀린 테스트케이스 보기 및 보정용)
+  const { data: testcases } = await supabase
+    .from("problem_testcases")
+    .select("id, problem_id, testcase_order, input_text, expected_output, is_hidden")
+    .eq("problem_id", id)
+    .eq("is_deleted", false)
+    .order("testcase_order", { ascending: true });
+    
+  problem.problem_testcases = testcases || [];
 
   return NextResponse.json(problem);
 }

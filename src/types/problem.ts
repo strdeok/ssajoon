@@ -29,4 +29,5 @@ export interface Problem {
   created_at?: string;
   updated_at?: string;
   problem_examples?: ProblemExample[];
+  problem_testcases?: ProblemTestcase[];
 }
