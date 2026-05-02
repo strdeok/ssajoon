@@ -162,7 +162,8 @@ export default function ProblemPage({
   return (
     <div className="flex-1 flex flex-col lg:flex-row lg:h-[calc(100vh-64px)] bg-zinc-50 dark:bg-black p-4 gap-4">
       {/* Left panel */}
-      <div className="flex-1 lg:w-1/2 flex flex-col min-h-0 bg-white dark:bg-[#09090b] rounded-xl lg:overflow-hidden shadow-2xl border border-zinc-200 dark:border-white/5 relative">
+      {/* Left panel: overflow-hidden 제거 → ProblemDetail이 직접 높이 제어 */}
+      <div className="flex-1 lg:w-1/2 flex flex-col min-h-0 bg-white dark:bg-[#09090b] rounded-xl shadow-2xl border border-zinc-200 dark:border-white/5 relative">
         <ProblemDetail problem={problem} />
       </div>
 
@@ -223,7 +224,7 @@ export default function ProblemPage({
                   로그인 후 실행/제출 가능
                 </span>
               )}
-              <button
+              {/* <button
                 onClick={handleRunCode}
                 disabled={isTesting || !code.trim() || !user}
                 className="flex items-center space-x-2 bg-zinc-200 hover:bg-zinc-300 disabled:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:disabled:bg-zinc-900 text-zinc-900 dark:text-white px-5 py-2.5 rounded-lg font-medium transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
@@ -234,7 +235,7 @@ export default function ProblemPage({
                   <Play className="w-4 h-4" />
                 )}
                 <span>코드 실행</span>
-              </button>
+              </button> */}
               <button
                 onClick={handleSubmit}
                 disabled={status === "PENDING" || !code.trim() || !user}

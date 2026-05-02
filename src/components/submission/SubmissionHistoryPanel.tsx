@@ -19,35 +19,38 @@ interface SubmissionSummary {
 interface SubmissionHistoryPanelProps {
   problemId: number;
   userId: string;
+  /** 어떤 아코디언이든 하나라도 열려있으면 true, 모두 닫히면 false */
+  onAnyExpanded?: (expanded: boolean) => void;
 }
 
-export function SubmissionHistoryPanel({ problemId, userId }: SubmissionHistoryPanelProps) {
+export function SubmissionHistoryPanel({ problemId, userId, onAnyExpanded }: SubmissionHistoryPanelProps) {
   const [summaries, setSummaries] = useState<Record<string, SubmissionSummary[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [expandedLanguages, setExpandedLanguages] = useState<Record<string, boolean>>({});
+
+  // ── 단일 오픈 상태 ─────────────────────────────────────────────────────
+  // 한 번에 하나의 언어 아코디언만 열림. null = 전부 닫힘
+  const [openLanguage, setOpenLanguage] = useState<string | null>(null);
+  // 한 번에 하나의 코드 아이템만 열림. null = 전부 닫힘
+  const [openCodeItemId, setOpenCodeItemId] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchSummaries() {
       setIsLoading(true);
       setError(null);
       const supabase = createClient();
-      
+
       try {
-        // source_code를 제외한 요약 정보만 조회 (soft delete 된 제출 제외)
         const { data, error: fetchError } = await supabase
           .from("submissions")
           .select("id, language, status, result, execution_time_ms, memory_kb, submitted_at, failed_testcase_order")
           .eq("problem_id", problemId)
           .eq("user_id", userId)
-          .eq("is_deleted", false)  // soft delete 방어
+          .eq("is_deleted", false)
           .order("submitted_at", { ascending: false });
 
-        if (fetchError) {
-          throw fetchError;
-        }
+        if (fetchError) throw fetchError;
 
-        // 데이터를 언어별로 그룹화
         const grouped = (data || []).reduce((acc, curr) => {
           const lang = curr.language || "unknown";
           if (!acc[lang]) acc[lang] = [];
@@ -56,11 +59,12 @@ export function SubmissionHistoryPanel({ problemId, userId }: SubmissionHistoryP
         }, {} as Record<string, SubmissionSummary[]>);
 
         setSummaries(grouped);
-        
-        // 첫 번째 언어 탭은 기본적으로 열어두기 (선택적)
+
+        // 첫 번째 언어만 자동으로 열기
         const langs = Object.keys(grouped);
         if (langs.length > 0) {
-          setExpandedLanguages({ [langs[0]]: true });
+          setOpenLanguage(langs[0]);
+          onAnyExpanded?.(true);
         }
       } catch (err: any) {
         setError("제출 내역을 불러오는 중 오류가 발생했습니다.");
@@ -72,11 +76,20 @@ export function SubmissionHistoryPanel({ problemId, userId }: SubmissionHistoryP
     fetchSummaries();
   }, [problemId, userId]);
 
+  /** 언어 아코디언 토글: 같은 언어 클릭 시 닫힘, 다른 언어 클릭 시 해당 언어만 열리고 코드 아이템도 리셋 */
   const toggleLanguage = (lang: string) => {
-    setExpandedLanguages(prev => ({
-      ...prev,
-      [lang]: !prev[lang]
-    }));
+    const next = openLanguage === lang ? null : lang;
+    setOpenLanguage(next);
+    setOpenCodeItemId(null); // 언어 전환 시 코드 아이템은 항상 닫기
+    onAnyExpanded?.(next !== null);
+  };
+
+  /** 코드 아이템 토글: 같은 아이템 클릭 시 닫힘, 다른 아이템 클릭 시 그것만 열림 */
+  const handleCodeItemToggle = (id: string) => {
+    const next = openCodeItemId === id ? null : id;
+    setOpenCodeItemId(next);
+    // 언어 아코디언이 열려있거나 코드 아이템이 열려있으면 true
+    onAnyExpanded?.(openLanguage !== null || next !== null);
   };
 
   if (isLoading) {
@@ -110,7 +123,7 @@ export function SubmissionHistoryPanel({ problemId, userId }: SubmissionHistoryP
     <div className="space-y-4">
       {languageKeys.map(lang => (
         <div key={lang} className="bg-zinc-50 dark:bg-black/20 rounded-xl border border-zinc-200 dark:border-white/5 overflow-hidden">
-          {/* 언어별 아코디언 헤더 */}
+          {/* 언어 아코디언 헤더 */}
           <button
             onClick={() => toggleLanguage(lang)}
             className="w-full px-5 py-4 flex justify-between items-center bg-white/50 dark:bg-zinc-900/50 hover:bg-zinc-100 dark:hover:bg-zinc-800/80 transition-colors cursor-pointer"
@@ -121,18 +134,23 @@ export function SubmissionHistoryPanel({ problemId, userId }: SubmissionHistoryP
                 {summaries[lang].length}
               </span>
             </div>
-            {expandedLanguages[lang] ? (
+            {openLanguage === lang ? (
               <ChevronUp className="w-5 h-5 text-zinc-400" />
             ) : (
               <ChevronDown className="w-5 h-5 text-zinc-400" />
             )}
           </button>
-          
-          {/* 언어별 제출 목록 (내용) */}
-          {expandedLanguages[lang] && (
+
+          {/* 언어별 제출 목록: 이 언어가 열려있을 때만 렌더링 */}
+          {openLanguage === lang && (
             <div className="p-4 border-t border-zinc-200 dark:border-white/5 space-y-3">
               {summaries[lang].map(sub => (
-                <SubmissionCodeItem key={sub.id} submission={sub} />
+                <SubmissionCodeItem
+                  key={sub.id}
+                  submission={sub}
+                  isOpen={openCodeItemId === sub.id}
+                  onToggle={handleCodeItemToggle}
+                />
               ))}
             </div>
           )}

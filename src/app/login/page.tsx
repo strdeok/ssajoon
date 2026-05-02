@@ -8,7 +8,7 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ me
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4 bg-zinc-50 dark:bg-black min-h-[calc(100vh-64px)]">
-      <div className="w-full max-w-sm flex flex-col gap-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-2xl shadow-xl p-8">
+      <div className="w-full max-w-md flex flex-col gap-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-2xl shadow-xl p-8">
 
         <h1 className="text-2xl font-bold text-center text-zinc-900 dark:text-zinc-100 mb-2">
           SSAJOON에 오신 것을 환영합니다
