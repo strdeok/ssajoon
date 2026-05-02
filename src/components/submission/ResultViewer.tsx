@@ -12,7 +12,6 @@ interface ResultViewerProps {
   problem: Problem | null;
 }
 
-// 모달에 전달할 테스트케이스 형태
 interface TestcaseDisplayData {
   id: string;
   input_text: string;
@@ -24,74 +23,61 @@ export function ResultViewer({ problem }: ResultViewerProps) {
   const { status, submissionId, result } = useSubmissionStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // ─── problem_testcases 직접 조회 상태 ────────────────────────────────
-  // problem.problem_testcases 에 의존하지 않고 별도 테이블에서 직접 fetch.
-  // WA 결과가 올 때 failedOrder 에 해당하는 테스트케이스를 찾기 위해 사용.
-  const [allTestcases, setAllTestcases] = useState<{
-    id: string;
-    testcase_order: number;
-    input_text: string;
-    expected_output: string;
-    is_hidden: boolean;
-  }[]>([]);
+  /**
+   * WA 결과가 왔을 때, failed_testcase_order 값으로
+   * problem_testcases 테이블에서 해당 행을 직접 조회해서 저장.
+   *
+   * 조회 조건:
+   *   problem_testcases.problem_id = problem.id   (외래키)
+   *   problem_testcases.testcase_order = failed_testcase_order
+   *   problem_testcases.is_deleted = false
+   */
+  const [failedTestcaseData, setFailedTestcaseData] = useState<TestcaseDisplayData | null>(null);
 
-  // problem.id 가 확정된 뒤 모든 테스트케이스(공개+히든) 조회.
-  // 히든 케이스도 failedOrder 매칭에 필요하므로 is_hidden 조건 없이 가져옴.
+  const failedOrder = result?.failed_testcase_order ?? null;
+  const isWA = result?.result === "WA";
+
   useEffect(() => {
-    if (!problem?.id) return;
+    // WA + failedOrder + problem.id 세 가지 모두 확정됐을 때만 조회
+    if (!isWA || failedOrder == null || !problem?.id) {
+      setFailedTestcaseData(null);
+      return;
+    }
 
-    async function fetchAllTestcases() {
+    async function fetchFailedTestcase() {
       const supabase = createClient();
+
+      // submissions.failed_testcase_order = problem_testcases.testcase_order
       const { data, error } = await supabase
         .from("problem_testcases")
-        .select("id, testcase_order, input_text, expected_output, is_hidden")
-        .eq("problem_id", problem!.id)  // FK: problem_testcases.problem_id → problems.id
+        .select("id, input_text, expected_output, is_hidden")
+        .eq("problem_id", problem!.id)          // 이 문제의 테스트케이스 중
+        .eq("testcase_order", failedOrder)       // 틀린 순번과 일치하는 행 하나
         .eq("is_deleted", false)
-        .order("testcase_order", { ascending: true });
+        .single();                               // 단일 행 반환
 
       if (!error && data) {
-        setAllTestcases(data);
+        setFailedTestcaseData({
+          id: data.id,
+          input_text: data.input_text,
+          expected_output: data.expected_output,
+          is_hidden: data.is_hidden,
+        });
+      } else {
+        setFailedTestcaseData(null);
       }
     }
-    fetchAllTestcases();
-  }, [problem?.id]);
+
+    fetchFailedTestcase();
+  }, [isWA, failedOrder, problem?.id]);
 
   if (!status && !submissionId) return null;
-
-  // ─── 공개 테스트케이스 수 계산 (히든 번호 보정용) ─────────────────────
-  const publicCount = allTestcases.filter(t => !t.is_hidden).length;
 
   const { text: resultText, isSuccess, isFail, isPending, isError, colorClass } = getSubmissionLabel(
     status,
     result?.result,
-    result?.failed_testcase_order,
-    publicCount
+    result?.failed_testcase_order
   );
-
-  const failedOrder = result?.failed_testcase_order;
-
-  // failedOrder 에 해당하는 테스트케이스를 testcase_order 기준으로 탐색
-  const failedTestcase = failedOrder != null
-    ? allTestcases.find(t => t.testcase_order === failedOrder) ?? null
-    : null;
-
-  // 모달 전달용 데이터 정규화
-  const failedTestcaseData: TestcaseDisplayData | null = failedTestcase
-    ? {
-        id: failedTestcase.id,
-        input_text: failedTestcase.input_text,
-        expected_output: failedTestcase.expected_output,
-        is_hidden: failedTestcase.is_hidden,
-      }
-    : null;
-
-  // 화면에 표시할 보정된 번호:
-  // 히든 케이스(failedOrder > publicCount)는 "히든 n번" 으로 보정
-  const displayOrder = failedOrder != null
-    ? failedOrder > publicCount && publicCount > 0
-      ? failedOrder - publicCount
-      : failedOrder
-    : 0;
 
   return (
     <div className="mt-4 p-6 rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900/50 backdrop-blur-md shadow-lg transition-all duration-300">
@@ -148,8 +134,8 @@ export function ResultViewer({ problem }: ResultViewerProps) {
       )}
 
       {/* 틀린 테스트케이스 보기 버튼:
-          WA + failedOrder 가 있고 DB에서 해당 케이스를 찾은 경우에만 표시 */}
-      {isFail && result?.result === "WA" && failedOrder != null && failedTestcaseData && (
+          WA이고 DB에서 해당 테스트케이스를 찾은 경우에만 표시 */}
+      {isWA && failedTestcaseData && (
         <div className="mt-4 mb-2">
           <button
             onClick={() => setIsModalOpen(true)}
@@ -170,7 +156,7 @@ export function ResultViewer({ problem }: ResultViewerProps) {
         <FailedTestcaseModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          failedOrder={displayOrder}
+          failedOrder={failedOrder ?? 0}
           testcase={failedTestcaseData}
         />
       )}
