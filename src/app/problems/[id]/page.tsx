@@ -34,12 +34,12 @@ export default function ProblemPage({
   const { submissionId, status, result, setSubmissionId, setStatus, reset } =
     useSubmissionStore();
 
-
-
   useEffect(() => {
     const fetchUser = async () => {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       setUser(user);
     };
     fetchUser();
@@ -54,8 +54,6 @@ export default function ProblemPage({
     // Reset submission store on unmount or problem change
     return () => reset();
   }, [id, reset]);
-
-
 
   const handleSubmit = async () => {
     setSubmitError(null);
@@ -74,7 +72,7 @@ export default function ProblemPage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ problemId: id, language, sourceCode: code }),
       });
-      
+
       const data = await res.json();
 
       if (!res.ok) {
@@ -123,12 +121,20 @@ export default function ProblemPage({
   };
 
   // UI 상태 계산 로직 통합
-  const { text: resultText, isSuccess, isFail, isPending, colorClass } = getSubmissionLabel(status, result?.result, result?.failed_testcase_order);
+  const {
+    text: resultText,
+    isSuccess,
+    isFail,
+    isPending,
+    colorClass,
+  } = getSubmissionLabel(status, result?.result, result?.failed_testcase_order);
 
   let editorBorderClass = "border-transparent";
-  if (isSuccess) editorBorderClass = "border-emerald-500 ring-4 ring-emerald-500/20";
+  if (isSuccess)
+    editorBorderClass = "border-emerald-500 ring-4 ring-emerald-500/20";
   else if (isFail) editorBorderClass = "border-red-500 ring-4 ring-red-500/20";
-  else if (isPending) editorBorderClass = "border-blue-500 ring-4 ring-blue-500/20";
+  else if (isPending)
+    editorBorderClass = "border-blue-500 ring-4 ring-blue-500/20";
 
   if (isLoading || !problem) {
     return (
@@ -144,7 +150,7 @@ export default function ProblemPage({
               <div className="h-4 w-full bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
               <div className="h-4 w-4/5 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
             </div>
-            
+
             <div className="h-6 w-24 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse mt-10 mb-4"></div>
             <div className="h-24 w-full bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse"></div>
           </div>
@@ -168,12 +174,14 @@ export default function ProblemPage({
       </div>
 
       {/* Right panel */}
-      <div 
+      <div
         id="code-editor-section"
-        className="flex-1 lg:w-1/2 flex flex-col min-h-0 gap-4 relative scroll-mt-20"
+        className="flex-1 lg:w-1/2 flex flex-col gap-4 relative scroll-mt-20"
       >
         {/* Editor wrapper */}
-        <div className={`min-h-[400px] lg:min-h-0 flex-1 relative group rounded-xl border-2 transition-all duration-300 ${editorBorderClass} lg:overflow-hidden`}>
+        <div
+          className={`min-h-100 flex-1 flex flex-col relative group rounded-xl border-2 transition-all duration-300 ${editorBorderClass} lg:overflow-hidden`}
+        >
           <CodeEditor
             value={code}
             onChange={(val) => {
@@ -239,7 +247,7 @@ export default function ProblemPage({
               <button
                 onClick={handleSubmit}
                 disabled={status === "PENDING" || !code.trim() || !user}
-                className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:from-zinc-300 disabled:to-zinc-300 dark:disabled:from-zinc-700 dark:disabled:to-zinc-700 text-white px-6 py-2.5 rounded-lg font-medium transition-all duration-300 shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0"
+                className="flex items-center space-x-2 bg-linear-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:from-zinc-300 disabled:to-zinc-300 dark:disabled:from-zinc-700 dark:disabled:to-zinc-700 text-white px-6 py-2.5 rounded-lg font-medium transition-all duration-300 shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0"
               >
                 {status === "PENDING" ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -258,15 +266,16 @@ export default function ProblemPage({
       </div>
 
       {/* 좁은 화면용 '코드 작성으로 이동' 플로팅 버튼 */}
-      <button 
+      <button
         className="lg:hidden fixed top-24 right-6 z-50 bg-blue-600 text-white px-5 py-3 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] font-bold text-sm flex items-center gap-2 hover:bg-blue-700 transition-colors active:scale-95"
         onClick={() => {
-          document.getElementById('code-editor-section')?.scrollIntoView({ behavior: 'smooth' });
+          document
+            .getElementById("code-editor-section")
+            ?.scrollIntoView({ behavior: "smooth" });
         }}
       >
         <span>↓ 코드 작성</span>
       </button>
-
     </div>
   );
 }
