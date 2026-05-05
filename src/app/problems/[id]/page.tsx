@@ -180,7 +180,7 @@ export default function ProblemPage({
       >
         {/* Editor wrapper */}
         <div
-          className={`min-h-100 flex-1 flex flex-col relative group rounded-xl border-2 transition-all duration-300 ${editorBorderClass} lg:overflow-hidden`}
+          className={`min-h-60 flex-1 flex flex-col relative group rounded-xl border-2 transition-all duration-300 ${editorBorderClass} lg:overflow-hidden`}
         >
           <CodeEditor
             value={code}
