@@ -22,8 +22,8 @@ export default function SubmissionFilters({
   setStatusFilter,
   languageFilter,
   setLanguageFilter,
-  availableStatuses = ["모든 상태", "맞았습니다!", "틀렸습니다", "시간 초과", "메모리 초과", "런타임 에러", "컴파일 에러"],
-  availableLanguages = ["모든 언어", "Python", "Java", "C++", "C", "JavaScript"],
+  availableStatuses = ["모든 상태", "정답", "오답", "시간 초과", "메모리 초과", "런타임 에러", "컴파일 에러", "출력 형식 오류", "시스템 오류"],
+  availableLanguages = ["모든 언어", "c++", "java", "python"],
 }: Props) {
   return (
     // 전체 컨테이너: 기본적으로 가로(flex-row) 배치, 좁은 화면(sm 미만)에서는 세로(flex-col) 배치로 반응형 처리

@@ -3,11 +3,17 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Loader2 } from "lucide-react";
-import SubmissionSummaryCards, { SubmissionSummary } from "@/components/submissions/SubmissionSummaryCards";
+import SubmissionSummaryCards, {
+  SubmissionSummary,
+} from "@/components/submissions/SubmissionSummaryCards";
 import SubmissionFilters from "@/components/submissions/SubmissionFilters";
-import SubmissionTable, { Submission } from "@/components/submissions/SubmissionTable";
+import SubmissionTable, {
+  Submission,
+} from "@/components/submissions/SubmissionTable";
 import SubmissionPagination from "@/components/submissions/SubmissionPagination";
-import WeeklySubmissionChart, { WeeklyStat } from "@/components/submissions/WeeklySubmissionChart";
+import WeeklySubmissionChart, {
+  WeeklyStat,
+} from "@/components/submissions/WeeklySubmissionChart";
 
 // 한 페이지당 보여줄 제출 기록의 수
 const ITEMS_PER_PAGE = 10;
@@ -17,6 +23,36 @@ const isAcceptedResult = (result: string | null) => {
   if (!result) return false;
   const lower = result.toLowerCase();
   return lower.includes("맞았습니다") || lower === "accepted" || lower === "ac";
+};
+
+const getResultText = (result: string) => {
+  switch (result) {
+    case "AC":
+      return "정답";
+    case "WA":
+      return "오답";
+    case "TLE":
+      return "시간 초과";
+    case "MLE":
+      return "메모리 초과";
+    case "RE":
+      return "런타임 에러";
+    case "CE":
+      return "컴파일 에러";
+    case "PE":
+      return "출력 형식 오류";
+    case "SYSTEM_ERROR":
+      return "시스템 오류";
+    default:
+      return result;
+  }
+};
+
+const normalizeLanguage = (lang: string | null | undefined) => {
+  if (!lang || lang === "Unknown") return "unknown";
+  const lower = lang.toLowerCase();
+  if (lower === "cpp" || lower === "c++") return "c++";
+  return lower;
 };
 
 export default function SubmissionsPage() {
@@ -47,7 +83,9 @@ export default function SubmissionsPage() {
       const supabase = createClient();
 
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user) {
           setError("로그인이 필요합니다.");
           setIsLoading(false);
@@ -56,7 +94,8 @@ export default function SubmissionsPage() {
 
         const { data, error: fetchError } = await supabase
           .from("submissions")
-          .select(`
+          .select(
+            `
             id,
             problem_id,
             language,
@@ -68,7 +107,8 @@ export default function SubmissionsPage() {
               title,
               category
             )
-          `)
+          `,
+          )
           .eq("user_id", user.id)
           .eq("is_deleted", false)
           .order("submitted_at", { ascending: false });
@@ -77,29 +117,61 @@ export default function SubmissionsPage() {
 
         // DB 데이터를 프론트엔드 Submission 인터페이스에 맞게 매핑
         const mappedSubmissions: Submission[] = (data || []).map((sub: any) => {
-          const problemData = Array.isArray(sub.problems) ? sub.problems[0] : sub.problems;
-          
+          const problemData = Array.isArray(sub.problems)
+            ? sub.problems[0]
+            : sub.problems;
+
+          let displayLanguage = sub.language || "Unknown";
+          if (displayLanguage.toLowerCase() === "cpp") {
+            displayLanguage = "c++";
+          } else if (displayLanguage !== "Unknown") {
+            displayLanguage = displayLanguage.toLowerCase();
+          }
+
+          const mappedSubmissions: Submission[] = (data || []).map(
+            (sub: any) => {
+              const problemData = Array.isArray(sub.problems)
+                ? sub.problems[0]
+                : sub.problems;
+
+              return {
+                id: sub.id,
+                problemId: sub.problem_id,
+                problemTitle: problemData?.title || "알 수 없는 문제",
+                category: problemData?.category || "기타",
+                language: normalizeLanguage(sub.language), // 👈 헬퍼 함수 적용
+                result: sub.result || "결과 없음",
+                runtimeMs: sub.execution_time_ms,
+                memoryKb: sub.memory_kb,
+                submittedAt: sub.submitted_at,
+              };
+            },
+          );
+
           return {
             id: sub.id,
             problemId: sub.problem_id,
             problemTitle: problemData?.title || "알 수 없는 문제",
             category: problemData?.category || "기타",
-            language: sub.language || "Unknown",
+            language: displayLanguage,
             result: sub.result || "결과 없음",
             runtimeMs: sub.execution_time_ms,
             memoryKb: sub.memory_kb,
             // Date 객체 변환을 위해 원본을 저장하되, UI 표시 시 가공할 수 있게 함
-            submittedAt: sub.submitted_at, 
+            submittedAt: sub.submitted_at,
           };
         });
 
         setSubmissions(mappedSubmissions);
-        
+
         // 1. 요약 통계 계산
         const total = mappedSubmissions.length;
-        const accepted = mappedSubmissions.filter(s => isAcceptedResult(s.result)).length;
-        const accuracy = total > 0 ? Number(((accepted / total) * 100).toFixed(1)) : 0;
-        
+        const accepted = mappedSubmissions.filter((s) =>
+          isAcceptedResult(s.result),
+        ).length;
+        const accuracy =
+          total > 0 ? Number(((accepted / total) * 100).toFixed(1)) : 0;
+
         setSummary({
           totalSubmissions: total,
           acceptedSubmissions: accepted,
@@ -109,7 +181,6 @@ export default function SubmissionsPage() {
         // 2. 주간 통계 계산 (최근 7일)
         const stats = calculateWeeklySubmissionStats(mappedSubmissions);
         setWeeklyStats(stats);
-
       } catch (err: any) {
         console.error("Failed to fetch submissions:", err);
         setError("제출 기록을 불러오는 중 오류가 발생했습니다.");
@@ -137,17 +208,17 @@ export default function SubmissionsPage() {
         date: dayNames[d.getDay()],
         count: 0,
         isToday: i === 0,
-        fullDate: d.toISOString().split("T")[0] // 내부 비교용 yyyy-mm-dd
+        fullDate: d.toISOString().split("T")[0], // 내부 비교용 yyyy-mm-dd
       });
     }
 
     // 제출 기록 순회하며 카운트 증가
-    subs.forEach(sub => {
+    subs.forEach((sub) => {
       if (!sub.submittedAt) return;
       const subDate = new Date(sub.submittedAt);
       const dateStr = subDate.toISOString().split("T")[0];
-      
-      const targetStat = internalStats.find(s => s.fullDate === dateStr);
+
+      const targetStat = internalStats.find((s) => s.fullDate === dateStr);
       if (targetStat) {
         targetStat.count += 1;
       }
@@ -162,19 +233,21 @@ export default function SubmissionsPage() {
   // -------------------------------------------------------------
   const filteredSubmissions = useMemo(() => {
     return submissions.filter((sub) => {
-      // 1. 검색어 필터 (문제 번호 또는 제목 포함 여부)
+      // 1. 검색어 필터 (생략)
       const matchesSearch =
         sub.problemTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
         sub.problemId.toString().includes(searchQuery);
 
-      // 2. 상태 필터 (맞았습니다, 틀렸습니다 등 단순 비교 또는 좀 더 유연하게)
-      const matchesStatus = 
-        statusFilter === "모든 상태" || 
-        (statusFilter === "맞았습니다!" && isAcceptedResult(sub.result)) ||
-        (statusFilter !== "맞았습니다!" && sub.result === statusFilter && !isAcceptedResult(sub.result));
+      // 2. 상태 필터 (생략)
+      const matchesStatus =
+        statusFilter === "모든 상태" ||
+        getResultText(sub.result) === statusFilter;
 
-      // 3. 언어 필터
-      const matchesLanguage = languageFilter === "모든 언어" || sub.language === languageFilter;
+      // 3. 언어 필터 (여기를 수정!)
+      // sub.language는 이미 소문자 'c++'로 매핑되어 있으므로, 필터 값도 통일해서 비교합니다.
+      const matchesLanguage =
+        languageFilter === "모든 언어" ||
+        sub.language === normalizeLanguage(languageFilter); // 👈 헬퍼 함수 적용
 
       return matchesSearch && matchesStatus && matchesLanguage;
     });
@@ -188,7 +261,8 @@ export default function SubmissionsPage() {
   // -------------------------------------------------------------
   // 페이지네이션 로직 (필터링된 데이터 중 현재 페이지에 해당하는 데이터만 추출)
   // -------------------------------------------------------------
-  const totalPages = Math.ceil(filteredSubmissions.length / ITEMS_PER_PAGE) || 1;
+  const totalPages =
+    Math.ceil(filteredSubmissions.length / ITEMS_PER_PAGE) || 1;
   const paginatedSubmissions = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredSubmissions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
@@ -210,7 +284,7 @@ export default function SubmissionsPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white p-6 rounded-xl shadow-sm text-center">
           <p className="text-red-500 mb-4">{error}</p>
-          <button 
+          <button
             onClick={() => window.location.reload()}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
@@ -226,7 +300,6 @@ export default function SubmissionsPage() {
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       {/* 넉넉한 spacing을 가진 중앙 정렬 컨테이너 */}
       <div className="max-w-6xl mx-auto">
-        
         {/* 1. 상단 헤더 및 요약 통계 섹션 */}
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-8">
           <div>
@@ -234,7 +307,8 @@ export default function SubmissionsPage() {
             <h1 className="text-2xl font-bold text-gray-900 mb-2">제출 기록</h1>
             {/* 설명 문구 */}
             <p className="text-sm text-gray-500">
-              본인이 제출한 모든 소스코드의 실행 결과와 이력을 확인하고 관리합니다.
+              본인이 제출한 모든 소스코드의 실행 결과와 이력을 확인하고
+              관리합니다.
             </p>
           </div>
           {/* 요약 통계 카드 컴포넌트 렌더링 */}
@@ -262,10 +336,7 @@ export default function SubmissionsPage() {
         />
 
         {/* 5. 주간 제출 통계 (차트) 섹션 */}
-        {weeklyStats.length > 0 && (
-          <WeeklySubmissionChart data={weeklyStats} />
-        )}
-
+        {weeklyStats.length > 0 && <WeeklySubmissionChart data={weeklyStats} />}
       </div>
     </div>
   );
