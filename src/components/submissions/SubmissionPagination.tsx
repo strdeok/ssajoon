@@ -43,12 +43,12 @@ export default function SubmissionPagination({
 
   return (
     <div className="flex justify-end items-center mb-10">
-      <nav className="inline-flex items-center -space-x-px rounded-md shadow-sm bg-white" aria-label="Pagination">
+      <nav className="inline-flex items-center -space-x-px rounded-md shadow-sm bg-white dark:bg-zinc-900" aria-label="Pagination">
         {/* 이전 페이지 버튼 */}
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 border border-gray-300 bg-white hover:bg-gray-50 focus:z-20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 dark:text-zinc-500 border border-gray-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-gray-50 dark:hover:bg-zinc-800 focus:z-20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <span className="sr-only">Previous</span>
           <ChevronLeft className="h-4 w-4" aria-hidden="true" />
@@ -61,8 +61,8 @@ export default function SubmissionPagination({
             onClick={() => onPageChange(page)}
             className={`relative inline-flex items-center px-4 py-2 text-sm font-medium border focus:z-20 transition-colors ${
               currentPage === page
-                ? "z-10 bg-blue-50 border-blue-500 text-blue-600" // 현재 페이지 강조 스타일
-                : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50" // 기본 스타일
+                ? "z-10 bg-blue-50 dark:bg-blue-900/30 border-blue-500 text-blue-600 dark:text-blue-400" // 현재 페이지 강조 스타일
+                : "bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-800 text-gray-500 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800" // 기본 스타일
             }`}
           >
             {page}
@@ -73,7 +73,7 @@ export default function SubmissionPagination({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 border border-gray-300 bg-white hover:bg-gray-50 focus:z-20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 dark:text-zinc-500 border border-gray-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-gray-50 dark:hover:bg-zinc-800 focus:z-20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <span className="sr-only">Next</span>
           <ChevronRight className="h-4 w-4" aria-hidden="true" />

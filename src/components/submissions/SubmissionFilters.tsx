@@ -41,7 +41,7 @@ export default function SubmissionFilters({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           // input 스타일: 패딩으로 왼쪽 아이콘 공간 확보, 테두리 둥글게, 포커스 시 테두리 색상 변경
-          className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-zinc-800 rounded-lg text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 placeholder-gray-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
         />
       </div>
 
@@ -50,10 +50,10 @@ export default function SubmissionFilters({
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 cursor-pointer transition-colors"
+          className="block w-full px-3 py-2 border border-gray-300 dark:border-zinc-800 rounded-lg text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 cursor-pointer transition-colors"
         >
           {availableStatuses.map((status) => (
-            <option key={status} value={status}>
+            <option key={status} value={status} className="dark:bg-zinc-900">
               {status}
             </option>
           ))}
@@ -65,10 +65,10 @@ export default function SubmissionFilters({
         <select
           value={languageFilter}
           onChange={(e) => setLanguageFilter(e.target.value)}
-          className="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 cursor-pointer transition-colors"
+          className="block w-full px-3 py-2 border border-gray-300 dark:border-zinc-800 rounded-lg text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 cursor-pointer transition-colors"
         >
           {availableLanguages.map((lang) => (
-            <option key={lang} value={lang}>
+            <option key={lang} value={lang} className="dark:bg-zinc-900">
               {lang}
             </option>
           ))}

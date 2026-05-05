@@ -62,17 +62,19 @@ export async function Header() {
         </div>
 
         <div className="flex-1 max-w-md hidden md:block">
-          <div className="relative group">
+          <form action="/problems" method="GET" className="relative group">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-4 w-4 text-zinc-400 group-focus-within:text-blue-500 transition-colors" />
             </div>
             <input
               type="text"
+              name="q"
               placeholder="문제 번호 또는 제목 검색..."
               className="block w-full pl-10 pr-3 py-1.5 border border-zinc-200 dark:border-zinc-800 rounded-full text-sm bg-zinc-50 dark:bg-zinc-900/50 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             />
-          </div>
+          </form>
         </div>
+
 
         <div className="flex items-center space-x-4 shrink-0">
           <ThemeSwitcher />

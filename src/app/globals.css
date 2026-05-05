@@ -30,3 +30,47 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
+::selection {
+  /* 기본 모드에서 텍스트 선택 영역 스타일을 지정한다. */
+  background-color: rgba(
+    37,
+    99,
+    235,
+    0.18
+  ); /* 연한 파란색 반투명 배경을 적용한다. */
+  color: inherit; /* 선택된 텍스트 색상을 기존 색상으로 유지한다. */
+} /* 기본 selection 스타일을 종료한다. */
+
+.dark ::selection {
+  /* 다크모드에서 텍스트 선택 영역 스타일을 지정한다. */
+  background-color: rgba(
+    96,
+    165,
+    250,
+    0.28
+  ); /* 다크모드에서는 조금 더 밝은 파란색 반투명 배경을 적용한다. */
+  color: inherit; /* 다크모드에서도 텍스트 색상을 기존 색상으로 유지한다. */
+} /* 다크모드 selection 스타일을 종료한다. */
+
+::-moz-selection {
+  /* Firefox 기본 모드 선택 영역 스타일을 지정한다. */
+  background-color: rgba(
+    37,
+    99,
+    235,
+    0.18
+  ); /* Firefox에서 연한 파란색 반투명 배경을 적용한다. */
+  color: inherit; /* Firefox에서 텍스트 색상을 기존 색상으로 유지한다. */
+} /* Firefox 기본 selection 스타일을 종료한다. */
+
+.dark ::-moz-selection {
+  /* Firefox 다크모드 선택 영역 스타일을 지정한다. */
+  background-color: rgba(
+    96,
+    165,
+    250,
+    0.28
+  ); /* Firefox 다크모드에서 밝은 파란색 반투명 배경을 적용한다. */
+  color: inherit; /* Firefox 다크모드에서 텍스트 색상을 기존 색상으로 유지한다. */
+} /* Firefox 다크모드 selection 스타일을 종료한다. */

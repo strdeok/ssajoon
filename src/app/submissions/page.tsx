@@ -121,43 +121,15 @@ export default function SubmissionsPage() {
             ? sub.problems[0]
             : sub.problems;
 
-          let displayLanguage = sub.language || "Unknown";
-          if (displayLanguage.toLowerCase() === "cpp") {
-            displayLanguage = "c++";
-          } else if (displayLanguage !== "Unknown") {
-            displayLanguage = displayLanguage.toLowerCase();
-          }
-
-          const mappedSubmissions: Submission[] = (data || []).map(
-            (sub: any) => {
-              const problemData = Array.isArray(sub.problems)
-                ? sub.problems[0]
-                : sub.problems;
-
-              return {
-                id: sub.id,
-                problemId: sub.problem_id,
-                problemTitle: problemData?.title || "알 수 없는 문제",
-                category: problemData?.category || "기타",
-                language: normalizeLanguage(sub.language), // 👈 헬퍼 함수 적용
-                result: sub.result || "결과 없음",
-                runtimeMs: sub.execution_time_ms,
-                memoryKb: sub.memory_kb,
-                submittedAt: sub.submitted_at,
-              };
-            },
-          );
-
           return {
             id: sub.id,
             problemId: sub.problem_id,
             problemTitle: problemData?.title || "알 수 없는 문제",
             category: problemData?.category || "기타",
-            language: displayLanguage,
+            language: normalizeLanguage(sub.language),
             result: sub.result || "결과 없음",
             runtimeMs: sub.execution_time_ms,
             memoryKb: sub.memory_kb,
-            // Date 객체 변환을 위해 원본을 저장하되, UI 표시 시 가공할 수 있게 함
             submittedAt: sub.submitted_at,
           };
         });
@@ -270,10 +242,10 @@ export default function SubmissionsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
           <Loader2 className="w-10 h-10 animate-spin text-blue-500" />
-          <p className="text-gray-500">제출 기록을 불러오는 중...</p>
+          <p className="text-gray-500 dark:text-zinc-400">제출 기록을 불러오는 중...</p>
         </div>
       </div>
     );
@@ -281,9 +253,9 @@ export default function SubmissionsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white p-6 rounded-xl shadow-sm text-center">
-          <p className="text-red-500 mb-4">{error}</p>
+      <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-sm text-center border border-gray-200 dark:border-zinc-800">
+          <p className="text-red-500 dark:text-red-400 mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -297,16 +269,16 @@ export default function SubmissionsPage() {
 
   return (
     // 페이지 전체 배경은 아주 연한 회색(bg-gray-50), 최소 높이는 화면 전체(min-h-screen)
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
       {/* 넉넉한 spacing을 가진 중앙 정렬 컨테이너 */}
       <div className="max-w-6xl mx-auto">
         {/* 1. 상단 헤더 및 요약 통계 섹션 */}
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-8">
           <div>
             {/* 큰 제목 */}
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">제출 기록</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-2">제출 기록</h1>
             {/* 설명 문구 */}
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-zinc-400">
               본인이 제출한 모든 소스코드의 실행 결과와 이력을 확인하고
               관리합니다.
             </p>

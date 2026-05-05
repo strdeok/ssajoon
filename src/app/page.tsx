@@ -1,20 +1,21 @@
-import { createClient } from "@/utils/supabase/server"; // 서버 컴포넌트에서 Supabase 서버 클라이언트를 사용하기 위해 가져온다.
-import Link from "next/link"; // Next.js 내부 페이지 이동을 위해 Link 컴포넌트를 가져온다.
+import { createClient } from "@/utils/supabase/server";
+import Link from "next/link";
 import {
-  // 홈 화면에서 사용할 lucide-react 아이콘들을 가져온다.
-  BookOpen, // 총 문제 수 카드에 사용할 책 아이콘이다.
-  Trophy, // 푼 문제 카드와 로그인 안내에 사용할 트로피 아이콘이다.
-  TrendingUp, // 최근 7일 제출 카드에 사용할 상승 아이콘이다.
-  Flame, // 히어로 배지에 사용할 불꽃 아이콘이다.
-  ChevronRight, // 링크와 버튼의 오른쪽 화살표 아이콘이다.
-  ArrowRight, // CTA 버튼에 사용할 오른쪽 화살표 아이콘이다.
-  CheckCircle2, // 정답 제출 상태 아이콘이다.
-  XCircle, // 실패 제출 상태 아이콘이다.
-  Clock, // 채점 중 상태 아이콘이다.
-  BarChart2, // 통계/빈 상태 아이콘이다.
-} from "lucide-react"; // lucide-react에서 아이콘을 가져온다.
+  BookOpen,
+  Trophy,
+  TrendingUp,
+  Flame,
+  ChevronRight,
+  ArrowRight,
+  BarChart2,
+} from "lucide-react";
+import {
+  DifficultyBadge,
+  StatusIcon,
+  StatusLabel,
+} from "@/components/problem/ProblemComponents";
 
-type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>; // 서버 Supabase 클라이언트 타입을 추론해서 재사용한다.
+type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
 type ProblemRow = {
   // 홈 화면 최근 문제 목록에서 사용할 문제 row 타입을 정의한다.
@@ -287,94 +288,6 @@ async function getData() {
   return { user, totalProblemsCount, recentProblems, submissions, stats }; // 홈 화면 데이터를 반환한다.
 } // getData 함수를 종료한다.
 
-function DifficultyBadge({ difficulty }: { difficulty?: string | null }) {
-  // 난이도 배지 컴포넌트를 정의한다.
-  if (!difficulty) return null; // 난이도가 없으면 아무것도 렌더링하지 않는다.
-
-  const map: Record<string, string> = {
-    // 난이도별 Tailwind 스타일 매핑을 정의한다.
-    Basic: "bg-sky-50 text-sky-700 border border-sky-200", // Basic 난이도 스타일이다.
-    BASIC: "bg-sky-50 text-sky-700 border border-sky-200", // BASIC 난이도 스타일이다.
-    Easy: "bg-emerald-50 text-emerald-700 border border-emerald-200", // Easy 난이도 스타일이다.
-    EASY: "bg-emerald-50 text-emerald-700 border border-emerald-200", // EASY 난이도 스타일이다.
-    Medium: "bg-amber-50 text-amber-700 border border-amber-200", // Medium 난이도 스타일이다.
-    MEDIUM: "bg-amber-50 text-amber-700 border border-amber-200", // MEDIUM 난이도 스타일이다.
-    Hard: "bg-red-50 text-red-700 border border-red-200", // Hard 난이도 스타일이다.
-    HARD: "bg-red-50 text-red-700 border border-red-200", // HARD 난이도 스타일이다.
-    MEDIUM_HARD: "bg-orange-50 text-orange-700 border border-orange-200", // MEDIUM_HARD 난이도 스타일이다.
-    "Medium Hard": "bg-orange-50 text-orange-700 border border-orange-200", // Medium Hard 난이도 스타일이다.
-    "Medium-Hard": "bg-orange-50 text-orange-700 border border-orange-200", // Medium-Hard 난이도 스타일이다.
-  }; // 스타일 매핑을 종료한다.
-
-  const labelMap: Record<string, string> = {
-    // 난이도 표시명 매핑을 정의한다.
-    BASIC: "Basic", // BASIC 표시명이다.
-    EASY: "Easy", // EASY 표시명이다.
-    MEDIUM: "Medium", // MEDIUM 표시명이다.
-    HARD: "Hard", // HARD 표시명이다.
-    MEDIUM_HARD: "Medium-Hard", // MEDIUM_HARD 표시명이다.
-  }; // 표시명 매핑을 종료한다.
-
-  return (
-    // 난이도 배지 JSX를 반환한다.
-    <span
-      className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${map[difficulty] ?? "bg-zinc-100 text-zinc-600 border border-zinc-200"}`}
-    >
-      {" "}
-      {/* 난이도별 스타일을 적용한 배지를 렌더링한다. */}
-      {labelMap[difficulty] ?? difficulty}{" "}
-      {/* 매핑된 표시명이 있으면 사용하고 없으면 원본 난이도를 표시한다. */}
-    </span> // 배지 span을 종료한다.
-  ); // return을 종료한다.
-} // DifficultyBadge 컴포넌트를 종료한다.
-
-function StatusIcon({ result }: { result: string | null }) {
-  // 제출 결과 아이콘 컴포넌트를 정의한다.
-  const normalizedResult = normalizeResult(result); // result 값을 정규화한다.
-
-  if (isAcceptedResult(normalizedResult)) {
-    // 정답 결과인지 확인한다.
-    return <CheckCircle2 className="w-4 h-4 text-emerald-500" />; // 정답이면 초록 체크 아이콘을 반환한다.
-  } // 정답 조건문을 종료한다.
-
-  if (normalizedResult === "PENDING" || normalizedResult === "JUDGING") {
-    // 채점 중 상태인지 확인한다.
-    return <Clock className="w-4 h-4 text-blue-400 animate-spin" />; // 채점 중이면 회전하는 시계 아이콘을 반환한다.
-  } // 채점 중 조건문을 종료한다.
-
-  return <XCircle className="w-4 h-4 text-red-400" />; // 그 외 결과는 실패 아이콘을 반환한다.
-} // StatusIcon 컴포넌트를 종료한다.
-
-function StatusLabel({ result }: { result: string | null }) {
-  // 제출 결과 라벨 컴포넌트를 정의한다.
-  const normalizedResult = normalizeResult(result); // result 값을 정규화한다.
-
-  const map: Record<string, { label: string; cls: string }> = {
-    // 결과별 표시명과 스타일 매핑을 정의한다.
-    AC: { label: "정답", cls: "text-emerald-600 font-semibold" }, // AC 결과 표시 설정이다.
-    ACCEPTED: { label: "정답", cls: "text-emerald-600 font-semibold" }, // ACCEPTED 결과 표시 설정이다.
-    WA: { label: "오답", cls: "text-red-500" }, // WA 결과 표시 설정이다.
-    WRONG_ANSWER: { label: "오답", cls: "text-red-500" }, // WRONG_ANSWER 결과 표시 설정이다.
-    TLE: { label: "시간초과", cls: "text-orange-500" }, // TLE 결과 표시 설정이다.
-    TIME_LIMIT_EXCEEDED: { label: "시간초과", cls: "text-orange-500" }, // TIME_LIMIT_EXCEEDED 결과 표시 설정이다.
-    MLE: { label: "메모리초과", cls: "text-purple-500" }, // MLE 결과 표시 설정이다.
-    MEMORY_LIMIT_EXCEEDED: { label: "메모리초과", cls: "text-purple-500" }, // MEMORY_LIMIT_EXCEEDED 결과 표시 설정이다.
-    RE: { label: "런타임오류", cls: "text-rose-500" }, // RE 결과 표시 설정이다.
-    RUNTIME_ERROR: { label: "런타임오류", cls: "text-rose-500" }, // RUNTIME_ERROR 결과 표시 설정이다.
-    CE: { label: "컴파일오류", cls: "text-yellow-600" }, // CE 결과 표시 설정이다.
-    COMPILE_ERROR: { label: "컴파일오류", cls: "text-yellow-600" }, // COMPILE_ERROR 결과 표시 설정이다.
-    PENDING: { label: "채점중", cls: "text-blue-500" }, // PENDING 결과 표시 설정이다.
-    JUDGING: { label: "채점중", cls: "text-blue-500" }, // JUDGING 결과 표시 설정이다.
-  }; // 결과 매핑을 종료한다.
-
-  const { label, cls } = map[normalizedResult] ?? {
-    label: normalizedResult || "알 수 없음",
-    cls: "text-zinc-500",
-  }; // 매핑이 없으면 원본 결과를 fallback으로 사용한다.
-
-  return <span className={`text-xs ${cls}`}>{label}</span>; // 결과 라벨을 렌더링한다.
-} // StatusLabel 컴포넌트를 종료한다.
-
 export default async function Home() {
   // 홈 페이지 서버 컴포넌트를 정의한다.
   const { user, totalProblemsCount, recentProblems, submissions, stats } =
@@ -418,13 +331,13 @@ export default async function Home() {
 
   return (
     // 홈 페이지 JSX를 반환한다.
-    <div className="min-h-screen bg-[#F7F9FC]">
+    <div className="min-h-screen bg-[#F7F9FC] dark:bg-zinc-950 transition-colors duration-300">
       {" "}
       {/* 전체 페이지 배경을 렌더링한다. */}
-      <section className="relative overflow-hidden mx-6 mt-6 rounded-xl h-[400px] bg-[#253EEB] flex items-center">
+      <section className="relative overflow-hidden mx-6 mt-6 rounded-xl h-[400px] bg-[#253EEB] dark:bg-indigo-700 flex items-center shadow-2xl shadow-blue-500/10">
         {" "}
         {/* 히어로 섹션을 렌더링한다. */}
-        <div className="absolute inset-0 opacity-10 select-none pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 opacity-10 dark:opacity-5 select-none pointer-events-none overflow-hidden">
           {" "}
           {/* 코드 텍스처 오버레이를 렌더링한다. */}
           <pre className="text-[11px] text-white leading-5 font-mono p-8 whitespace-pre-wrap break-all">
@@ -452,7 +365,7 @@ def binary_search(arr, target):
     return -1`}
           </pre>
         </div>
-        <div className="absolute inset-0 bg-gradient-to-r from-[#253EEB] via-[#253EEB]/80 to-transparent" />{" "}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#253EEB] via-[#253EEB]/80 to-transparent dark:from-indigo-700 dark:via-indigo-700/80" />{" "}
         {/* 왼쪽에서 오른쪽으로 흐르는 그라데이션을 렌더링한다. */}
         <div className="relative z-10 px-12 max-w-xl">
           {" "}
@@ -510,28 +423,30 @@ def binary_search(arr, target):
           ) => (
             <div
               key={label}
-              className="bg-white border border-[#E2E8F0] rounded-lg p-6 flex flex-col gap-2"
+              className="bg-white dark:bg-zinc-900 border border-[#E2E8F0] dark:border-zinc-800 rounded-lg p-6 flex flex-col gap-2 shadow-sm transition-all hover:shadow-md"
             >
               {" "}
               {/* 통계 카드 하나를 렌더링한다. */}
               <div className="flex items-center justify-between">
                 {" "}
                 {/* 카드 상단 라벨/아이콘 영역을 렌더링한다. */}
-                <span className="text-sm text-zinc-500 font-medium">
+                <span className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
                   {label}
                 </span>{" "}
                 {/* 카드 라벨을 렌더링한다. */}
-                <div className={`p-2 rounded-lg ${bg}`}>{icon}</div>{" "}
+                <div className={`p-2 rounded-lg ${bg} dark:bg-opacity-10`}>
+                  {icon}
+                </div>{" "}
                 {/* 아이콘 배경과 아이콘을 렌더링한다. */}
               </div>
               <div className="flex items-baseline gap-1">
                 {" "}
                 {/* 카드 값 영역을 렌더링한다. */}
-                <span className="text-3xl font-extrabold text-zinc-900">
+                <span className="text-3xl font-extrabold text-zinc-900 dark:text-zinc-100">
                   {typeof value === "number" ? value.toLocaleString() : value}
                 </span>{" "}
                 {/* 숫자는 천 단위 콤마로 표시한다. */}
-                <span className="text-sm text-zinc-400 font-medium">
+                <span className="text-sm text-zinc-400 dark:text-zinc-500 font-medium">
                   {unit}
                 </span>{" "}
                 {/* 단위를 렌더링한다. */}
@@ -549,7 +464,7 @@ def binary_search(arr, target):
           <div className="flex items-center justify-between">
             {" "}
             {/* 최근 문제 섹션 헤더를 렌더링한다. */}
-            <h2 className="text-lg font-bold text-zinc-900">
+            <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
               최근 추가된 문제
             </h2>{" "}
             {/* 섹션 제목을 렌더링한다. */}
@@ -563,10 +478,10 @@ def binary_search(arr, target):
               {/* 링크 텍스트와 아이콘을 렌더링한다. */}
             </Link>
           </div>
-          <div className="bg-white border border-[#E2E8F0] rounded-lg overflow-hidden">
+          <div className="bg-white dark:bg-zinc-900 border border-[#E2E8F0] dark:border-zinc-800 rounded-lg overflow-hidden">
             {" "}
             {/* 최근 문제 테이블 카드 컨테이너를 렌더링한다. */}
-            <div className="grid grid-cols-12 gap-4 px-5 py-3 bg-[#F8FAFC] border-b border-[#E2E8F0] text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+            <div className="grid grid-cols-12 gap-4 px-5 py-3 bg-[#F8FAFC] dark:bg-zinc-800/50 border-b border-[#E2E8F0] dark:border-zinc-800 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
               {" "}
               {/* 테이블 헤더를 렌더링한다. */}
               <div className="col-span-1">#</div>{" "}
@@ -591,7 +506,7 @@ def binary_search(arr, target):
                   <Link
                     href={`/problems/${problem.id}`}
                     key={problem.id}
-                    className="group grid grid-cols-12 gap-4 items-center px-5 py-4 border-b border-[#E2E8F0] last:border-0 hover:bg-[#F8FAFC] transition-colors"
+                    className="group grid grid-cols-12 gap-4 items-center px-5 py-4 border-b border-[#E2E8F0] dark:border-zinc-800 last:border-0 hover:bg-[#F8FAFC] dark:hover:bg-zinc-800/50 transition-colors"
                   >
                     {" "}
                     {/* 문제 상세 페이지로 이동하는 row를 렌더링한다. */}
@@ -602,11 +517,11 @@ def binary_search(arr, target):
                     <div className="col-span-6">
                       {" "}
                       {/* 문제 제목/설명 영역을 렌더링한다. */}
-                      <p className="text-sm font-semibold text-zinc-800 group-hover:text-blue-600 transition-colors line-clamp-1">
+                      <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
                         {problem.title}
                       </p>{" "}
                       {/* 문제 제목을 렌더링한다. */}
-                      <p className="text-xs text-zinc-400 mt-0.5 line-clamp-1">
+                      <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5 line-clamp-1">
                         {problem.description ||
                           problem.category ||
                           "설명이 없습니다."}
@@ -622,7 +537,7 @@ def binary_search(arr, target):
                     <div className="col-span-3 flex justify-end">
                       {" "}
                       {/* 풀기 버튼 영역을 렌더링한다. */}
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 group-hover:text-blue-700 bg-blue-50 group-hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-all">
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 bg-blue-50 dark:bg-blue-900/20 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 px-3 py-1.5 rounded-lg transition-all">
                         {" "}
                         {/* 풀기 pill 버튼을 렌더링한다. */}
                         풀기 <ChevronRight className="w-3.5 h-3.5" />{" "}
@@ -641,7 +556,7 @@ def binary_search(arr, target):
           <div className="flex items-center justify-between">
             {" "}
             {/* 최근 제출 섹션 헤더를 렌더링한다. */}
-            <h2 className="text-lg font-bold text-zinc-900">
+            <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
               최근 제출 현황
             </h2>{" "}
             {/* 섹션 제목을 렌더링한다. */}
@@ -657,14 +572,14 @@ def binary_search(arr, target):
               </Link>
             )}
           </div>
-          <div className="bg-white border border-[#E2E8F0] rounded-lg overflow-hidden flex-1">
+          <div className="bg-white dark:bg-zinc-900 border border-[#E2E8F0] dark:border-zinc-800 rounded-lg overflow-hidden flex-1">
             {" "}
             {/* 최근 제출 카드 컨테이너를 렌더링한다. */}
             {!user ? ( // 로그인하지 않은 경우를 확인한다.
               <div className="flex flex-col items-center justify-center py-16 px-6 text-center gap-4">
                 {" "}
                 {/* 로그인 안내 영역을 렌더링한다. */}
-                <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center">
+                <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
                   {" "}
                   {/* 로그인 안내 아이콘 배경을 렌더링한다. */}
                   <Trophy className="w-7 h-7 text-blue-400" />{" "}
@@ -673,11 +588,11 @@ def binary_search(arr, target):
                 <div>
                   {" "}
                   {/* 로그인 안내 텍스트 영역을 렌더링한다. */}
-                  <p className="text-sm font-semibold text-zinc-700 mb-1">
+                  <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
                     로그인하고 내 제출 현황을 확인하세요
                   </p>{" "}
                   {/* 로그인 안내 제목을 렌더링한다. */}
-                  <p className="text-xs text-zinc-400">
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500">
                     나의 알고리즘 성장 과정을 기록하세요
                   </p>{" "}
                   {/* 로그인 안내 설명을 렌더링한다. */}
@@ -694,7 +609,7 @@ def binary_search(arr, target):
               <div className="flex flex-col items-center justify-center py-16 px-6 text-center gap-3">
                 {" "}
                 {/* 빈 제출 상태 영역을 렌더링한다. */}
-                <div className="w-14 h-14 bg-zinc-50 rounded-full flex items-center justify-center">
+                <div className="w-14 h-14 bg-zinc-50 dark:bg-zinc-800 rounded-full flex items-center justify-center">
                   {" "}
                   {/* 빈 상태 아이콘 배경을 렌더링한다. */}
                   <BarChart2 className="w-7 h-7 text-zinc-300" />{" "}
@@ -714,7 +629,7 @@ def binary_search(arr, target):
               </div>
             ) : (
               // 최근 제출이 있는 경우를 처리한다.
-              <div className="divide-y divide-[#E2E8F0]">
+              <div className="divide-y divide-[#E2E8F0] dark:divide-zinc-800">
                 {" "}
                 {/* 제출 row 구분선을 렌더링한다. */}
                 {submissions.map(
@@ -724,7 +639,7 @@ def binary_search(arr, target):
                     <Link
                       href={`/submissions/${submission.id}`}
                       key={submission.id}
-                      className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F8FAFC] transition-colors"
+                      className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F8FAFC] dark:hover:bg-zinc-800/50 transition-colors"
                     >
                       {" "}
                       {/* 제출 상세 페이지로 이동하는 row를 렌더링한다. */}
@@ -733,11 +648,11 @@ def binary_search(arr, target):
                       <div className="flex-1 min-w-0">
                         {" "}
                         {/* 제출 문제 제목/시간 영역을 렌더링한다. */}
-                        <p className="text-sm font-medium text-zinc-800 truncate">
+                        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
                           {submission.problem_title}
                         </p>{" "}
                         {/* 문제 제목을 렌더링한다. */}
-                        <p className="text-xs text-zinc-400 mt-0.5">
+                        <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
                           {" "}
                           {/* 제출 시간을 렌더링한다. */}
                           {submission.submitted_at // 제출 시간이 있는지 확인한다.
@@ -758,7 +673,7 @@ def binary_search(arr, target):
                         {/* 제출 결과/언어 영역을 렌더링한다. */}
                         <StatusLabel result={submission.result} />{" "}
                         {/* 제출 결과 라벨을 렌더링한다. */}
-                        <span className="text-xs text-zinc-400">
+                        <span className="text-xs text-zinc-400 dark:text-zinc-500">
                           {submission.language || "-"}
                         </span>{" "}
                         {/* 제출 언어를 렌더링한다. */}
@@ -771,51 +686,7 @@ def binary_search(arr, target):
           </div>
         </div>
       </section>
-      <footer className="border-t border-[#E2E8F0] bg-white mt-auto">
-        {" "}
-        {/* 푸터를 렌더링한다. */}
-        <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          {" "}
-          {/* 푸터 내부 컨테이너를 렌더링한다. */}
-          <div>
-            {" "}
-            {/* 푸터 브랜드 영역을 렌더링한다. */}
-            <p className="text-base font-semibold text-zinc-800">
-              싸준 (SSAJUN)
-            </p>{" "}
-            {/* 서비스 이름을 렌더링한다. */}
-            <p className="text-xs text-zinc-400 mt-1">
-              © 2024 싸준 (SSAJUN). All rights reserved.
-            </p>{" "}
-            {/* 저작권 문구를 렌더링한다. */}
-          </div>
-          <nav className="flex items-center gap-6 text-sm text-zinc-500">
-            {" "}
-            {/* 푸터 네비게이션을 렌더링한다. */}
-            <Link
-              href="/problems"
-              className="hover:text-zinc-800 transition-colors"
-            >
-              문제
-            </Link>{" "}
-            {/* 문제 링크를 렌더링한다. */}
-            <Link
-              href="/generate"
-              className="hover:text-zinc-800 transition-colors"
-            >
-              AI 생성
-            </Link>{" "}
-            {/* 문제 생성 링크를 렌더링한다. */}
-            <Link
-              href="/submissions"
-              className="hover:text-zinc-800 transition-colors"
-            >
-              제출
-            </Link>{" "}
-            {/* 제출 링크를 렌더링한다. */}
-          </nav>
-        </div>
-      </footer>
+
     </div>
   );
 }
