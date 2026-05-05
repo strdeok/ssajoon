@@ -109,8 +109,13 @@ export default function SubmissionTable({ submissions }: Props) {
               submissions.map((sub) => (
                 <tr key={sub.id} className="hover:bg-gray-50 transition-colors">
                   {/* 1. 제출 ID */}
-                  <td className="px-6 py-4 font-mono text-gray-500">
-                    {sub.id}
+                  <td className="px-6 py-4 font-mono">
+                    <Link
+                      href={`/submissions/${sub.id}`}
+                      className="text-gray-500 hover:text-blue-600 hover:underline transition-colors"
+                    >
+                      {sub.id}
+                    </Link>
                   </td>
 
                   {/* 2. 문제명 (두 줄 처리: 제목+번호, 카테고리) */}
@@ -138,13 +143,15 @@ export default function SubmissionTable({ submissions }: Props) {
 
                   {/* 4. 결과 (자동 색상 배지) */}
                   <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getResultBadgeStyle(
-                        sub.result,
-                      )}`}
-                    >
-                      {getResultText(sub.result)}
-                    </span>
+                    <Link href={`/submissions/${sub.id}`}>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border cursor-pointer hover:brightness-95 transition-all ${getResultBadgeStyle(
+                          sub.result,
+                        )}`}
+                      >
+                        {getResultText(sub.result)}
+                      </span>
+                    </Link>
                   </td>
 
                   {/* 5. 실행 시간 */}

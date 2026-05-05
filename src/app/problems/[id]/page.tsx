@@ -10,6 +10,7 @@ import {
 } from "@/components/submission/TestResultViewer";
 import { useSubmissionStore } from "@/store/submissionStore";
 import { Play, Send, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Problem } from "@/types/problem";
 import { createClient } from "@/utils/supabase/client";
 import { SubmissionStatusListener } from "@/components/submission/SubmissionStatusListener";
@@ -21,6 +22,7 @@ export default function ProblemPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const router = useRouter();
   const [problem, setProblem] = useState<Problem | null>(null);
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("python");
@@ -54,6 +56,17 @@ export default function ProblemPage({
     // Reset submission store on unmount or problem change
     return () => reset();
   }, [id, reset]);
+
+  // 채점 완료 시 상세 페이지로 자동 이동
+  useEffect(() => {
+    if (submissionId && status && status !== "PENDING" && status !== "QUEUED" && status !== "RUNNING") {
+      // 결과 애니메이션을 잠시 보여준 뒤(1.5초) 상세 페이지로 이동
+      const timer = setTimeout(() => {
+        router.push(`/submissions/${submissionId}`);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [status, submissionId, router]);
 
   const handleSubmit = async () => {
     setSubmitError(null);
