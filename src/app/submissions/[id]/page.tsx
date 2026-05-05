@@ -3,6 +3,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { notFound } from "next/navigation";
 import SubmissionSummary from "@/components/submissions/detail/SubmissionSummary";
 import TestCaseResults from "@/components/submissions/detail/TestCaseResults";
+import CompareOthersLanguage from "@/components/submissions/detail/CompareOthersLanguage"; // 다른 유저 풀이 언어 비교 컴포넌트를 가져온다.
 import CodeViewer from "@/components/submissions/detail/CodeViewer";
 import PerformanceAnalysis from "@/components/submissions/detail/PerformanceAnalysis";
 import Link from "next/link";
@@ -43,6 +44,21 @@ export default async function SubmissionDetailPage({
     )
     .eq("id", submissionId) // URL의 제출 id와 일치하는 제출만 조회한다.
     .single(); // 단일 row로 가져온다.
+
+  const { data: languageRows, error: languageError } = await supabaseAdmin // 다른 유저들의 정답 제출 언어 데이터를 조회한다.
+    .from("submissions") // submissions 테이블을 조회한다.
+    .select("user_id, language") // 언어 집계에 필요한 user_id와 language만 가져온다.
+    .eq("problem_id", submission.problem_id) // 현재 제출과 같은 문제의 제출만 조회한다.
+    .in("result", ["AC", "ACCEPTED"]) // 정답 제출만 조회한다.
+    .neq("user_id", submission.user_id) // 현재 유저의 제출은 제외하고 다른 유저만 조회한다.
+    .or("is_deleted.is.false,is_deleted.is.null") // 삭제되지 않은 제출만 조회한다.
+    .not("language", "is", null) // 언어가 null인 제출은 제외한다.
+    .limit(5000); // 과도한 조회를 막기 위해 최대 5000개까지만 가져온다.
+
+  if (languageError) {
+    // 언어 통계 조회 중 에러가 있는지 확인한다.
+    console.error("다른 유저 언어 통계 조회 실패:", languageError); // 서버 콘솔에 에러를 출력한다.
+  }
 
   if (error || !submission) {
     // 제출 조회에 실패했거나 데이터가 없으면 확인한다.
@@ -139,11 +155,19 @@ export default async function SubmissionDetailPage({
                 {/* 성능 분석 제목을 렌더링한다. */}
                 성능 데이터 분석 {/* 제목 텍스트를 렌더링한다. */}
               </h2>
-              <PerformanceAnalysis // 성능 분석 컴포넌트를 렌더링한다.
-                runtime={submission.execution_time_ms} // 내 실행 시간을 넘긴다.
-                memory={submission.memory_kb} // 내 메모리 사용량을 넘긴다.
-                comparisonRows={performanceRows || []} // 다른 유저 정답 제출 성능 데이터를 넘긴다.
-              />
+              <div className="space-y-8">
+                {" "}
+                {/* 오른쪽 분석 카드들을 세로로 배치한다. */}
+                <PerformanceAnalysis // 성능 비교 컴포넌트를 렌더링한다.
+                  runtime={submission.execution_time_ms} // 내 실행 시간을 넘긴다.
+                  memory={submission.memory_kb} // 내 메모리 사용량을 넘긴다.
+                  comparisonRows={performanceRows || []} // 다른 유저 정답 제출 성능 데이터를 넘긴다.
+                />
+                <CompareOthersLanguage // 다른 유저들의 풀이 언어 비교 컴포넌트를 렌더링한다.
+                  rows={languageRows || []} // 다른 유저 정답 제출 언어 데이터를 넘긴다.
+                  myLanguage={submission.language} // 현재 내 제출 언어를 넘긴다.
+                />
+              </div>
             </div>
           </div>
         </div>
