@@ -14,7 +14,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const { category } = await request.json();
+    const { category, difficulty } = await request.json();
+
+    if (!category || !difficulty) {
+      return NextResponse.json(
+        { success: false, message: "알고리즘 유형과 난이도를 모두 선택해주세요.", code: "INVALID_REQUEST" },
+        { status: 400 }
+      );
+    }
 
     // 2. 현재 사용자 정보(문제 생성 제한 관련 컬럼) 조회
     const { data: userData, error: userError } = await supabase
@@ -50,38 +57,35 @@ export async function POST(request: Request) {
           message: "하루 최대 문제 생성 횟수(3회)를 초과했습니다. 내일 다시 시도해주세요.", 
           code: "DAILY_LIMIT_EXCEEDED" 
         },
-        { status: 429 } // 429 Too Many Requests
+        { status: 429 }
       );
     }
 
-    // 5. 생성할 더미 문제 데이터 (선택한 카테고리 기반)
-    const dummyProblem = {
-      title: `[${category}] AI 생성 더미 문제`,
-      difficulty: "Medium",
-      description: `이 문제는 AI가 '${category}' 카테고리를 기반으로 생성한 더미 문제입니다.\n\n배열 내 두 숫자를 더해 target을 만드는 알고리즘을 구현하세요.`,
-      input_description: "첫 줄에 N, 두 번째 줄에 배열, 세 번째 줄에 target이 주어집니다.",
-      output_description: "인덱스 두 개를 공백으로 구분하여 출력합니다.",
-      time_limit_ms: 1000,
-      memory_limit_mb: 256
-    };
+    // 5. RPC 함수 호출하여 비공개 문제 하나를 공개(is_hidden = false)로 전환
+    // 만약 RPC가 아직 준비되지 않았다면 404가 발생하거나 에러가 날 수 있음.
+    // 여기서는 동시성 보장을 위해 RPC 사용 (추천 RPC 형태에 맞춤)
+    const { data: publishedProblem, error: publishError } = await supabase
+      .rpc('publish_hidden_problem', { 
+        p_category: category, 
+        p_difficulty: difficulty 
+      });
 
-    // 6. DB 업데이트 로직 (문제 생성 및 카운트 증가)
-    
-    // (A) problems 테이블에 문제 데이터 삽입
-    const { data: insertedProblem, error: insertError } = await supabase
-      .from("problems")
-      .insert(dummyProblem)
-      .select()
-      .single();
-
-    if (insertError) {
+    if (publishError) {
+      console.error("RPC Error:", publishError);
       return NextResponse.json(
-        { success: false, message: "문제 생성 중 오류가 발생했습니다.", code: "INSERT_ERROR" },
+        { success: false, message: "문제 생성 중 오류가 발생했습니다. 조건에 맞는 비공개 문제가 없을 수 있습니다.", code: "RPC_ERROR" },
         { status: 500 }
       );
     }
 
-    // (B) users 테이블의 제한 카운트 및 날짜 업데이트
+    if (!publishedProblem || !publishedProblem.id) {
+      return NextResponse.json(
+        { success: false, message: "해당 조건의 비공개 문제가 남아있지 않습니다.", code: "NO_HIDDEN_PROBLEMS" },
+        { status: 404 }
+      );
+    }
+
+    // 6. users 테이블의 제한 카운트 및 날짜 업데이트
     const newCount = currentCount + 1;
     const { error: updateError } = await supabase
       .from("users")
@@ -92,18 +96,26 @@ export async function POST(request: Request) {
       .eq("id", user.id);
 
     if (updateError) {
-      // 카운트 업데이트 실패 시 무시 (문제 생성은 완료됨)
+      console.error("User Count Update Error:", updateError);
     }
 
-    // 7. 성공 시 결과 반환
+    // 7. 문제의 examples 가져오기
+    const { data: examples, error: examplesError } = await supabase
+      .from("problem_examples")
+      .select("input_text, output_text")
+      .eq("problem_id", publishedProblem.id);
+
+    // 8. 성공 시 결과 반환
     return NextResponse.json({
       success: true,
       message: "문제가 성공적으로 생성되었습니다.",
-      problem: insertedProblem,
+      problem: publishedProblem,
+      examples: examples || [],
       remainingCount: MAX_GENERATE - newCount
     });
 
   } catch (error) {
+    console.error("Server Error:", error);
     return NextResponse.json(
       { success: false, message: "서버 내부 오류가 발생했습니다.", code: "SERVER_ERROR" },
       { status: 500 }
