@@ -81,11 +81,23 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
     setError(null);
 
     try {
-      await saveProblem({
-        ...formData,
+      // problemId가 유효할 때만 id를 포함한다.
+      const payload = {
+        ...(formData.id && formData.id !== "$undefined" ? { id: formData.id } : {}),
+        title: formData.title,
+        category: formData.category,
+        difficulty: formData.difficulty,
+        description: formData.description,
+        input_description: formData.input_description,
+        output_description: formData.output_description,
+        time_limit_ms: formData.time_limit_ms,
+        memory_limit_mb: formData.memory_limit_mb,
         examples,
         testcases,
-      });
+      };
+
+      // 서버 액션 saveProblem은 단일 객체를 받도록 호출하라.
+      await saveProblem(payload);
       // redirect occurs in server action, but just in case
       router.push('/admin/problems');
     } catch (err: any) {
