@@ -31,7 +31,7 @@ export default function RootLayout({
                     <Link href="/">SSAJOON</Link>
                   </h1>
                   <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-                    <Link href="/" className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">문제 목록</Link>
+                    <Link href="/problems" className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">문제 목록</Link>
                     <Link href="/generate" className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">문제 생성</Link>
                     <Link href="/submissions" className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">제출 내역</Link>
                   </nav>

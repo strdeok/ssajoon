@@ -23,12 +23,16 @@ async function getData() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // 문제 목록 (최근 5개)
-  const problemsRes = await fetch(`${protocol}://${host}/api/problems`, {
-    cache: "no-store",
-  });
-  const problems = problemsRes.ok ? await problemsRes.json() : [];
-  const recentProblems = problems.slice(0, 5);
+  // 문제 목록 (최근 5개 + 전체 카운트)
+  const problemsRes = await fetch(
+    `${protocol}://${host}/api/problems?pageSize=5`,
+    { cache: "no-store" },
+  );
+  const problemsJson = problemsRes.ok
+    ? await problemsRes.json()
+    : { data: [], count: 0 };
+  const recentProblems: any[] = problemsJson.data ?? [];
+  const totalProblemsCount: number = problemsJson.count ?? 0;
 
   // 사용자 제출 이력 (로그인 상태일 때만)
   let submissions: any[] = [];
@@ -62,7 +66,7 @@ async function getData() {
     }
   }
 
-  return { user, problems, recentProblems, submissions: submissions.slice(0, 6), stats };
+  return { user, totalProblemsCount, recentProblems, submissions: submissions.slice(0, 6), stats };
 }
 
 function DifficultyBadge({ difficulty }: { difficulty?: string }) {
@@ -115,7 +119,7 @@ function StatusLabel({ status }: { status: string }) {
 }
 
 export default async function Home() {
-  const { user, problems, recentProblems, submissions, stats } = await getData();
+  const { user, totalProblemsCount, recentProblems, submissions, stats } = await getData();
 
   return (
     <div className="min-h-screen bg-[#F7F9FC]">
@@ -218,7 +222,7 @@ def inorder(root):
           {
             icon: <BookOpen className="w-5 h-5 text-amber-500" />,
             label: "총 문제 수",
-            value: problems.length,
+            value: totalProblemsCount,
             unit: "문제",
             bg: "bg-amber-50",
           },
@@ -351,11 +355,7 @@ def inorder(root):
               </div>
             ) : (
               <div className="divide-y divide-[#E2E8F0]">
-                {submissions.map((sub: any) => {
-                  const prob = problems.find(
-                    (p: any) => p.id === sub.problem_id
-                  );
-                  return (
+                {submissions.map((sub: any) => (
                     <div
                       key={sub.id}
                       className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F8FAFC] transition-colors"
@@ -363,7 +363,7 @@ def inorder(root):
                       <StatusIcon status={sub.status} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-zinc-800 truncate">
-                          {prob?.title ?? `문제 #${sub.problem_id}`}
+                          {sub.problem_title ?? `문제 #${sub.problem_id}`}
                         </p>
                         <p className="text-xs text-zinc-400 mt-0.5">
                           {new Date(sub.submitted_at).toLocaleDateString(
@@ -377,8 +377,7 @@ def inorder(root):
                         <span className="text-xs text-zinc-400">{sub.language}</span>
                       </div>
                     </div>
-                  );
-                })}
+                  ))}
               </div>
             )}
           </div>
