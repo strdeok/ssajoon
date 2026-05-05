@@ -25,6 +25,15 @@ type SubmissionStatusRow = {
   result: string | null;
 };
 
+type ProblemStats = {
+  problem_id: string | number;
+  attempted_users: number;
+  solved_users: number;
+  total_submissions: number;
+  accepted_submissions: number;
+  acceptance_rate: number;
+};
+
 const DIFFICULTY_MAP: Record<
   string,
   { label: string; cls: string; bg: string }
@@ -112,6 +121,9 @@ export default function ProblemsPage() {
 
   const [problemStatusMap, setProblemStatusMap] = useState<
     Map<ProblemId, ProblemStatus>
+  >(new Map());
+  const [problemStatsMap, setProblemStatsMap] = useState<
+    Map<string, ProblemStats>
   >(new Map());
   const [totalSolvedCount, setTotalSolvedCount] = useState(0);
 
@@ -285,6 +297,47 @@ export default function ProblemsPage() {
     fetchProblemStatuses();
   }, [user, problems]);
 
+  useEffect(() => {
+    const fetchProblemStats = async () => {
+      if (problems.length === 0) {
+        setProblemStatsMap(new Map());
+        return;
+      }
+
+      const problemIds = problems.map((problem) => problem.id.toString());
+
+      try {
+        const res = await fetch("/api/problems/stats", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            problemIds,
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error("문제 통계 조회 실패");
+        }
+
+        const json = await res.json();
+        const nextStatsMap = new Map<string, ProblemStats>();
+
+        (json.data ?? []).forEach((stats: ProblemStats) => {
+          nextStatsMap.set(String(stats.problem_id), stats);
+        });
+
+        setProblemStatsMap(nextStatsMap);
+      } catch (error) {
+        console.error("문제 통계 조회 실패:", error);
+        setProblemStatsMap(new Map());
+      }
+    };
+
+    fetchProblemStats();
+  }, [problems]);
+
   const displayed =
     selectedStatus === "풀었음"
       ? problems.filter(
@@ -319,24 +372,17 @@ export default function ProblemsPage() {
 
   return (
     <div className="min-h-screen bg-[#F7F9FC]">
-      {" "}
       <div className="w-full mx-auto px-6 pt-8 pb-20 space-y-6">
-        {" "}
         <div className="flex items-end justify-between">
-          {" "}
           <div>
-            {" "}
             <h1 className="text-3xl font-extrabold text-zinc-900 tracking-tight">
-              {" "}
               문제 목록
             </h1>
             <p className="text-sm text-zinc-500 mt-1.5">
-              {" "}
-              알고리즘 역량을 키울 수 있는 엄선된 문제들을 만나보세요{" "}
+              알고리즘 역량을 키울 수 있는 엄선된 문제들을 만나보세요
             </p>
           </div>
           <div className="hidden sm:flex items-center gap-4">
-            {" "}
             <div className="bg-white border border-[#E2E8F0] rounded-lg px-4 py-3 flex items-center gap-3 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
               <div className="p-2 bg-blue-50 rounded-lg">
                 <BookOpen className="w-4 h-4 text-blue-500" />
@@ -354,29 +400,22 @@ export default function ProblemsPage() {
               </div>
             </div>
             <div className="bg-white border border-[#E2E8F0] rounded-lg px-4 py-3 flex items-center gap-3 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
-              {" "}
               <div className="p-2 bg-emerald-50 rounded-lg">
-                {" "}
-                <Trophy className="w-4 h-4 text-emerald-500" />{" "}
+                <Trophy className="w-4 h-4 text-emerald-500" />
               </div>
               <div>
-                {" "}
-                <p className="text-xs text-zinc-500 font-medium">
-                  해결한 문제
-                </p>{" "}
+                <p className="text-xs text-zinc-500 font-medium">해결한 문제</p>
                 <p className="text-xl font-extrabold text-zinc-900 leading-tight">
-                  {" "}
                   {!user ? (
                     <span className="text-zinc-400 text-sm font-medium">
                       로그인 필요
                     </span>
                   ) : (
                     <>
-                      {" "}
-                      {totalSolvedCount.toLocaleString()}{" "}
+                      {totalSolvedCount.toLocaleString()}
                       <span className="text-xs font-medium text-zinc-400 ml-1">
                         문제
-                      </span>{" "}
+                      </span>
                     </>
                   )}
                 </p>
@@ -385,14 +424,11 @@ export default function ProblemsPage() {
           </div>
         </div>
         <div className="bg-white border border-[#E2E8F0] rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.05)] px-4 py-5">
-          {" "}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {" "}
             <div className="flex flex-col gap-1.5">
-              {" "}
               <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">
                 난이도
-              </label>{" "}
+              </label>
               <select
                 value={selectedDifficulty}
                 onChange={(e) =>
@@ -402,17 +438,15 @@ export default function ProblemsPage() {
               >
                 {DIFFICULTIES.map((difficulty) => (
                   <option key={difficulty} value={difficulty}>
-                    {" "}
                     {difficulty}
                   </option>
                 ))}
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              {" "}
               <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">
                 카테고리
-              </label>{" "}
+              </label>
               <select
                 value={selectedCategory}
                 onChange={(e) =>
@@ -423,17 +457,15 @@ export default function ProblemsPage() {
                 <option value="전체">전체</option>
                 {categories.map((category) => (
                   <option key={category} value={category}>
-                    {" "}
                     {category}
                   </option>
                 ))}
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              {" "}
               <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">
                 상태
-              </label>{" "}
+              </label>
               <select
                 value={selectedStatus}
                 onChange={(e) =>
@@ -445,17 +477,15 @@ export default function ProblemsPage() {
                 <option value="전체">전체</option>
                 <option value="풀었음">풀었음</option>
                 <option value="틀렸음">틀렸음</option>
-                <option value="안 풀었음">안 풀었음</option>{" "}
+                <option value="안 풀었음">안 풀었음</option>
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              {" "}
               <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">
                 검색
-              </label>{" "}
+              </label>
               <div className="relative">
-                {" "}
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />{" "}
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
                 <input
                   type="text"
                   placeholder="문제 제목, 번호 검색"
@@ -468,95 +498,123 @@ export default function ProblemsPage() {
           </div>
         </div>
         <div className="bg-white border border-[#E2E8F0] rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.05)] overflow-hidden">
-          {" "}
           <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-[#F8FAFC] border-b border-[#E2E8F0]">
-            {" "}
             <div className="col-span-1 text-xs font-semibold text-zinc-500 uppercase tracking-wide">
               #
-            </div>{" "}
-            {user && (
-              <div className="col-span-1 text-xs font-semibold text-zinc-500 uppercase tracking-wide text-center">
-                상태
-              </div>
-            )}{" "}
+            </div>
             <div
               className={`${user ? "col-span-5" : "col-span-6"} text-xs font-semibold text-zinc-500 uppercase tracking-wide`}
             >
               제목
-            </div>{" "}
+            </div>
             <div className="col-span-2 text-xs font-semibold text-zinc-500 uppercase tracking-wide">
               카테고리
-            </div>{" "}
+            </div>
             <div className="col-span-2 text-xs font-semibold text-zinc-500 uppercase tracking-wide">
               난이도
-            </div>{" "}
+            </div>
             <div className="col-span-1 text-xs font-semibold text-zinc-500 uppercase tracking-wide text-right">
-              풀기
-            </div>{" "}
+              정답률
+            </div>
+            {user && (
+              <div className="col-span-1 text-xs font-semibold text-zinc-500 uppercase tracking-wide text-center">
+                상태
+              </div>
+            )}
           </div>
           {isFetching ? (
             <div className="divide-y divide-[#E2E8F0]">
-              {" "}
               {Array.from({ length: 8 }).map((_, index) => (
                 <div
                   key={index}
                   className="grid grid-cols-12 gap-4 px-6 py-4 animate-pulse"
                 >
-                  {" "}
-                  <div className="col-span-1 h-4 bg-zinc-100 rounded" />{" "}
+                  <div className="col-span-1 h-4 bg-zinc-100 rounded" />
                   {user && (
                     <div className="col-span-1 h-4 bg-zinc-100 rounded" />
-                  )}{" "}
+                  )}
                   <div
                     className={`${user ? "col-span-5" : "col-span-6"} h-4 bg-zinc-100 rounded`}
-                  />{" "}
-                  <div className="col-span-2 h-4 bg-zinc-100 rounded" />{" "}
-                  <div className="col-span-2 h-4 bg-zinc-100 rounded w-16" />{" "}
-                  <div className="col-span-1 h-4 bg-zinc-100 rounded" />{" "}
+                  />
+                  <div className="col-span-2 h-4 bg-zinc-100 rounded" />
+                  <div className="col-span-2 h-4 bg-zinc-100 rounded w-16" />
+                  <div className="col-span-1 h-4 bg-zinc-100 rounded" />
                 </div>
               ))}
             </div>
           ) : displayed.length === 0 ? (
             <div className="py-20 text-center">
-              {" "}
               <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                {" "}
-                <BarChart2 className="w-8 h-8 text-zinc-300" />{" "}
+                <BarChart2 className="w-8 h-8 text-zinc-300" />
               </div>
               <p className="text-zinc-500 font-medium">
                 조건에 맞는 문제가 없습니다
-              </p>{" "}
-              <p className="text-zinc-400 text-sm mt-1">필터를 조정해보세요</p>{" "}
+              </p>
+              <p className="text-zinc-400 text-sm mt-1">필터를 조정해보세요</p>
               <button
                 onClick={resetFilters}
                 className="mt-4 text-sm text-blue-600 hover:underline font-medium"
               >
-                {" "}
                 필터 초기화
               </button>
             </div>
           ) : (
             <div className="divide-y divide-[#E2E8F0]">
-              {" "}
               {displayed.map((problem, index) => {
                 const problemStatus =
                   problemStatusMap.get(problem.id) ?? "none";
 
                 return (
-                  <Link
+                  <div
                     key={problem.id}
-                    href={`/problems/${problem.id}`}
-                    className="group grid grid-cols-12 gap-4 items-center px-6 py-4 hover:bg-[#F8FAFC] transition-colors"
+                    className="group grid grid-cols-12 gap-4 items-center px-6 py-4 hover:bg-[#F8FAFC] transition-colors border-b border-[#E2E8F0] last:border-0"
                   >
                     <div className="col-span-1 text-sm text-zinc-400 font-medium">
-                      {" "}
                       {problem.problem_no ??
-                        (currentPage - 1) * PAGE_SIZE + index + 1}{" "}
+                        (currentPage - 1) * PAGE_SIZE + index + 1}
                     </div>
+
+                    <div className={user ? "col-span-5" : "col-span-6"}>
+                      <Link href={`/problems/${problem.id}`} className="block">
+                        <p className="text-sm font-semibold text-zinc-800 hover:text-blue-600 transition-colors line-clamp-1">
+                          {problem.title}
+                        </p>
+                      </Link>
+                    </div>
+
+                    <div className="col-span-2">
+                      {problem.category ? (
+                        <span className="text-xs text-zinc-500 bg-zinc-50 border border-zinc-200 px-2 py-0.5 rounded-full">
+                          {problem.category}
+                        </span>
+                      ) : (
+                        <span className="text-zinc-300 text-xs">—</span>
+                      )}
+                    </div>
+
+                    <div className="col-span-2">
+                      <DifficultyBadge difficulty={problem.difficulty} />
+                    </div>
+
+                    {(() => {
+                      const stats = problemStatsMap.get(String(problem.id));
+
+                      const acceptanceRateText =
+                        !stats || stats.attempted_users === 0
+                          ? "-"
+                          : `${stats.acceptance_rate}%`;
+
+                      return (
+                        <div className="col-span-1 text-right">
+                          <span className="text-xs font-semibold text-zinc-600">
+                            {acceptanceRateText}
+                          </span>
+                        </div>
+                      );
+                    })()}
 
                     {user && (
                       <div className="col-span-1 flex justify-center">
-                        {" "}
                         {problemStatus === "solved" ? (
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                         ) : problemStatus === "wrong" ? (
@@ -566,58 +624,21 @@ export default function ProblemsPage() {
                         )}
                       </div>
                     )}
-
-                    <div className={user ? "col-span-5" : "col-span-6"}>
-                      {" "}
-                      <p className="text-sm font-semibold text-zinc-800 group-hover:text-blue-600 transition-colors line-clamp-1">
-                        {" "}
-                        {problem.title}
-                      </p>
-                    </div>
-
-                    <div className="col-span-2">
-                      {" "}
-                      {problem.category ? (
-                        <span className="text-xs text-zinc-500 bg-zinc-50 border border-zinc-200 px-2 py-0.5 rounded-full">
-                          {" "}
-                          {problem.category}
-                        </span>
-                      ) : (
-                        <span className="text-zinc-300 text-xs">—</span>
-                      )}
-                    </div>
-
-                    <div className="col-span-2">
-                      {" "}
-                      <DifficultyBadge difficulty={problem.difficulty} />{" "}
-                    </div>
-
-                    <div className="col-span-1 flex justify-end">
-                      {" "}
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 group-hover:text-blue-700 bg-blue-50 group-hover:bg-blue-100 px-2.5 py-1.5 rounded-lg transition-all">
-                        {" "}
-                        풀기
-                        <ChevronRight className="w-3 h-3" />{" "}
-                      </span>
-                    </div>
-                  </Link>
+                  </div>
                 );
               })}
             </div>
           )}
           {!isFetching && totalCount > 0 && (
             <div className="flex items-center justify-between px-6 py-4 bg-[#F8FAFC] border-t border-[#E2E8F0]">
-              {" "}
               <p className="text-xs text-zinc-500">
-                {" "}
-                총{" "}
+                총
                 <span className="font-semibold text-zinc-700">
                   {isFetching ? "—" : filteredCount.toLocaleString()}
                 </span>
                 개 문제
               </p>
               <div className="flex items-center gap-2">
-                {" "}
                 <button
                   onClick={() =>
                     setCurrentPage((page) => Math.max(1, page - 1))
@@ -628,7 +649,6 @@ export default function ProblemsPage() {
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 <div className="flex items-center gap-1">
-                  {" "}
                   {(() => {
                     const pages: number[] = [];
                     const windowSize = 5;
@@ -669,38 +689,32 @@ export default function ProblemsPage() {
         </div>
       </div>
       <footer className="border-t border-[#E2E8F0] bg-white">
-        {" "}
         <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          {" "}
           <div>
-            {" "}
-            <p className="text-sm font-semibold text-zinc-800">
-              싸준 (SSAJUN)
-            </p>{" "}
+            <p className="text-sm font-semibold text-zinc-800">싸준 (SSAJUN)</p>
             <p className="text-xs text-zinc-400 mt-0.5">
               © 2024 싸준 (SSAJUN). All rights reserved.
-            </p>{" "}
+            </p>
           </div>
           <nav className="flex items-center gap-6 text-sm text-zinc-500">
-            {" "}
             <Link
               href="/problems"
               className="hover:text-zinc-800 transition-colors font-medium text-zinc-800"
             >
               문제
-            </Link>{" "}
+            </Link>
             <Link
               href="/generate"
               className="hover:text-zinc-800 transition-colors"
             >
               AI 생성
-            </Link>{" "}
+            </Link>
             <Link
               href="/submissions"
               className="hover:text-zinc-800 transition-colors"
             >
               제출
-            </Link>{" "}
+            </Link>
           </nav>
         </div>
       </footer>
