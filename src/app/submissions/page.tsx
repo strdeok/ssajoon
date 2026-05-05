@@ -126,14 +126,14 @@ export default function SubmissionsPage() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const stats: WeeklyStat[] = [];
+    const internalStats: (WeeklyStat & { fullDate: string })[] = [];
     const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
 
     // 최근 7일에 대한 기본 데이터 구조 생성 (6일 전 ~ 오늘)
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
-      stats.push({
+      internalStats.push({
         date: dayNames[d.getDay()],
         count: 0,
         isToday: i === 0,
@@ -147,13 +147,14 @@ export default function SubmissionsPage() {
       const subDate = new Date(sub.submittedAt);
       const dateStr = subDate.toISOString().split("T")[0];
       
-      const targetStat = stats.find(s => (s as any).fullDate === dateStr);
+      const targetStat = internalStats.find(s => s.fullDate === dateStr);
       if (targetStat) {
         targetStat.count += 1;
       }
     });
 
-    return stats;
+    // 화면용 데이터만 추출해서 반환
+    return internalStats.map(({ fullDate, ...rest }) => rest);
   };
 
   // -------------------------------------------------------------
