@@ -14,6 +14,7 @@ import {
   StatusIcon,
   StatusLabel,
 } from "@/components/problem/ProblemComponents";
+import { getKoreanTag } from "@/utils/tagUtils";
 
 type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -22,17 +23,18 @@ type ProblemRow = {
   title: string;
   difficulty: string | null;
   description: string | null;
-  category: string | null;
+  tag1: string | null;
+  tag2: string | null;
   created_at: string | null;
 };
 
 type JoinedProblem =
   | {
-      title: string | null;
-    }
+    title: string | null;
+  }
   | {
-      title: string | null;
-    }[]
+    title: string | null;
+  }[]
   | null;
 
 type SubmissionRow = {
@@ -139,7 +141,7 @@ async function getVisibleProblemsCount(supabase: ServerSupabaseClient) {
 async function getRecentVisibleProblems(supabase: ServerSupabaseClient) {
   const { data, error } = await supabase
     .from("problems")
-    .select("id, title, difficulty, description, category, created_at")
+    .select("id, title, difficulty, description, tag1, tag2, created_at")
     .eq("is_deleted", false)
     .eq("is_hidden", false)
     .order("created_at", { ascending: false, nullsFirst: false })
@@ -150,7 +152,7 @@ async function getRecentVisibleProblems(supabase: ServerSupabaseClient) {
   if (isUndefinedColumnError(error)) {
     const { data: fallbackData, error: fallbackError } = await supabase
       .from("problems")
-      .select("id, title, difficulty, description, category, created_at")
+      .select("id, title, difficulty, description, tag1, tag2, created_at")
       .eq("is_deleted", false)
       .order("created_at", { ascending: false, nullsFirst: false })
       .limit(10);
@@ -406,7 +408,7 @@ def binary_search(arr, target):
                       </p>
                       <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5 line-clamp-1">
                         {problem.description ||
-                          problem.category ||
+                          (problem.tag1 ? getKoreanTag(problem.tag1) : "") ||
                           "설명이 없습니다."}
                       </p>
                     </div>
@@ -493,13 +495,13 @@ def binary_search(arr, target):
                         <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
                           {submission.submitted_at
                             ? new Date(
-                                submission.submitted_at,
-                              ).toLocaleDateString("ko-KR", {
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
+                              submission.submitted_at,
+                            ).toLocaleDateString("ko-KR", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
                             : "제출 시간 없음"}
                         </p>
                       </div>
