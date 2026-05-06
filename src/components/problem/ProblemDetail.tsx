@@ -5,6 +5,7 @@ import { Problem } from "@/types/problem";
 import { createClient } from "@/utils/supabase/client";
 import { Loader2, FileText, Clock, Copy, Check, Cpu } from "lucide-react";
 import { SubmissionHistoryPanel } from "@/components/submission/SubmissionHistoryPanel";
+import ProblemMarkdown from "../common/ProblemMarkdown";
 
 export function ProblemDetail({ problem }: { problem: Problem }) {
   // ─── 탭 상태 ───────────────────────────────────────────────
@@ -115,11 +116,10 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
         <div className="flex px-8 space-x-6">
           <button
             onClick={() => handleTabChange("description")}
-            className={`pb-4 text-sm font-medium transition-colors relative flex items-center space-x-2 cursor-pointer ${
-              activeTab === "description"
-                ? "text-blue-600 dark:text-blue-400"
-                : "text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
-            }`}
+            className={`pb-4 text-sm font-medium transition-colors relative flex items-center space-x-2 cursor-pointer ${activeTab === "description"
+              ? "text-blue-600 dark:text-blue-400"
+              : "text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+              }`}
           >
             <FileText className="w-4 h-4" />
             <span>문제 설명</span>
@@ -130,11 +130,10 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
 
           <button
             onClick={() => handleTabChange("submissions")}
-            className={`pb-4 text-sm font-medium transition-colors relative flex items-center space-x-2 cursor-pointer ${
-              activeTab === "submissions"
-                ? "text-blue-600 dark:text-blue-400"
-                : "text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
-            }`}
+            className={`pb-4 text-sm font-medium transition-colors relative flex items-center space-x-2 cursor-pointer ${activeTab === "submissions"
+              ? "text-blue-600 dark:text-blue-400"
+              : "text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+              }`}
           >
             <Clock className="w-4 h-4" />
             <span>내 제출 코드</span>
@@ -185,7 +184,7 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
                   문제 설명
                 </h2>
                 <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-6 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap">
-                  {problem.description}
+                  <ProblemMarkdown content={problem.description} />
                 </div>
               </section>
             )}
@@ -198,7 +197,7 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
                   입력 설명
                 </h2>
                 <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-6 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap">
-                  {problem.input_description}
+                  <ProblemMarkdown content={problem.input_description} />
                 </div>
               </section>
             )}
@@ -211,7 +210,7 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
                   출력 설명
                 </h2>
                 <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-6 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap">
-                  {problem.output_description}
+                  <ProblemMarkdown content={problem.output_description} />
                 </div>
               </section>
             )}
