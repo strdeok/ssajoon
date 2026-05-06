@@ -102,6 +102,7 @@ export default async function SubmissionDetailPage({
     submitted_at: submission.submitted_at, // 제출 시간을 넣는다.
     problem_title: problemData?.title || "알 수 없는 문제", // 문제 제목을 넣는다.
     problem_id: problemData?.id || submission.problem_id, // 문제 id를 넣는다.
+    failed_testcase_order: submission.failed_testcase_order,
   };
 
   return (
