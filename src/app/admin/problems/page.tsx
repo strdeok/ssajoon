@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Plus, Edit } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getKoreanTag } from "@/utils/tagUtils";
-import { toggleHidden } from "./actions";
+import { deleteProblem } from "./actions";
 import { DeleteProblemButton } from "@/components/admin/DeleteProblemButton";
 import { ToggleHiddenButton } from "@/components/admin/ToggleHiddenButton";
 import { AdminProblemSearch } from "@/components/admin/AdminProblemSearch";
@@ -192,9 +192,9 @@ export default async function AdminProblemsPage({ searchParams }: AdminProblemsP
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      <ToggleHiddenButton 
-                        id={problem.id} 
-                        isHidden={problem.is_hidden} 
+                      <ToggleHiddenButton
+                        id={problem.id}
+                        isHidden={problem.is_hidden}
                         disabled={problem.is_deleted}
                       />
                       {!problem.is_deleted && (
