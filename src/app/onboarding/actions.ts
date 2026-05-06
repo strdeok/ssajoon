@@ -4,8 +4,9 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
-export async function setupNickname(formData: FormData) {
+export async function setupProfile(formData: FormData) {
   const nickname = formData.get("nickname") as string;
+  const school_number = formData.get("school_number") as string;
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -22,12 +23,12 @@ export async function setupNickname(formData: FormData) {
     .single();
 
   if (existingProfile) {
-    return redirect(`/onboarding?message=${encodeURIComponent("Nickname already exists.")}`);
+    return redirect(`/onboarding?message=${encodeURIComponent("이미 존재하는 닉네임입니다.")}`);
   }
 
   // Update Auth layer
   const { error: authError } = await supabase.auth.updateUser({
-    data: { nickname }
+    data: { nickname, school_number }
   });
 
   if (authError) {
@@ -37,7 +38,7 @@ export async function setupNickname(formData: FormData) {
   // Update Database layer natively replacing temporary nickname
   const { error: dbError } = await supabase
     .from("users")
-    .update({ nickname })
+    .update({ nickname, school_number })
     .eq("id", user.id);
 
   if (dbError) {

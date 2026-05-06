@@ -26,6 +26,12 @@ export default function ClientForm({ initialNickname, initialSchoolNumber, userE
     setIsSaving(true);
     setMessage(null);
 
+    if (schoolNumber && !/^\d{7}$/.test(schoolNumber)) {
+      setMessage({ type: "error", text: "학번은 숫자 7자리여야 합니다." });
+      setIsSaving(false);
+      return;
+    }
+
     const formData = new FormData();
     formData.append("nickname", nickname);
     formData.append("school_number", schoolNumber);
@@ -118,8 +124,12 @@ export default function ClientForm({ initialNickname, initialSchoolNumber, userE
               type="text"
               value={schoolNumber}
               onChange={(e) => setSchoolNumber(e.target.value)}
-              placeholder="학번을 입력하세요 (예: 1234567)"
+              minLength={7}
+              maxLength={7}
+              pattern="\d{7}"
+              placeholder="학번 7자리를 입력하세요"
               className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 outline-none transition-all"
+              title="학번은 숫자 7자리여야 합니다."
             />
           </div>
 
