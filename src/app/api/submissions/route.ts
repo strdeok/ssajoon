@@ -95,44 +95,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 5. 외부 오케스트레이터 채점 서버로 Proxy 전송
-    // 환경변수 적용: ORCHESTRATORURL
-    const orchestratorUrl = process.env.ORCHESTRATORURL;
-    
-    if (!orchestratorUrl) {
-      return NextResponse.json(
-        { success: false, message: "채점 서버 주소가 설정되지 않았습니다." },
-        { status: 500 }
-      );
-    }
-
-    const orchestratorRes = await fetch(orchestratorUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ submissionId: insertedSubmission.id }),
-    });
-
-    let orchestratorData;
-    try {
-      orchestratorData = await orchestratorRes.json();
-    } catch (e) {
-      orchestratorData = { message: "Invalid JSON response from orchestrator" };
-    }
-
-    if (!orchestratorRes.ok) {
-      // 오류 발생 시 DB 기록 삭제
-      await supabase
-        .from("submissions")
-        .delete()
-        .eq("id", insertedSubmission.id);
-
-      return NextResponse.json(
-        { success: false, message: orchestratorData.message || "외부 채점 서버 연동 에러가 발생했습니다." },
-        { status: orchestratorRes.status }
-      );
-    }
-
-    // 6. 결과 반환
+    // 5. 결과 반환
     return NextResponse.json({
       success: true,
       message: "제출이 완료되었습니다.",

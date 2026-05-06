@@ -69,7 +69,7 @@ export function getSubmissionLabel(
           const isHiddenFail = failedTestcaseOrder > publicTestcaseCount;
           const displayOrder = isHiddenFail ? failedTestcaseOrder - publicTestcaseCount : failedTestcaseOrder;
           const labelPrefix = isHiddenFail ? "히든 " : "";
-          
+
           text = `${labelPrefix}${displayOrder}번 테스트케이스에서 틀렸습니다`;
         } else {
           text = "오답입니다";
@@ -106,10 +106,6 @@ export function getSubmissionLabel(
   // DONE인데 result가 비어 있는 예외 상황을 처리한다.
   else if (status === "DONE") {
     text = "채점 완료 (결과 미상)";
-  }
-  // 그 외 예외 상황을 처리한다.
-  else {
-    text = "결과 확인 중";
   }
 
   return {
