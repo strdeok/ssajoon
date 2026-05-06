@@ -1,12 +1,14 @@
 "use client";
 
+import { getKoreanTag } from "@/utils/tagUtils";
 import Link from "next/link";
 
 export type Submission = {
   id: number;
   problemId: number;
   problemTitle: string;
-  category: string;
+  tag1: string;
+  tag2: string | null;
   language: string;
   result: string;
   runtimeMs: number | null;
@@ -95,24 +97,38 @@ export default function SubmissionTable({ submissions }: Props) {
           <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
             {submissions.length === 0 ? (
               <tr>
-                <td
-                  colSpan={8}
-                  className="px-6 py-20 text-center"
-                >
+                <td colSpan={8} className="px-6 py-20 text-center">
                   <div className="flex flex-col items-center justify-center space-y-3">
                     <div className="w-12 h-12 bg-gray-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-1">
-                      <svg className="w-6 h-6 text-gray-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      <svg
+                        className="w-6 h-6 text-gray-400 dark:text-zinc-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
                       </svg>
                     </div>
-                    <p className="text-gray-900 dark:text-zinc-200 font-medium text-base">제출 내역이 없습니다.</p>
-                    <p className="text-gray-500 dark:text-zinc-500 text-sm">아직 제출한 문제가 없습니다. 새로운 문제에 도전해보세요!</p>
+                    <p className="text-gray-900 dark:text-zinc-200 font-medium text-base">
+                      제출 내역이 없습니다.
+                    </p>
+                    <p className="text-gray-500 dark:text-zinc-500 text-sm">
+                      아직 제출한 문제가 없습니다. 새로운 문제에 도전해보세요!
+                    </p>
                   </div>
                 </td>
               </tr>
             ) : (
               submissions.map((sub) => (
-                <tr key={sub.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
+                <tr
+                  key={sub.id}
+                  className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+                >
                   <td className="px-6 py-4 font-mono">
                     <Link
                       href={`/submissions/${sub.id}`}
@@ -133,9 +149,21 @@ export default function SubmissionTable({ submissions }: Props) {
                           #{sub.problemId}
                         </span>
                       </Link>
-                      <span className="text-xs text-gray-500 dark:text-zinc-500 mt-0.5">
-                        {sub.category}
-                      </span>
+                      <div className="flex gap-1 mt-0.5">
+                        <span className="text-xs text-gray-500 dark:text-zinc-500">
+                          {getKoreanTag(sub.tag1)}
+                        </span>
+                        {sub.tag2 && (
+                          <>
+                            <span className="text-xs text-gray-400 dark:text-zinc-600">
+                              •
+                            </span>
+                            <span className="text-xs text-gray-500 dark:text-zinc-500">
+                              {getKoreanTag(sub.tag2)}
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </td>
 
