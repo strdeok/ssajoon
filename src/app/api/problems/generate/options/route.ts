@@ -21,10 +21,10 @@ export async function GET() {
 
     const { data: problems, error } = await supabase
       .from("problems")
-      .select("id, category, difficulty")
+      .select("id, tag1, tag2, difficulty")
       .eq("is_hidden", true)
       .eq("is_deleted", false)
-      .not("category", "is", null)
+      .not("tag1", "is", null)
       .not("difficulty", "is", null);
 
     if (error) {
@@ -40,18 +40,19 @@ export async function GET() {
 
     const optionMap = new Map<
       string,
-      { category: string; difficulty: string; count: number }
+      { tag1: string; tag2: string | null; difficulty: string; count: number }
     >();
 
     for (const p of problems) {
-      if (!p.category || !p.difficulty) continue;
+      if (!p.tag1 || !p.difficulty) continue;
 
-      const key = `${p.category}::${p.difficulty}`;
+      const key = `${p.tag1}::${p.tag2 || ""}::${p.difficulty}`;
       if (optionMap.has(key)) {
         optionMap.get(key)!.count += 1;
       } else {
         optionMap.set(key, {
-          category: p.category,
+          tag1: p.tag1,
+          tag2: p.tag2 || null,
           difficulty: p.difficulty,
           count: 1,
         });

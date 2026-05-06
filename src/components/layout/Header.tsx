@@ -50,14 +50,6 @@ export async function Header() {
             >
               문제 생성
             </Link>
-            {userRole === "ADMIN" && (
-              <Link
-                href="/admin"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
-              >
-                관리자
-              </Link>
-            )}
           </nav>
         </div>
 

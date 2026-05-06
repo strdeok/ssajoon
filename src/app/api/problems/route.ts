@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     Math.max(1, parseInt(searchParams.get("pageSize") || "20")),
   );
   const difficulty = searchParams.get("difficulty") || "";
-  const category = searchParams.get("category") || "";
+  const tag = searchParams.get("tag") || searchParams.get("category") || "";
   const search = searchParams.get("search") || "";
 
   const supabase = await createClient();
@@ -29,7 +29,7 @@ export async function GET(request: Request) {
 
   let query = supabase
     .from("problems")
-    .select("id, title, category, difficulty", { count: "exact" })
+    .select("id, title, tag1, tag2, difficulty", { count: "exact" })
     .eq("is_deleted", false)
     .eq("is_hidden", false)
     .order("id", { ascending: true });
@@ -38,8 +38,8 @@ export async function GET(request: Request) {
     query = query.in("difficulty", DIFFICULTY_FILTER[difficulty]);
   }
 
-  if (category) {
-    query = query.eq("category", category);
+  if (tag) {
+    query = query.or(`tag1.eq.${tag},tag2.eq.${tag}`);
   }
 
   if (search.trim()) {

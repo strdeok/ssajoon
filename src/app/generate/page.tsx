@@ -15,9 +15,11 @@ import {
   Copy,
   Lightbulb,
 } from "lucide-react";
+import { getKoreanTag } from "@/utils/tagUtils";
 
 interface OptionItem {
-  category: string;
+  tag1: string;
+  tag2: string | null;
   difficulty: string;
   count: number;
 }
@@ -28,7 +30,8 @@ interface GeneratedProblem {
   description: string;
   input_description: string;
   output_description: string;
-  category: string;
+  tag1: string;
+  tag2?: string | null;
   difficulty: string;
   time_limit_ms: number;
   memory_limit_mb: number;
@@ -123,7 +126,8 @@ export default function GeneratePage() {
   const [optionItems, setOptionItems] = useState<OptionItem[]>([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState(true);
 
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedTag1, setSelectedTag1] = useState<string>("");
+  const [selectedTag2, setSelectedTag2] = useState<string>("");
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("");
 
   const [isGenerating, setIsGenerating] = useState(false);
@@ -231,38 +235,62 @@ export default function GeneratePage() {
     };
   }, [isGenerating, loadingStartedAt]);
 
-  const availableCategories = useMemo(() => {
-    return Array.from(new Set(optionItems.map((item) => item.category))).sort();
+  const availableTag1s = useMemo(() => {
+    return Array.from(new Set(optionItems.map((item) => item.tag1))).sort();
   }, [optionItems]);
 
-  const availableDifficulties = useMemo(() => {
-    if (!selectedCategory) return [];
+  const availableTag2s = useMemo(() => {
+    if (!selectedTag1) return [];
+    const tags = optionItems
+      .filter((item) => item.tag1 === selectedTag1 && item.tag2 !== null)
+      .map((item) => item.tag2 as string);
+    return Array.from(new Set(tags)).sort();
+  }, [selectedTag1, optionItems]);
 
+  const availableDifficulties = useMemo(() => {
+    if (!selectedTag1) return [];
+  
     return optionItems
-      .filter((item) => item.category === selectedCategory)
+      .filter((item) => 
+        item.tag1 === selectedTag1 && 
+        (selectedTag2 === "" ? item.tag2 === null : item.tag2 === selectedTag2)
+      )
       .map((item) => item.difficulty)
       .sort();
-  }, [selectedCategory, optionItems]);
+  }, [selectedTag1, selectedTag2, optionItems]);
 
   const selectedOptionCount = useMemo(() => {
-    if (!selectedCategory || !selectedDifficulty) return 0;
-
-    const option = optionItems.find((item) => item.category === selectedCategory && item.difficulty === selectedDifficulty);
-
+    if (!selectedTag1 || !selectedDifficulty) return 0;
+  
+    const option = optionItems.find((item) => 
+      item.tag1 === selectedTag1 && 
+      (selectedTag2 === "" ? item.tag2 === null : item.tag2 === selectedTag2) && 
+      item.difficulty === selectedDifficulty
+    );
+  
     return option?.count ?? 0;
-  }, [selectedCategory, selectedDifficulty, optionItems]);
+  }, [selectedTag1, selectedTag2, selectedDifficulty, optionItems]);
 
   const canGenerate =
     !isGenerating &&
     !isLoadingUsage &&
     !isLoadingOptions &&
-    Boolean(selectedCategory) &&
+    Boolean(selectedTag1) &&
     Boolean(selectedDifficulty) &&
     selectedOptionCount > 0 &&
     remainingCount > 0;
 
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategory(category);
+  const handleTag1Change = (tag: string) => {
+    setSelectedTag1(tag);
+    setSelectedTag2("");
+    setSelectedDifficulty("");
+    setGeneratedProblem(null);
+    setProblemExamples([]);
+    setErrorMessage(null);
+  };
+
+  const handleTag2Change = (tag: string) => {
+    setSelectedTag2(tag);
     setSelectedDifficulty("");
     setGeneratedProblem(null);
     setProblemExamples([]);
@@ -298,7 +326,8 @@ export default function GeneratePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          category: selectedCategory,
+          tag1: selectedTag1,
+          tag2: selectedTag2 || null,
           difficulty: selectedDifficulty,
         }),
       });
@@ -388,16 +417,16 @@ export default function GeneratePage() {
 
               <div className="relative">
                 <select
-                  value={selectedCategory}
-                  onChange={(event) => handleCategoryChange(event.target.value)}
+                  value={selectedTag1}
+                  onChange={(event) => handleTag1Change(event.target.value)}
                   disabled={isLoadingOptions || isGenerating}
                   className="w-full appearance-none bg-zinc-50 dark:bg-black/50 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 block px-4 py-3.5 outline-none transition-all cursor-pointer font-medium disabled:opacity-50"
                 >
                   <option value="">{isLoadingOptions ? "불러오는 중..." : "알고리즘을 선택하세요"}</option>
 
-                  {availableCategories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
+                  {availableTag1s.map((tag) => (
+                    <option key={tag} value={tag}>
+                      {getKoreanTag(tag)}
                     </option>
                   ))}
                 </select>
@@ -408,6 +437,35 @@ export default function GeneratePage() {
               </div>
             </div>
 
+            {availableTag2s.length > 0 && (
+              <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                  추가 알고리즘 유형 (선택)
+                </label>
+
+                <div className="relative">
+                  <select
+                    value={selectedTag2}
+                    onChange={(event) => handleTag2Change(event.target.value)}
+                    disabled={isGenerating}
+                    className="w-full appearance-none bg-zinc-50 dark:bg-black/50 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 block px-4 py-3.5 outline-none transition-all cursor-pointer font-medium disabled:opacity-50"
+                  >
+                    <option value="">전체</option>
+
+                    {availableTag2s.map((tag) => (
+                      <option key={tag} value={tag}>
+                        {getKoreanTag(tag)}
+                      </option>
+                    ))}
+                  </select>
+
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-500">
+                    <ChevronRight className="w-4 h-4 rotate-90" />
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-3">
               <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                 난이도 선택
@@ -417,10 +475,10 @@ export default function GeneratePage() {
                 <select
                   value={selectedDifficulty}
                   onChange={(event) => setSelectedDifficulty(event.target.value)}
-                  disabled={!selectedCategory || isLoadingOptions || isGenerating}
+                  disabled={!selectedTag1 || isLoadingOptions || isGenerating}
                   className="w-full appearance-none bg-zinc-50 dark:bg-black/50 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 block px-4 py-3.5 outline-none transition-all cursor-pointer font-medium disabled:opacity-50"
                 >
-                  <option value="">{selectedCategory ? "난이도를 선택하세요" : "알고리즘을 먼저 선택하세요"}</option>
+                  <option value="">{selectedTag1 ? "난이도를 선택하세요" : "알고리즘을 먼저 선택하세요"}</option>
 
                   {availableDifficulties.map((difficulty) => (
                     <option key={difficulty} value={difficulty}>
@@ -543,8 +601,13 @@ export default function GeneratePage() {
                     </span>
 
                     <span className="px-3 py-1 rounded-full text-xs font-bold border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-black">
-                      {generatedProblem.category}
+                      {getKoreanTag(generatedProblem.tag1)}
                     </span>
+                    {generatedProblem.tag2 && (
+                      <span className="px-3 py-1 rounded-full text-xs font-bold border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-black">
+                        {getKoreanTag(generatedProblem.tag2)}
+                      </span>
+                    )}
                   </div>
 
                   <h3 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tight">

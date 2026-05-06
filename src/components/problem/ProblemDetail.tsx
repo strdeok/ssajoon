@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 import { Loader2, FileText, Clock, Copy, Check, Cpu } from "lucide-react";
 import { SubmissionHistoryPanel } from "@/components/submission/SubmissionHistoryPanel";
 import ProblemMarkdown from "../common/ProblemMarkdown";
+import { getKoreanTag } from "@/utils/tagUtils";
 
 export function ProblemDetail({ problem }: { problem: Problem }) {
   const [activeTab, setActiveTab] = useState<"description" | "submissions">("description");
@@ -78,11 +79,21 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
           <h1 className="text-3xl font-bold text-zinc-900 dark:text-white tracking-tight">
             {problem.problem_no ? `${problem.problem_no}. ${problem.title}` : problem.title}
           </h1>
-          {problem.difficulty && (
-            <span className="px-3 py-1 rounded-full text-sm font-bold bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 shadow-sm cursor-default">
-              {problem.difficulty}
+          <div className="flex gap-2">
+            <span className="px-3 py-1 rounded-full text-sm font-bold bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 shadow-sm cursor-default">
+              {getKoreanTag(problem.tag1)}
             </span>
-          )}
+            {problem.tag2 && (
+              <span className="px-3 py-1 rounded-full text-sm font-bold bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 shadow-sm cursor-default">
+                {getKoreanTag(problem.tag2)}
+              </span>
+            )}
+            {problem.difficulty && (
+              <span className="px-3 py-1 rounded-full text-sm font-bold bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 shadow-sm cursor-default">
+                {problem.difficulty}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex px-8 space-x-6">

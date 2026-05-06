@@ -4,13 +4,16 @@ import Link from "next/link";
 import { Problem } from "@/types/problem";
 import { ChevronRight, Code2, Search } from "lucide-react";
 import { useState } from "react";
+import { getKoreanTag } from "@/utils/tagUtils";
 
 export function ProblemList({ problems }: { problems: Problem[] }) {
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredProblems = problems.filter((problem) =>
     problem.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    problem.description.toLowerCase().includes(searchQuery.toLowerCase())
+    problem.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    problem.tag1.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (problem.tag2 && problem.tag2.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -58,10 +61,18 @@ export function ProblemList({ problems }: { problems: Problem[] }) {
                   <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-blue-400 transform group-hover:translate-x-1 transition-all flex-shrink-0 ml-2 mt-2" />
                 </div>
                 
-                <div className="mt-6 flex items-center gap-2">
+                <div className="mt-6 flex flex-wrap items-center gap-2">
                   <span className="text-xs font-medium px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-full">
                     No. {problem.problem_no || problem.id}
                   </span>
+                  <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+                    {getKoreanTag(problem.tag1)}
+                  </span>
+                  {problem.tag2 && (
+                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+                      {getKoreanTag(problem.tag2)}
+                    </span>
+                  )}
                   {problem.difficulty && (
                     <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20">
                       {problem.difficulty}

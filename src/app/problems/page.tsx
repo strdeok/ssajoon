@@ -18,6 +18,7 @@ import {
   isAcceptedResult,
   StatusIcon
 } from "@/components/problem/ProblemComponents";
+import { getKoreanTag } from "@/utils/tagUtils";
 
 type ProblemStatus = "solved" | "wrong" | "none";
 
@@ -379,7 +380,7 @@ function ProblemsContent() {
               className="w-full bg-[#F8FAFC] dark:bg-[#09090b] border border-[#E2E8F0] dark:border-zinc-800 text-sm text-zinc-800 dark:text-zinc-200 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 dark:focus:border-blue-500/50 transition cursor-pointer"
             >
               <option value="전체">전체</option>
-              {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+              {categories.map((c) => <option key={c} value={c}>{getKoreanTag(c)}</option>)}
             </select>
           </div>
           <div className="flex flex-col gap-1.5">
@@ -416,7 +417,7 @@ function ProblemsContent() {
         <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-[#F8FAFC] dark:bg-zinc-800/30 border-b border-[#E2E8F0] dark:border-zinc-800">
           <div className="col-span-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">#</div>
           <div className={`${user ? "col-span-5" : "col-span-6"} text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide`}>제목</div>
-          <div className="col-span-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">카테고리</div>
+          <div className="col-span-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">태그</div>
           <div className="col-span-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">난이도</div>
           <div className="col-span-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide text-right">정답률</div>
           {user && <div className="col-span-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide text-center">상태</div>}
@@ -465,13 +466,14 @@ function ProblemsContent() {
                       </p>
                     </Link>
                   </div>
-                  <div className="col-span-2">
-                    {problem.category ? (
+                  <div className="col-span-2 flex flex-wrap gap-1">
+                    <span className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 rounded-full font-medium">
+                      {getKoreanTag(problem.tag1)}
+                    </span>
+                    {problem.tag2 && (
                       <span className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 rounded-full font-medium">
-                        {problem.category}
+                        {getKoreanTag(problem.tag2)}
                       </span>
-                    ) : (
-                      <span className="text-zinc-300 dark:text-zinc-700 text-xs">—</span>
                     )}
                   </div>
                   <div className="col-span-2">

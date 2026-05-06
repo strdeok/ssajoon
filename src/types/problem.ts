@@ -19,7 +19,8 @@ export interface Problem {
   id: number; // bigint auto increment
   problem_no?: number;
   title: string;
-  category?: string;
+  tag1: string;
+  tag2?: string | null;
   description: string;
   input_description: string;
   output_description: string;

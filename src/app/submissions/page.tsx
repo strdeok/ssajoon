@@ -145,7 +145,14 @@ export default function SubmissionsPage() {
         const stats = calculateWeeklySubmissionStats(mappedSubmissions);
         setWeeklyStats(stats);
       } catch (err: any) {
-        setError("제출 기록을 불러오는 중 오류가 발생했습니다.");
+        // 데이터가 없는 경우는 에러로 처리하지 않음
+        setSubmissions([]);
+        setSummary({
+          totalSubmissions: 0,
+          acceptedSubmissions: 0,
+          submissionAccuracyRate: 0,
+        });
+        setWeeklyStats([]);
       } finally {
         setIsLoading(false);
       }

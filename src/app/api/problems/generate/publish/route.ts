@@ -13,9 +13,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const { category, difficulty } = await request.json();
+    const { tag1, tag2, difficulty } = await request.json();
 
-    if (!category || !difficulty) {
+    if (!tag1 || !difficulty) {
       return NextResponse.json(
         { success: false, message: "알고리즘 유형과 난이도를 모두 선택해주세요.", code: "INVALID_REQUEST" },
         { status: 400 }
@@ -58,7 +58,8 @@ export async function POST(request: Request) {
 
     const { data: publishedProblem, error: publishError } = await supabase
       .rpc('publish_hidden_problem', { 
-        p_category: category, 
+        p_tag1: tag1,
+        p_tag2: tag2 || null,
         p_difficulty: difficulty 
       });
 

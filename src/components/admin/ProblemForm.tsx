@@ -24,7 +24,8 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
   const [formData, setFormData] = useState({
     id: initialData?.id || undefined,
     title: initialData?.title || "",
-    category: initialData?.category || "",
+    tag1: initialData?.tag1 || "",
+    tag2: initialData?.tag2 || "",
     difficulty: initialData?.difficulty || "Basic",
     description: initialData?.description || "",
     input_description: initialData?.input_description || "",
@@ -84,7 +85,8 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
       const payload = {
         ...(formData.id && formData.id !== "$undefined" ? { id: formData.id } : {}),
         title: formData.title,
-        category: formData.category,
+        tag1: formData.tag1,
+        tag2: formData.tag2 || null,
         difficulty: formData.difficulty,
         description: formData.description,
         input_description: formData.input_description,
@@ -155,14 +157,30 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">카테고리</label>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">알고리즘 태그 1</label>
+                  <input
+                    required
+                    type="text"
+                    value={formData.tag1}
+                    onChange={e => setFormData({...formData, tag1: e.target.value})}
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-lg px-4 py-2 text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="예: BFS, DP (필수)"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">알고리즘 태그 2</label>
                   <input
                     type="text"
-                    value={formData.category}
-                    onChange={e => setFormData({...formData, category: e.target.value})}
+                    value={formData.tag2 || ""}
+                    onChange={e => setFormData({...formData, tag2: e.target.value})}
                     className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-lg px-4 py-2 text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="예: BFS, DP"
+                    placeholder="추가 알고리즘 (선택)"
                   />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="hidden">
+                  {/* Empty space to align with layout if needed, or just remove grid if not needed */}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">난이도</label>
