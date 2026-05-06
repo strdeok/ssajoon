@@ -15,6 +15,7 @@ import { Problem } from "@/types/problem";
 import { createClient } from "@/utils/supabase/client";
 import { SubmissionStatusListener } from "@/components/submission/SubmissionStatusListener";
 import { getSubmissionLabel } from "@/lib/submission/getSubmissionLabel";
+import { useProblemStarterCode } from "@/hooks/useProblemStarterCode";
 
 export default function ProblemPage({
   params,
@@ -24,15 +25,24 @@ export default function ProblemPage({
   const { id } = use(params);
   const router = useRouter();
   const [problem, setProblem] = useState<Problem | null>(null);
-  const [code, setCode] = useState("");
-  const [language, setLanguage] = useState("python");
+  const [language, setLanguage] = useState("python"); // 현재 선택된 언어 상태를 정의한다.
+
+
   const [isLoading, setIsLoading] = useState(true);
   const [testResults, setTestResults] = useState<TestResult[] | null>(null);
   const [isTesting, setIsTesting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
-
+  const { // 문제별 시작 코드 hook을 사용한다.
+    code, // 에디터에 표시할 코드 값을 가져온다.
+    isCodeLoading, // 최신 제출 코드 로딩 상태를 가져온다.
+    handleCodeChange, // 에디터 변경 핸들러를 가져온다.
+  } = useProblemStarterCode({ // 현재 문제와 유저, 언어를 기준으로 시작 코드를 관리한다.
+    problemId: id, // URL 파라미터에서 가져온 id를 직접 전달한다.
+    userId: user?.id, // 현재 로그인 유저 id를 전달한다.
+    language, // 현재 선택된 언어를 전달한다.
+  }); // useProblemStarterCode 호출을 종료한다.
   const { submissionId, status, result, setSubmissionId, setStatus, reset } =
     useSubmissionStore();
 
@@ -107,32 +117,6 @@ export default function ProblemPage({
     }
   };
 
-  const handleRunCode = async () => {
-    setSubmitError(null);
-    if (!code.trim()) return;
-
-    setIsTesting(true);
-    setTestResults(null);
-    reset(); // Optionally clear submission results when running a test
-
-    try {
-      const res = await fetch("/api/run", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ problemId: id, code, language }),
-      });
-      const data = await res.json();
-
-      if (data.results) {
-        setTestResults(data.results);
-      }
-    } catch (err) {
-      // 실행 오류 시 별도 처리 없이 무시
-    } finally {
-      setIsTesting(false);
-    }
-  };
-
   // UI 상태 계산 로직 통합
   const {
     text: resultText,
@@ -195,16 +179,11 @@ export default function ProblemPage({
         <div
           className={`min-h-60 flex-1 flex flex-col relative group rounded-xl border-2 transition-all duration-300 ${editorBorderClass} lg:overflow-hidden`}
         >
-          <CodeEditor
-            value={code}
-            onChange={(val) => {
-              setCode(val || "");
-              if (status || submitError) {
-                reset();
-                setSubmitError(null);
-              }
-            }}
-            language={language}
+          <CodeEditor // 코드 에디터를 렌더링한다.
+            value={code} // 최신 제출 코드 또는 기본 템플릿이 들어간 code 상태를 전달한다.
+            onChange={handleCodeChange} // 사용자가 코드를 수정하면 hook의 변경 핸들러를 실행한다.
+            language={language} // 현재 선택된 언어를 전달한다.
+            isLoading={isCodeLoading} // 최신 제출 코드 조회 중이면 로딩 오버레이를 보여준다.
           />
         </div>
 
@@ -245,18 +224,6 @@ export default function ProblemPage({
                   로그인 후 실행/제출 가능
                 </span>
               )}
-              {/* <button
-                onClick={handleRunCode}
-                disabled={isTesting || !code.trim() || !user}
-                className="flex items-center space-x-2 bg-zinc-200 hover:bg-zinc-300 disabled:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:disabled:bg-zinc-900 text-zinc-900 dark:text-white px-5 py-2.5 rounded-lg font-medium transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isTesting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Play className="w-4 h-4" />
-                )}
-                <span>코드 실행</span>
-              </button> */}
               <button
                 onClick={handleSubmit}
                 disabled={status === "PENDING" || !code.trim() || !user}
