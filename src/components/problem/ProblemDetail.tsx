@@ -8,24 +8,13 @@ import { SubmissionHistoryPanel } from "@/components/submission/SubmissionHistor
 import ProblemMarkdown from "../common/ProblemMarkdown";
 
 export function ProblemDetail({ problem }: { problem: Problem }) {
-  // ─── 탭 상태 ───────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<"description" | "submissions">("description");
 
-  // ─── 로그인 유저 ───────────────────────────────────────────
   const [user, setUser] = useState<any>(null);
   const [isUserLoaded, setIsUserLoaded] = useState(false);
 
-  // ─── 클립보드 복사 피드백 ──────────────────────────────────
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  /**
-   * [핵심] 제출 내역 아코디언 open 상태를 부모(이 컴포넌트)에서 추적.
-   * SubmissionHistoryPanel 이 onAnyExpanded 콜백으로 알려주면
-   * 여기서 컨테이너 높이 클래스를 동적으로 교체한다.
-   *
-   * - true  → 아코디언이 하나 이상 열림 → 높이 auto (콘텐츠만큼 확장)
-   * - false → 전부 닫힘             → 높이 full + overflow-hidden 복구
-   */
   const [isSubmissionExpanded, setIsSubmissionExpanded] = useState(false);
 
   const handleCopy = (text: string, id: string) => {
@@ -34,7 +23,6 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  /** 탭 전환 시 expanded 상태도 초기화 */
   const handleTabChange = (tab: "description" | "submissions") => {
     if (tab === "description") {
       setIsSubmissionExpanded(false);
@@ -52,9 +40,6 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
     loadUser();
   }, []);
 
-  // ─── 공개 테스트케이스 (problem_testcases 테이블 직접 조회) ─────────────────
-  // problem_testcases 는 problems 와 별개 테이블 (problem_id FK).
-  // API 응답에 embedded 된 값에 의존하지 않고 클라이언트에서 직접 fetch.
   const [publicTestcases, setPublicTestcases] = useState<{
     id: string;
     input_text: string;
@@ -68,10 +53,10 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
       const { data, error } = await supabase
         .from("problem_testcases")
         .select("id, input_text, expected_output, testcase_order")
-        .eq("problem_id", problem.id)   // FK: problem_testcases.problem_id → problems.id
-        .eq("is_hidden", false)          // 공개 케이스만
-        .eq("is_deleted", false)         // soft delete 제외
-        .order("testcase_order", { ascending: true }); // 순서대로
+        .eq("problem_id", problem.id)
+        .eq("is_hidden", false)
+        .eq("is_deleted", false)
+        .order("testcase_order", { ascending: true });
 
       if (!error && data) {
         setPublicTestcases(data);
@@ -80,27 +65,14 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
     fetchPublicTestcases();
   }, [problem.id]);
 
-  /**
-   * 컨테이너 높이 클래스 동적 결정:
-   *
-   * [데스크탑 lg]
-   *  - 기본(description 탭 / 아코디언 닫힘):
-   *      h-full + overflow-hidden → 부모 flex 높이를 꽉 채우고 내부 스크롤
-   *  - 제출 탭 + 아코디언 열림:
-   *      h-auto + overflow-visible → 콘텐츠만큼 자유롭게 확장
-   *
-   * [모바일]
-   *  항상 h-auto (세로 스택이므로 자연 확장)
-   */
   const isExpanded = activeTab === "submissions" && isSubmissionExpanded;
   const containerClass = isExpanded
-    ? "flex flex-col h-auto bg-white dark:bg-zinc-900/50 rounded-xl"          // 확장됨
-    : "flex flex-col lg:h-full h-auto bg-white dark:bg-zinc-900/50 rounded-xl lg:overflow-hidden"; // 기본
+    ? "flex flex-col h-auto bg-white dark:bg-zinc-900/50 rounded-xl"
+    : "flex flex-col lg:h-full h-auto bg-white dark:bg-zinc-900/50 rounded-xl lg:overflow-hidden";
 
   return (
     <div className={containerClass}>
 
-      {/* ── 헤더 + 탭 ── */}
       <div className="flex-shrink-0 border-b border-zinc-200 dark:border-white/10 bg-white/90 dark:bg-zinc-900/80 sticky top-0 backdrop-blur-md z-10">
         <div className="p-8 pb-4 flex items-center gap-4 flex-wrap">
           <h1 className="text-3xl font-bold text-zinc-900 dark:text-white tracking-tight">
@@ -144,20 +116,14 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
         </div>
       </div>
 
-      {/* ── 컨텐츠 영역 ──
-          - isExpanded=true  → overflow-visible, 높이 제한 없음
-          - isExpanded=false → flex-1 min-h-0 overflow-auto (내부 스크롤)
-      */}
       <div className={isExpanded
         ? "overflow-visible pb-8"
         : "flex-1 min-h-0 overflow-auto custom-scrollbar"
       }>
 
-        {/* 문제 설명 탭 */}
         {activeTab === "description" && (
           <div className="p-8 space-y-10">
 
-            {/* 제약사항 */}
             {(problem.time_limit_ms != null || problem.memory_limit_mb != null) && (
               <section className="flex flex-wrap gap-6 items-center bg-zinc-50 dark:bg-black/20 p-5 rounded-xl border border-zinc-200 dark:border-white/5">
                 <h2 className="text-sm font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mr-2">제약사항</h2>
@@ -176,7 +142,6 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
               </section>
             )}
 
-            {/* 문제 설명 */}
             {problem.description && (
               <section>
                 <h2 className="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-4 flex items-center">
@@ -189,7 +154,6 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
               </section>
             )}
 
-            {/* 입력 설명 (problems.input_description) */}
             {problem.input_description && (
               <section>
                 <h2 className="text-lg font-semibold text-purple-600 dark:text-purple-400 mb-4 flex items-center">
@@ -202,7 +166,6 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
               </section>
             )}
 
-            {/* 출력 설명 (problems.output_description) */}
             {problem.output_description && (
               <section>
                 <h2 className="text-lg font-semibold text-pink-600 dark:text-pink-400 mb-4 flex items-center">
@@ -215,13 +178,10 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
               </section>
             )}
 
-            {/* 입력 n / 출력 n: problem_testcases where is_hidden = false
-                섹션 제목 없이 입력1&출력1, 입력2&출력2... 형태로 반복 표시 */}
             {publicTestcases.length > 0 && (
               <section className="space-y-6">
                 {publicTestcases.map((tc, index) => (
                   <div key={tc.id} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* 입력 n */}
                     <div>
                       <h3 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
                         입력 {index + 1}
@@ -239,7 +199,6 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
                         </button>
                       </div>
                     </div>
-                    {/* 출력 n */}
                     <div>
                       <h3 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
                         출력 {index + 1}
@@ -264,9 +223,6 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
           </div>
         )}
 
-        {/* 제출 내역 탭
-            SubmissionHistoryPanel → onAnyExpanded 콜백 → setIsSubmissionExpanded
-            부모가 expanded 상태를 감지하면 위 containerClass가 즉시 바뀜 */}
         {activeTab === "submissions" && (
           <div className="p-8">
             {!isUserLoaded ? (

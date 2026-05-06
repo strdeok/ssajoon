@@ -81,7 +81,6 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
     setError(null);
 
     try {
-      // problemId가 유효할 때만 id를 포함한다.
       const payload = {
         ...(formData.id && formData.id !== "$undefined" ? { id: formData.id } : {}),
         title: formData.title,
@@ -96,19 +95,13 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
         testcases,
       };
 
-      // 서버 액션 saveProblem은 단일 객체를 받도록 호출하라.
       await saveProblem(payload);
-      // redirect occurs in server action, but just in case
       router.push('/admin/problems');
     } catch (err: any) {
-      // NEXT_REDIRECT는 서버 액션이 redirect()를 호출할 때 throw하는 정상 신호
-      // rethrow해야 Next.js 프레임워크가 실제 리다이렉트를 처리함
-      // catch 후 return/무시하면 리다이렉트가 실행되지 않음
       if (err?.digest?.startsWith("NEXT_REDIRECT")) {
         throw err;
       }
 
-      // 실제 오류(DB 에러 등)만 처리
       const userMessage = formData.id
         ? "문제 수정에 실패했습니다. 입력값을 확인해주세요."
         : "문제 생성에 실패했습니다. 입력값을 확인해주세요.";
@@ -146,7 +139,6 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-6">
-          {/* 기본 정보 */}
           <section className="bg-white dark:bg-zinc-900 p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">기본 정보</h2>
             <div className="space-y-4">
@@ -189,7 +181,6 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
             </div>
           </section>
 
-          {/* 문제 설명 */}
           <section className="bg-white dark:bg-zinc-900 p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">상세 설명</h2>
             <div className="space-y-4">
@@ -229,7 +220,6 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
             </div>
           </section>
 
-          {/* 예제 (공개) */}
           <section className="bg-white dark:bg-zinc-900 p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">예제 (공개 테스트케이스)</h2>
@@ -283,7 +273,6 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
             )}
           </section>
 
-          {/* 테스트케이스 (숨김/채점용) */}
           <section className="bg-white dark:bg-zinc-900 p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <div>
@@ -342,7 +331,6 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
         </div>
 
         <div className="md:col-span-1 space-y-6">
-          {/* 제한 설정 */}
           <section className="bg-white dark:bg-zinc-900 p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4 sticky top-6">
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">제한 설정</h2>
             <div className="space-y-4">

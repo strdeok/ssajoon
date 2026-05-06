@@ -57,17 +57,13 @@ export async function updateSession(request: NextRequest) {
       .single()
     dbUser = data
 
-    // 1. 차단된(소프트 탈퇴) 사용자 접근 제어
     if (dbUser?.is_deleted && !request.nextUrl.pathname.startsWith('/api/auth/signout')) {
-      // 강제 로그아웃을 유도하거나 일단 에러 페이지/홈으로 리다이렉트
-      // (완전한 로그아웃 처리는 클라이언트에서 하도록 유도)
       const url = request.nextUrl.clone()
       url.pathname = '/login'
       url.searchParams.set('error', '탈퇴한 회원입니다.')
       return NextResponse.redirect(url)
     }
 
-    // Force onboarding if nickname is missing and user is not already on onboarding
     if (
       !user.user_metadata?.nickname && 
       !request.nextUrl.pathname.startsWith('/onboarding') &&
@@ -80,7 +76,6 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url)
     }
 
-    // Prevent users from accessing onboarding if they already have a nickname
     if (
       user.user_metadata?.nickname && 
       request.nextUrl.pathname.startsWith('/onboarding')
@@ -91,12 +86,10 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // 2. 관리자(/admin) 경로 보호
   if (request.nextUrl.pathname.startsWith('/admin')) {
     if (!user || dbUser?.role !== 'ADMIN') {
       const url = request.nextUrl.clone()
-      url.pathname = '/' // 권한 없음. 홈으로 리다이렉트
-      // 접근 불가 메시지를 쿼리 파라미터로 넘길 수도 있음
+      url.pathname = '/'
       return NextResponse.redirect(url)
     }
   }

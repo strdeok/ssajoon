@@ -166,7 +166,6 @@ export default function GeneratePage() {
         setOptionItems([]);
       }
     } catch (error) {
-      console.error("옵션 로드 실패:", error);
       setOptionItems([]);
     } finally {
       setIsLoadingOptions(false);
@@ -189,7 +188,6 @@ export default function GeneratePage() {
 
       setRemainingCount(data.remainingCount ?? 0);
     } catch (error) {
-      console.error("생성 횟수 조회 실패:", error);
       setRemainingCount(0);
     } finally {
       setIsLoadingUsage(false);
@@ -317,7 +315,6 @@ export default function GeneratePage() {
     }
 
     if (requestError) {
-      console.error("문제 생성 요청 실패:", requestError);
       setErrorMessage("네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
       setIsGenerating(false);
       setLoadingStartedAt(null);

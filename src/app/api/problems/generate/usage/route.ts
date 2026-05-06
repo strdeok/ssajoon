@@ -35,8 +35,6 @@ export async function GET() {
         .maybeSingle();
 
     if (userError) {
-        console.error("문제 생성 사용량 user 조회 실패:", userError);
-
         return NextResponse.json(
             { success: false, message: "생성 횟수를 조회하지 못했습니다." },
             { status: 500 },
@@ -58,8 +56,6 @@ export async function GET() {
             .single();
 
         if (insertError) {
-            console.error("문제 생성 사용량 user 생성 실패:", insertError);
-
             return NextResponse.json(
                 { success: false, message: "생성 횟수 정보를 생성하지 못했습니다." },
                 { status: 500 },
@@ -92,8 +88,6 @@ export async function GET() {
             .eq("id", user.id);
 
         if (resetError) {
-            console.error("문제 생성 사용량 초기화 실패:", resetError);
-
             return NextResponse.json(
                 { success: false, message: "생성 횟수를 초기화하지 못했습니다." },
                 { status: 500 },

@@ -16,7 +16,7 @@ export type SubmissionHistoryItem = {
   memory_kb: number | null;
   failed_testcase_order?: number | null;
   source_code: string | null;
-  is_deleted?: boolean;  // soft delete 여부 (관리자 화면에서 표시)
+  is_deleted?: boolean;
   problems: { title: string } | null;
 };
 
@@ -30,7 +30,6 @@ interface UserProblemHistoryProps {
   groupedData: GroupedProblemHistory[];
 }
 
-// 개별 제출 내역 컴포넌트
 function SubmissionItemRow({ submission }: { submission: SubmissionHistoryItem }) {
   const [isOpen, setIsOpen] = useState(false);
   const { text: resultText, isSuccess, isPending, colorClass } = getSubmissionLabel(
@@ -57,7 +56,6 @@ function SubmissionItemRow({ submission }: { submission: SubmissionHistoryItem }
           <span className={`px-2.5 py-1 text-xs font-bold rounded-full border ${badgeClass} whitespace-nowrap`}>
             {resultText}
           </span>
-          {/* 삭제된 제출 표시 */}
           {submission.is_deleted && (
             <span className="px-2 py-0.5 text-xs font-bold rounded bg-zinc-200 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">
               삭제된 제출
@@ -103,11 +101,9 @@ function SubmissionItemRow({ submission }: { submission: SubmissionHistoryItem }
   );
 }
 
-// 문제별 그룹 컴포넌트
 function ProblemGroup({ group }: { group: GroupedProblemHistory }) {
   const [isGroupOpen, setIsGroupOpen] = useState(true);
   
-  // 그룹 내 AC 여부 확인
   const hasSuccess = group.submissions.some(
     sub => sub.result === 'AC' || sub.status === 'AC' || sub.status === 'SUCCESS' || sub.result === 'SUCCESS'
   );

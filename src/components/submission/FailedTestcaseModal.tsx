@@ -67,7 +67,6 @@ export function FailedTestcaseModal({
         });
       }
     } catch (err: any) {
-      console.error("Failed to fetch testcase:", err);
       setError("테스트케이스 정보를 불러오는 데 실패했습니다.");
     } finally {
       setIsLoading(false);

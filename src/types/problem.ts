@@ -19,7 +19,7 @@ export interface Problem {
   id: number; // bigint auto increment
   problem_no?: number;
   title: string;
-  category?: string; // 추가된 카테고리
+  category?: string;
   description: string;
   input_description: string;
   output_description: string;

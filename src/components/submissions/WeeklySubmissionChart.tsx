@@ -16,7 +16,7 @@ import {
 export type WeeklyStat = {
   date: string;
   count: number;
-  isToday: boolean; // 오늘 날짜 여부 추가 (막대 색상 강조에 사용)
+  isToday: boolean;
 };
 
 type Props = {
@@ -25,7 +25,6 @@ type Props = {
 
 export default function WeeklySubmissionChart({ data }: Props) {
   const { theme } = useTheme();
-  // Recharts 컴포넌트는 클라이언트 사이드에서 마운트된 후 렌더링되어야 hydration 에러를 방지할 수 있습니다.
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -46,16 +45,13 @@ export default function WeeklySubmissionChart({ data }: Props) {
 
   return (
     <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl shadow-sm p-6">
-      {/* 차트 상단 헤더 영역 */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-zinc-100">제출 통계 (주간)</h2>
-        {/* 상세 분석 보기 버튼 (추후 링크 연동 가능) */}
         <button className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
           상세 분석 보기
         </button>
       </div>
 
-      {/* BarChart 영역 */}
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
@@ -63,32 +59,28 @@ export default function WeeklySubmissionChart({ data }: Props) {
             margin={{
               top: 5,
               right: 20,
-              left: -20, // Y축 여백 줄이기
+              left: -20,
               bottom: 0,
             }}
           >
-            {/* 배경 가로선(점선) 설정 */}
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
             
-            {/* X축 (날짜/요일) 설정 */}
             <XAxis
               dataKey="date"
               axisLine={false}
               tickLine={false}
               tick={{ fill: axisColor, fontSize: 12 }}
-              dy={10} // 텍스트를 약간 아래로 내림
+              dy={10}
             />
             
-            {/* Y축 설정 */}
             <YAxis
               axisLine={false}
               tickLine={false}
               tick={{ fill: axisColor, fontSize: 12 }}
             />
             
-            {/* 툴팁 설정 */}
             <Tooltip
-              cursor={{ fill: isDark ? "#27272a" : "#F3F4F6" }} // 마우스 오버 시 막대 배경색
+              cursor={{ fill: isDark ? "#27272a" : "#F3F4F6" }}
               contentStyle={{
                 backgroundColor: tooltipBg,
                 borderRadius: "8px",
@@ -102,13 +94,11 @@ export default function WeeklySubmissionChart({ data }: Props) {
               }}
             />
             
-            {/* 실제 데이터를 나타내는 막대 */}
             <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={40}>
-              {/* 오늘 날짜인 경우 진한 파란색, 아니면 연한 파란색을 동적으로 부여 */}
               {data.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={entry.isToday ? barTodayColor : barOtherColor} // isToday 플래그에 따라 파란색 계열 강조
+                  fill={entry.isToday ? barTodayColor : barOtherColor}
                 />
               ))}
             </Bar>

@@ -18,9 +18,7 @@ interface SubmissionSummary {
 
 interface SubmissionCodeItemProps {
   submission: SubmissionSummary;
-  /** 부모(SubmissionHistoryPanel)가 제어하는 open 상태 */
   isOpen: boolean;
-  /** 이 아이템 토글 클릭 시 부모에게 id 전달 */
   onToggle: (id: string) => void;
 }
 
@@ -30,10 +28,8 @@ export function SubmissionCodeItem({ submission, isOpen, onToggle }: SubmissionC
   const [error, setError] = useState<string | null>(null);
 
   const handleClick = async () => {
-    // 항상 부모에 id 전달 (부모가 단일 오픈 로직을 처리)
     onToggle(submission.id);
 
-    // 열리는 경우이고 아직 코드를 가져오지 않았다면 fetch
     if (!isOpen && sourceCode === null) {
       setIsLoading(true);
       setError(null);
@@ -108,7 +104,6 @@ export function SubmissionCodeItem({ submission, isOpen, onToggle }: SubmissionC
         </div>
       </button>
 
-      {/* 코드 영역: max-h-96 으로 긴 코드가 패널을 무한 확장하지 않도록 제한 */}
       {isOpen && (
         <div className="border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#0a0a0a] p-4">
           {isLoading ? (

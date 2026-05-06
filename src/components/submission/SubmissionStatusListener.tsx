@@ -17,10 +17,8 @@ export function SubmissionStatusListener({ submissionId }: SubmissionStatusListe
 
     const supabase = createClient();
 
-    // 구독 채널 이름 생성 (안정성을 위해 고유 이름 사용)
     const channelName = `submission_${submissionId}`;
 
-    // 특정 submissionId의 row 변경 감지
     const channel = supabase
       .channel(channelName)
       .on(
@@ -35,25 +33,21 @@ export function SubmissionStatusListener({ submissionId }: SubmissionStatusListe
           const newRow = payload.new;
 
           if (newRow) {
-            // 상태 갱신
             if (newRow.status) {
               setStatus(newRow.status as SubmissionStatus);
             }
 
-            // 결과 및 리소스 사용량 갱신 (JudgeResult 형식에 맞게)
             setResult({
               status: newRow.status as SubmissionStatus,
               result: newRow.result,
               execution_time_ms: newRow.execution_time_ms,
               memory_kb: newRow.memory_kb,
-              failed_testcase_order: newRow.failed_testcase_order, // fail_order -> failed_testcase_order
+              failed_testcase_order: newRow.failed_testcase_order,
             });
           }
         }
       )
       .subscribe(async (status) => {
-        
-        // Race condition 방지: 구독 성공 직후 최신 상태를 한 번 긁어온다.
         if (status === "SUBSCRIBED") {
           const { data, error } = await supabase
             .from("submissions")
@@ -61,10 +55,7 @@ export function SubmissionStatusListener({ submissionId }: SubmissionStatusListe
             .eq("id", submissionId)
             .single();
 
-          if (error) {
-            // 초기 상태 fetch 실패 시 무시 (Realtime으로 추후 갱신됨)
-          } else if (data) {
-            
+          if (!error && data) {
             if (data.status) {
               setStatus(data.status as SubmissionStatus);
             }
@@ -80,12 +71,10 @@ export function SubmissionStatusListener({ submissionId }: SubmissionStatusListe
         }
       });
 
-    // Cleanup: 언마운트되거나 submissionId가 바뀔 때 구독 취소
     return () => {
       supabase.removeChannel(channel);
     };
   }, [submissionId, setStatus, setResult]);
 
-  // UI를 렌더링하지 않는 논리적 컴포넌트
   return null;
 }

@@ -11,11 +11,8 @@ async function main() {
     .limit(20);
   
   if (error) {
-    console.error(error);
     return;
   }
-  
-  console.log(JSON.stringify(data, null, 2));
 }
 
 main();

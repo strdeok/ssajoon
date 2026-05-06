@@ -163,8 +163,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("문제 통계 요청 problemIds:", problemIds);
-
     const supabaseAdmin = getSupabaseAdmin();
     const statsMap = createInitialStatsMap(problemIds);
 
@@ -181,8 +179,6 @@ export async function POST(request: NextRequest) {
         .range(from, to);
 
       if (error) {
-        console.error("문제 통계 조회 실패:", error);
-
         return NextResponse.json(
           { error: "Failed to fetch problem stats" },
           { status: 500 },
@@ -192,11 +188,6 @@ export async function POST(request: NextRequest) {
       const rows = (data ?? []) as SubmissionRow[];
 
       totalFetchedRows += rows.length;
-
-      if (from === 0) {
-        console.log("문제 통계 submissions 조회 row 수:", rows.length);
-        console.log("문제 통계 submissions 샘플:", rows.slice(0, 5));
-      }
 
       rows.forEach((row) => {
         applySubmissionToStats(statsMap, row);
@@ -211,13 +202,8 @@ export async function POST(request: NextRequest) {
 
     const result = buildProblemStats(problemIds, statsMap);
 
-    console.log("문제 통계 총 조회 row 수:", totalFetchedRows);
-    console.log("문제 통계 계산 결과 샘플:", result.slice(0, 5));
-
     return NextResponse.json({ data: result });
   } catch (error) {
-    console.error("문제 통계 API 오류:", error);
-
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

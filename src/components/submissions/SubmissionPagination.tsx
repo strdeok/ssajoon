@@ -14,16 +14,12 @@ export default function SubmissionPagination({
   totalPages,
   onPageChange,
 }: Props) {
-  // 전체 페이지 수가 0 또는 1이면 렌더링하지 않음
   if (totalPages <= 1) return null;
 
-  // 표시할 페이지 번호 배열 생성 로직 (예: 1 2 3 4 5)
-  // 현재 페이지를 중심으로 앞뒤 2개씩 총 최대 5개의 페이지 번호 표시
   const getPageNumbers = () => {
     let startPage = Math.max(1, currentPage - 2);
     let endPage = Math.min(totalPages, currentPage + 2);
 
-    // 표시할 페이지 수가 5개 미만인 경우 보정
     if (endPage - startPage < 4) {
       if (startPage === 1) {
         endPage = Math.min(totalPages, startPage + 4);
@@ -44,7 +40,6 @@ export default function SubmissionPagination({
   return (
     <div className="flex justify-end items-center mb-10">
       <nav className="inline-flex items-center -space-x-px rounded-md shadow-sm bg-white dark:bg-zinc-900" aria-label="Pagination">
-        {/* 이전 페이지 버튼 */}
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
@@ -54,22 +49,20 @@ export default function SubmissionPagination({
           <ChevronLeft className="h-4 w-4" aria-hidden="true" />
         </button>
 
-        {/* 페이지 번호 버튼 목록 */}
         {pages.map((page) => (
           <button
             key={page}
             onClick={() => onPageChange(page)}
             className={`relative inline-flex items-center px-4 py-2 text-sm font-medium border focus:z-20 transition-colors ${
               currentPage === page
-                ? "z-10 bg-blue-50 dark:bg-blue-900/30 border-blue-500 text-blue-600 dark:text-blue-400" // 현재 페이지 강조 스타일
-                : "bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-800 text-gray-500 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800" // 기본 스타일
+                ? "z-10 bg-blue-50 dark:bg-blue-900/30 border-blue-500 text-blue-600 dark:text-blue-400"
+                : "bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-800 text-gray-500 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800"
             }`}
           >
             {page}
           </button>
         ))}
 
-        {/* 다음 페이지 버튼 */}
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}

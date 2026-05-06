@@ -15,10 +15,8 @@ import WeeklySubmissionChart, {
   WeeklyStat,
 } from "@/components/submissions/WeeklySubmissionChart";
 
-// 한 페이지당 보여줄 제출 기록의 수
 const ITEMS_PER_PAGE = 10;
 
-// 정답 처리 기준 판별 (기존 로직과 통일성 유지)
 const isAcceptedResult = (result: string | null) => {
   if (!result) return false;
   const lower = result.toLowerCase();
@@ -60,7 +58,6 @@ export default function SubmissionsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 요약 통계 및 주간 차트 상태
   const [summary, setSummary] = useState<SubmissionSummary>({
     totalSubmissions: 0,
     acceptedSubmissions: 0,
@@ -68,9 +65,6 @@ export default function SubmissionsPage() {
   });
   const [weeklyStats, setWeeklyStats] = useState<WeeklyStat[]>([]);
 
-  // -------------------------------------------------------------
-  // 클라이언트 상태 관리 (검색, 필터, 페이지네이션)
-  // -------------------------------------------------------------
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("모든 상태");
   const [languageFilter, setLanguageFilter] = useState("모든 언어");
@@ -115,7 +109,6 @@ export default function SubmissionsPage() {
 
         if (fetchError) throw fetchError;
 
-        // DB 데이터를 프론트엔드 Submission 인터페이스에 맞게 매핑
         const mappedSubmissions: Submission[] = (data || []).map((sub: any) => {
           const problemData = Array.isArray(sub.problems)
             ? sub.problems[0]
@@ -136,7 +129,6 @@ export default function SubmissionsPage() {
 
         setSubmissions(mappedSubmissions);
 
-        // 1. 요약 통계 계산
         const total = mappedSubmissions.length;
         const accepted = mappedSubmissions.filter((s) =>
           isAcceptedResult(s.result),
@@ -150,11 +142,9 @@ export default function SubmissionsPage() {
           submissionAccuracyRate: accuracy,
         });
 
-        // 2. 주간 통계 계산 (최근 7일)
         const stats = calculateWeeklySubmissionStats(mappedSubmissions);
         setWeeklyStats(stats);
       } catch (err: any) {
-        console.error("Failed to fetch submissions:", err);
         setError("제출 기록을 불러오는 중 오류가 발생했습니다.");
       } finally {
         setIsLoading(false);
@@ -164,7 +154,6 @@ export default function SubmissionsPage() {
     fetchSubmissions();
   }, []);
 
-  // 주간 통계 계산 헬퍼 함수
   const calculateWeeklySubmissionStats = (subs: Submission[]): WeeklyStat[] => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -172,7 +161,6 @@ export default function SubmissionsPage() {
     const internalStats: (WeeklyStat & { fullDate: string })[] = [];
     const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
 
-    // 최근 7일에 대한 기본 데이터 구조 생성 (6일 전 ~ 오늘)
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
@@ -180,11 +168,10 @@ export default function SubmissionsPage() {
         date: dayNames[d.getDay()],
         count: 0,
         isToday: i === 0,
-        fullDate: d.toISOString().split("T")[0], // 내부 비교용 yyyy-mm-dd
+        fullDate: d.toISOString().split("T")[0],
       });
     }
 
-    // 제출 기록 순회하며 카운트 증가
     subs.forEach((sub) => {
       if (!sub.submittedAt) return;
       const subDate = new Date(sub.submittedAt);
@@ -196,43 +183,31 @@ export default function SubmissionsPage() {
       }
     });
 
-    // 화면용 데이터만 추출해서 반환
     return internalStats.map(({ fullDate, ...rest }) => rest);
   };
 
-  // -------------------------------------------------------------
-  // 필터링 로직 (검색어, 상태, 언어에 따라 데이터 필터링)
-  // -------------------------------------------------------------
   const filteredSubmissions = useMemo(() => {
     return submissions.filter((sub) => {
-      // 1. 검색어 필터 (생략)
       const matchesSearch =
         sub.problemTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
         sub.problemId.toString().includes(searchQuery);
 
-      // 2. 상태 필터 (생략)
       const matchesStatus =
         statusFilter === "모든 상태" ||
         getResultText(sub.result) === statusFilter;
 
-      // 3. 언어 필터 (여기를 수정!)
-      // sub.language는 이미 소문자 'c++'로 매핑되어 있으므로, 필터 값도 통일해서 비교합니다.
       const matchesLanguage =
         languageFilter === "모든 언어" ||
-        sub.language === normalizeLanguage(languageFilter); // 👈 헬퍼 함수 적용
+        sub.language === normalizeLanguage(languageFilter);
 
       return matchesSearch && matchesStatus && matchesLanguage;
     });
   }, [submissions, searchQuery, statusFilter, languageFilter]);
 
-  // 필터 조건이 변경되면 첫 페이지로 되돌아감
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, statusFilter, languageFilter]);
 
-  // -------------------------------------------------------------
-  // 페이지네이션 로직 (필터링된 데이터 중 현재 페이지에 해당하는 데이터만 추출)
-  // -------------------------------------------------------------
   const totalPages =
     Math.ceil(filteredSubmissions.length / ITEMS_PER_PAGE) || 1;
   const paginatedSubmissions = useMemo(() => {

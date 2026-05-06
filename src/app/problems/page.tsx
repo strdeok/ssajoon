@@ -82,9 +82,6 @@ function ProblemsContent() {
     const supabase = createClient();
     const init = async () => {
       const { data, error } = await supabase.auth.getUser();
-      if (error) {
-        console.error("유저 조회 실패:", error);
-      }
       setUser(data.user);
 
       try {
@@ -93,7 +90,6 @@ function ProblemsContent() {
         const cats = await res.json();
         setCategories(Array.isArray(cats) ? cats : []);
       } catch (categoryError) {
-        console.error("카테고리 목록 조회 실패:", categoryError);
         setCategories([]);
       }
     };
@@ -124,7 +120,6 @@ function ProblemsContent() {
           .range(from, to);
 
         if (error) {
-          console.error("정답 제출 문제 조회 실패:", error);
           throw error;
         }
 
@@ -160,7 +155,6 @@ function ProblemsContent() {
           .eq("is_hidden", false);
 
         if (error) {
-          console.error("공개 해결 문제 조회 실패:", error);
           throw error;
         }
 
@@ -190,7 +184,6 @@ function ProblemsContent() {
 
         setTotalSolvedCount(publicSolvedProblemIds.length);
       } catch (error) {
-        console.error("전체 해결 문제 수 계산 실패:", error);
         setTotalSolvedCount(0);
       }
     };
@@ -217,7 +210,6 @@ function ProblemsContent() {
       setTotalCount(json.totalCount ?? 0);
       setFilteredCount(json.filteredCount ?? 0);
     } catch (error) {
-      console.error("문제 목록 조회 실패:", error);
       setProblems([]);
       setTotalCount(0);
       setFilteredCount(0);
@@ -246,7 +238,6 @@ function ProblemsContent() {
         .in("problem_id", problemIds);
 
       if (error) {
-        console.error("문제별 제출 상태 조회 실패:", error);
         setProblemStatusMap(new Map());
         return;
       }
@@ -293,7 +284,6 @@ function ProblemsContent() {
         });
         setProblemStatsMap(nextStatsMap);
       } catch (error) {
-        console.error("문제 통계 조회 실패:", error);
         setProblemStatsMap(new Map());
       }
     };
