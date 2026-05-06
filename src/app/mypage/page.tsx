@@ -12,7 +12,7 @@ export default async function Mypage() {
 
   const { data: userData } = await supabase
     .from("users")
-    .select("nickname, created_at")
+    .select("nickname, school_number, created_at")
     .eq("id", user.id)
     .single();
 
@@ -29,6 +29,7 @@ export default async function Mypage() {
       
       <ClientForm 
         initialNickname={userData?.nickname || user.user_metadata?.nickname || ""} 
+        initialSchoolNumber={userData?.school_number || user.user_metadata?.school_number || ""}
         userEmail={user.email || ""}
       />
     </div>

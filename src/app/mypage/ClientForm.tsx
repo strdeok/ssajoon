@@ -7,12 +7,14 @@ import { useRouter } from "next/navigation";
 
 interface ClientFormProps {
   initialNickname: string;
+  initialSchoolNumber: string;
   userEmail: string;
 }
 
-export default function ClientForm({ initialNickname, userEmail }: ClientFormProps) {
+export default function ClientForm({ initialNickname, initialSchoolNumber, userEmail }: ClientFormProps) {
   const router = useRouter();
   const [nickname, setNickname] = useState(initialNickname);
+  const [schoolNumber, setSchoolNumber] = useState(initialSchoolNumber);
   const [isSaving, setIsSaving] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error", text: string } | null>(null);
@@ -26,6 +28,7 @@ export default function ClientForm({ initialNickname, userEmail }: ClientFormPro
 
     const formData = new FormData();
     formData.append("nickname", nickname);
+    formData.append("school_number", schoolNumber);
 
     const result = await updateProfile(formData);
 
@@ -103,6 +106,19 @@ export default function ClientForm({ initialNickname, userEmail }: ClientFormPro
               placeholder="사용할 닉네임을 입력하세요"
               required
               maxLength={20}
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="schoolNumber" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+              학번
+            </label>
+            <input
+              id="schoolNumber"
+              type="text"
+              value={schoolNumber}
+              onChange={(e) => setSchoolNumber(e.target.value)}
+              placeholder="학번을 입력하세요 (예: 1234567)"
               className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 outline-none transition-all"
             />
           </div>
@@ -110,7 +126,11 @@ export default function ClientForm({ initialNickname, userEmail }: ClientFormPro
           <div className="flex items-center justify-between">
             <button
               type="submit"
-              disabled={isSaving || nickname === initialNickname || nickname.trim() === ""}
+              disabled={
+                isSaving || 
+                (nickname === initialNickname && schoolNumber === initialSchoolNumber) || 
+                nickname.trim() === ""
+              }
               className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-300 dark:disabled:bg-zinc-800 text-white px-6 py-2.5 rounded-lg font-medium transition-all duration-300 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
             >
               {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
