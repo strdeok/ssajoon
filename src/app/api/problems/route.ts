@@ -24,12 +24,14 @@ export async function GET(request: Request) {
   const { count: totalCount } = await supabase
     .from("problems")
     .select("*", { count: "exact", head: true })
-    .eq("is_deleted", false);
+    .eq("is_deleted", false)
+    .eq("is_hidden", false);
 
   let query = supabase
     .from("problems")
     .select("id, title, category, difficulty", { count: "exact" })
     .eq("is_deleted", false)
+    .eq("is_hidden", false)
     .order("id", { ascending: true });
 
   if (difficulty && DIFFICULTY_FILTER[difficulty]) {

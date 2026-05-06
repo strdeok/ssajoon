@@ -9,6 +9,7 @@ export async function GET() {
     .from("problems")
     .select("category")
     .eq("is_deleted", false)
+    .eq("is_hidden", false)
     .not("category", "is", null)
     .range(0, 9999);
 

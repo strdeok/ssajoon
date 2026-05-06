@@ -13,8 +13,8 @@ import {
   Trophy,
   BarChart2,
 } from "lucide-react";
-import { 
-  DifficultyBadge, 
+import {
+  DifficultyBadge,
   isAcceptedResult,
   StatusIcon
 } from "@/components/problem/ProblemComponents";
@@ -102,26 +102,97 @@ function ProblemsContent() {
 
   useEffect(() => {
     const supabase = createClient();
+
+    const PAGE_SIZE = 1000;
+
+    const CHUNK_SIZE = 300;
+
+    const fetchAllAcceptedSubmissionProblemIds = async () => {
+      const allProblemIds: number[] = [];
+
+      let from = 0;
+
+      while (true) {
+        const to = from + PAGE_SIZE - 1;
+
+        const { data, error } = await supabase
+          .from("submissions")
+          .select("problem_id")
+          .eq("user_id", user!.id)
+          .eq("is_deleted", false)
+          .in("result", ["AC", "ACCEPTED"])
+          .range(from, to);
+
+        if (error) {
+          console.error("정답 제출 문제 조회 실패:", error);
+          throw error;
+        }
+
+        const rows = data ?? [];
+
+        rows.forEach((row) => {
+          if (row.problem_id !== null && row.problem_id !== undefined) {
+            allProblemIds.push(row.problem_id);
+          }
+        });
+
+        if (rows.length < PAGE_SIZE) {
+          break;
+        }
+
+        from += PAGE_SIZE;
+      }
+
+      return Array.from(new Set(allProblemIds));
+    };
+
+    const fetchPublicProblemIds = async (problemIds: number[]) => {
+      const publicProblemIds: number[] = [];
+
+      for (let i = 0; i < problemIds.length; i += CHUNK_SIZE) {
+        const chunk = problemIds.slice(i, i + CHUNK_SIZE);
+
+        const { data, error } = await supabase
+          .from("problems")
+          .select("id")
+          .in("id", chunk)
+          .eq("is_deleted", false)
+          .eq("is_hidden", false);
+
+        if (error) {
+          console.error("공개 해결 문제 조회 실패:", error);
+          throw error;
+        }
+
+        (data ?? []).forEach((problem) => {
+          publicProblemIds.push(problem.id);
+        });
+      }
+
+      return publicProblemIds;
+    };
+
     const fetchTotalSolvedCount = async () => {
       if (!user) {
         setTotalSolvedCount(0);
         return;
       }
 
-      const { data, error } = await supabase
-        .from("submissions")
-        .select("problem_id")
-        .eq("user_id", user.id)
-        .in("result", ["AC", "ACCEPTED"]);
+      try {
+        const solvedProblemIds = await fetchAllAcceptedSubmissionProblemIds();
 
-      if (error) {
-        console.error("전체 해결 문제 수 조회 실패:", error);
+        if (solvedProblemIds.length === 0) {
+          setTotalSolvedCount(0);
+          return;
+        }
+
+        const publicSolvedProblemIds = await fetchPublicProblemIds(solvedProblemIds);
+
+        setTotalSolvedCount(publicSolvedProblemIds.length);
+      } catch (error) {
+        console.error("전체 해결 문제 수 계산 실패:", error);
         setTotalSolvedCount(0);
-        return;
       }
-
-      const uniqueSolvedProblemIds = new Set((data ?? []).map((row) => row.problem_id));
-      setTotalSolvedCount(uniqueSolvedProblemIds.size);
     };
 
     fetchTotalSolvedCount();
