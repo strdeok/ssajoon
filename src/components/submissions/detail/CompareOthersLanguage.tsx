@@ -158,7 +158,7 @@ export default function CompareOthersLanguage({
             {/* 요약 정보 영역을 렌더링한다. */}
             <span>비교 대상</span> {/* 비교 대상 라벨을 출력한다. */}
             <span className="font-semibold text-zinc-700 dark:text-zinc-300">
-              {totalCount.toLocaleString()}명/건
+              {totalCount.toLocaleString()}/건
             </span>{" "}
             {/* 전체 비교 대상 수를 출력한다. */}
           </div>{" "}

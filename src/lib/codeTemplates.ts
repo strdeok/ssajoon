@@ -40,11 +40,11 @@ export function getDefaultCodeTemplate(language: string | undefined | null) { //
 export function getLanguageQueryValues(language: string | undefined | null) { // DB에 저장된 언어 표기 차이를 고려한 조회 후보를 만드는 함수를 정의한다.
     const normalizedLanguage = normalizeLanguage(language); // 언어 값을 정규화한다.
 
-    if (normalizedLanguage === "python") return ["python", "python3", "py", "Python", "Python3"]; // Python 계열 저장값 후보를 반환한다.
+    if (normalizedLanguage === "python") return ["python", "python3", "py", "Python", "Python3", "PYTHON", "PYTHON3"]; // Python 계열 저장값 후보를 반환한다.
 
-    if (normalizedLanguage === "java") return ["java", "Java"]; // Java 계열 저장값 후보를 반환한다.
+    if (normalizedLanguage === "java") return ["java", "Java", "JAVA"]; // Java 계열 저장값 후보를 반환한다.
 
-    if (normalizedLanguage === "cpp") return ["cpp", "c++", "C++", "CPP"]; // C++ 계열 저장값 후보를 반환한다.
+    if (normalizedLanguage === "cpp") return ["cpp", "c++", "C++", "CPP", "Cpp"]; // C++ 계열 저장값 후보를 반환한다.
 
     return [normalizedLanguage]; // 그 외 언어는 정규화된 값 하나만 후보로 반환한다.
 } // getLanguageQueryValues 함수를 종료한다.

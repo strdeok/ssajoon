@@ -50,7 +50,6 @@ export default async function SubmissionDetailPage({
     .select("user_id, language") // 언어 집계에 필요한 user_id와 language만 가져온다.
     .eq("problem_id", submission.problem_id) // 현재 제출과 같은 문제의 제출만 조회한다.
     .in("result", ["AC", "ACCEPTED"]) // 정답 제출만 조회한다.
-    .neq("user_id", submission.user_id) // 현재 유저의 제출은 제외하고 다른 유저만 조회한다.
     .or("is_deleted.is.false,is_deleted.is.null") // 삭제되지 않은 제출만 조회한다.
     .not("language", "is", null) // 언어가 null인 제출은 제외한다.
     .limit(5000); // 과도한 조회를 막기 위해 최대 5000개까지만 가져온다.
