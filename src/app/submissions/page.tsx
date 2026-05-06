@@ -20,7 +20,12 @@ const ITEMS_PER_PAGE = 10;
 const isAcceptedResult = (result: string | null) => {
   if (!result) return false;
   const lower = result.toLowerCase();
-  return lower.includes("맞았습니다") || lower === "accepted" || lower === "ac";
+  return (
+    lower.includes("맞았습니다") ||
+    lower === "accepted" ||
+    lower === "ac" ||
+    lower.includes("정답")
+  );
 };
 
 const getResultText = (result: string) => {
@@ -119,8 +124,42 @@ export default function SubmissionsPage() {
             ? sub.problems[0]
             : sub.problems;
 
-          // result가 없으면 status를 결과로 사용 (AC/WA 등)
-          const displayResult = sub.result || sub.status || "결과 없음";
+          let displayResult = sub.result || sub.status || "결과 없음";
+
+          // 결과 값 정규화 (배지 스타일 일관성을 위함)
+          if (isAcceptedResult(displayResult)) {
+            displayResult = "AC";
+          } else if (
+            displayResult.includes("틀렸습니다") ||
+            displayResult === "Wrong Answer" ||
+            displayResult === "WA"
+          ) {
+            displayResult = "WA";
+          } else if (
+            displayResult.includes("시간 초과") ||
+            displayResult === "Time Limit Exceeded" ||
+            displayResult === "TLE"
+          ) {
+            displayResult = "TLE";
+          } else if (
+            displayResult.includes("메모리 초과") ||
+            displayResult === "Memory Limit Exceeded" ||
+            displayResult === "MLE"
+          ) {
+            displayResult = "MLE";
+          } else if (
+            displayResult.includes("런타임 에러") ||
+            displayResult === "Runtime Error" ||
+            displayResult === "RE"
+          ) {
+            displayResult = "RE";
+          } else if (
+            displayResult.includes("컴파일 에러") ||
+            displayResult === "Compile Error" ||
+            displayResult === "CE"
+          ) {
+            displayResult = "CE";
+          }
 
           return {
             id: sub.id,
@@ -175,8 +214,16 @@ export default function SubmissionsPage() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const internalStats: (WeeklyStat & { fullDate: string })[] = [];
+    const internalStats: (WeeklyStat & { localDateStr: string })[] = [];
     const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
+
+    // 로컬 날짜 문자열 생성을 위한 헬퍼 (YYYY-MM-DD)
+    const getLocalDateStr = (date: Date) => {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    };
 
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
@@ -185,22 +232,22 @@ export default function SubmissionsPage() {
         date: dayNames[d.getDay()],
         count: 0,
         isToday: i === 0,
-        fullDate: d.toISOString().split("T")[0],
+        localDateStr: getLocalDateStr(d),
       });
     }
 
     subs.forEach((sub) => {
       if (!sub.submittedAt) return;
       const subDate = new Date(sub.submittedAt);
-      const dateStr = subDate.toISOString().split("T")[0];
+      const dateStr = getLocalDateStr(subDate);
 
-      const targetStat = internalStats.find((s) => s.fullDate === dateStr);
+      const targetStat = internalStats.find((s) => s.localDateStr === dateStr);
       if (targetStat) {
         targetStat.count += 1;
       }
     });
 
-    return internalStats.map(({ fullDate, ...rest }) => rest);
+    return internalStats.map(({ localDateStr, ...rest }) => rest);
   };
 
   const filteredSubmissions = useMemo(() => {
