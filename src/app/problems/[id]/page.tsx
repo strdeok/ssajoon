@@ -9,7 +9,7 @@ import {
   TestResult,
 } from "@/components/submission/TestResultViewer";
 import { useSubmissionStore } from "@/store/submissionStore";
-import { Play, Send, Loader2 } from "lucide-react";
+import { Play, Send, Loader2, Sun, Moon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Problem } from "@/types/problem";
 import { createClient } from "@/utils/supabase/client";
@@ -26,6 +26,7 @@ export default function ProblemPage({
   const router = useRouter();
   const [problem, setProblem] = useState<Problem | null>(null);
   const [language, setLanguage] = useState("python"); // 현재 선택된 언어 상태를 정의한다.
+  const [editorTheme, setEditorTheme] = useState<"light" | "dark" | null>(null); // 에디터 전용 테마 상태를 정의한다.
 
 
   const [isLoading, setIsLoading] = useState(true);
@@ -179,10 +180,18 @@ export default function ProblemPage({
         <div
           className={`min-h-60 flex-1 flex flex-col relative group rounded-xl border-2 transition-all duration-300 ${editorBorderClass} lg:overflow-hidden`}
         >
+          <button
+            onClick={() => setEditorTheme(editorTheme === "light" ? "dark" : "light")}
+            className="absolute top-4 right-4 z-20 p-2 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 transition-all shadow-md backdrop-blur-sm border border-zinc-200 dark:border-zinc-700"
+            title="에디터 테마 변경"
+          >
+            {editorTheme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+          </button>
           <CodeEditor // 코드 에디터를 렌더링한다.
             value={code} // 최신 제출 코드 또는 기본 템플릿이 들어간 code 상태를 전달한다.
             onChange={handleCodeChange} // 사용자가 코드를 수정하면 hook의 변경 핸들러를 실행한다.
             language={language} // 현재 선택된 언어를 전달한다.
+            theme={editorTheme || undefined}
             isLoading={isCodeLoading} // 최신 제출 코드 조회 중이면 로딩 오버레이를 보여준다.
           />
         </div>

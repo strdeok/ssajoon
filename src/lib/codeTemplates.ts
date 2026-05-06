@@ -1,13 +1,13 @@
 export const CODE_TEMPLATES: Record<string, string> = { // 언어별 기본 코드 템플릿을 정의한다.
     python: `# 여기에 파이썬 코드를 작성해주세요.`, // Python 기본 템플릿을 정의한다.
     java: `// 여기에 자바 코드를 작성해주세요.
-    public class Main{
+public class Main{
     public static void main(String args[]){
 
     }
 }`, // Java 기본 템플릿을 정의한다.
     cpp: `// 여기에 c++ 코드를 작성해주세요.
-    #include <iostream>
+#include <iostream>
 
 using namespace std;
 

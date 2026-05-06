@@ -9,6 +9,7 @@ interface CodeEditorProps { // CodeEditor 컴포넌트가 받을 props 타입을
   value: string; // 에디터에 표시할 코드 값을 의미한다.
   onChange: (value: string | undefined) => void; // 코드가 변경될 때 부모 상태를 업데이트할 함수를 의미한다.
   language?: string; // 현재 선택된 프로그래밍 언어를 의미한다.
+  theme?: "light" | "dark"; // 에디터 전용 테마를 선택적으로 받는다.
   readOnly?: boolean; // 에디터를 읽기 전용으로 사용할지 여부를 의미한다.
   isLoading?: boolean; // 부모에서 최신 제출 코드 등을 불러오는 중인지 여부를 의미한다.
   loadingText?: string; // 로딩 중 화면에 표시할 문구를 의미한다.
@@ -18,6 +19,7 @@ export function CodeEditor({ // CodeEditor 컴포넌트를 정의한다.
   value, // 부모에서 전달한 코드 값을 받는다.
   onChange, // 부모에서 전달한 코드 변경 함수를 받는다.
   language = "python", // 언어 값이 없으면 python을 기본값으로 사용한다.
+  theme, // 부모로부터 전달받은 에디터 전용 테마를 받는다.
   readOnly = false, // readOnly 값이 없으면 false를 기본값으로 사용한다.
   isLoading = false, // isLoading 값이 없으면 false를 기본값으로 사용한다.
   loadingText = "최근 제출 코드를 불러오는 중...", // loadingText 값이 없으면 기본 로딩 문구를 사용한다.
@@ -32,9 +34,10 @@ export function CodeEditor({ // CodeEditor 컴포넌트를 정의한다.
     return normalizeLanguage(language); // 전달받은 language를 프로젝트 기준으로 정규화한다.
   }, [language]); // language가 바뀔 때만 다시 계산한다.
 
-  const editorTheme = useMemo(() => { // Monaco Editor 테마를 메모이제이션한다.
-    return resolvedTheme === "light" ? "light" : "vs-dark"; // 라이트 모드면 light, 그 외에는 vs-dark를 사용한다.
-  }, [resolvedTheme]); // resolvedTheme이 바뀔 때만 다시 계산한다.
+  const editorTheme = useMemo(() => { // 적용할 Monaco Editor 테마를 결정한다.
+    const currentTheme = theme || (resolvedTheme === "light" ? "light" : "dark"); // 주입된 테마가 있으면 사용하고, 없으면 시스템 테마를 따른다.
+    return currentTheme === "light" ? "light" : "vs-dark"; // 라이트면 light, 다크면 vs-dark를 반환한다.
+  }, [theme, resolvedTheme]); // 주입된 테마나 시스템 테마가 바뀔 때 재계산한다.
 
   useEffect(() => { // 컨테이너 크기가 바뀔 때 에디터 높이를 동적으로 조정한다.
     const element = containerRef.current; // 현재 컨테이너 DOM을 가져온다.
