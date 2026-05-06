@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 import {
   Loader2,
   AlertCircle,
@@ -117,6 +119,7 @@ function getRemainingLoadingTime(startedAt: number) {
 }
 
 export default function GeneratePage() {
+  const router = useRouter();
   const [optionItems, setOptionItems] = useState<OptionItem[]>([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState(true);
 
@@ -134,6 +137,18 @@ export default function GeneratePage() {
   const [loadingTipIndex, setLoadingTipIndex] = useState(0);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingStartedAt, setLoadingStartedAt] = useState<number | null>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        router.push("/login?returnUrl=/generate");
+      }
+    };
+    checkAuth();
+  }, [router]);
 
   const fetchOptions = useCallback(async () => {
     setIsLoadingOptions(true);
