@@ -66,7 +66,8 @@ export async function saveProblem(rawFormData: any) {
   const {
     id,
     title,
-    category,
+    tag1,
+    tag2,
     difficulty,
     description,
     input_description,
@@ -99,15 +100,14 @@ export async function saveProblem(rawFormData: any) {
   // DB에 삽입 또는 업데이트할 문제 데이터 객체 구성
   const problemData = {
     title,
-    category,
+    tag1,
+    tag2,
     difficulty,
     description,
     input_description,
     output_description,
     is_deleted: false,
-    // 시간 제한은 문자열일 수 있으므로 숫자로 변환 (없으면 null)
     time_limit_ms: time_limit_ms ? parseInt(time_limit_ms, 10) : null,
-    // 메모리 제한도 문자열일 수 있으므로 숫자로 변환 (없으면 null)
     memory_limit_mb: memory_limit_mb ? parseInt(memory_limit_mb, 10) : null,
   };
 
@@ -187,4 +187,21 @@ export async function saveProblem(rawFormData: any) {
   revalidatePath("/problems");
   // 작업 완료 후 관리자 문제 목록 페이지로 리다이렉트
   redirect("/admin/problems");
+}
+
+export async function toggleHidden(id: number, currentHidden: boolean) {
+  await requireAdmin();
+  const supabaseAdmin = createAdminClient();
+
+  const { error } = await supabaseAdmin
+    .from("problems")
+    .update({ is_hidden: !currentHidden })
+    .eq("id", id);
+
+  if (error) {
+    throw new Error("상태 변경에 실패했습니다.");
+  }
+
+  revalidatePath("/admin/problems");
+  revalidatePath("/problems");
 }
