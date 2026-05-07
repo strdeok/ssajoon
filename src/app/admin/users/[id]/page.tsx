@@ -107,7 +107,7 @@ export default async function AdminUserDetailPage({
   const groupedMap = new Map<number, GroupedProblemHistory>();
   
   if (submissionsData) {
-    (submissionsData as AdminSubmissionHistoryRow[]).forEach((sub) => {
+    (submissionsData as unknown as AdminSubmissionHistoryRow[]).forEach((sub) => {
       const pId = sub.problem_id;
       if (!groupedMap.has(pId)) {
         groupedMap.set(pId, {
