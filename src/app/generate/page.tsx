@@ -259,18 +259,6 @@ export default function GeneratePage() {
     return Array.from(new Set(tags)).sort();
   }, [selectedTag1, optionItems, selectedDifficulty]);
 
-  const availableDifficulties = useMemo(() => {
-    let items = optionItems;
-    if (selectedTag1) {
-      items = items.filter((item) => item.tag1 === selectedTag1);
-      if (selectedTag2 !== "") {
-        items = items.filter((item) => item.tag2 === selectedTag2);
-      }
-    }
-
-    const diffs = Array.from(new Set(items.map((item) => item.difficulty)));
-    return diffs.sort((a, b) => (DIFFICULTY_ORDER[a] || 99) - (DIFFICULTY_ORDER[b] || 99));
-  }, [selectedTag1, selectedTag2, optionItems]);
 
   const selectedOptionCount = useMemo(() => {
     if (!selectedTag1 || !selectedDifficulty) return 0;
@@ -408,11 +396,11 @@ export default function GeneratePage() {
   return (
     <div className="flex-1 max-w-6xl mx-auto w-full p-6 sm:p-8 space-y-10 pb-20">
       <div className="flex flex-col items-center text-center space-y-4 pt-8">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center mb-2">
+        <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center mb-2">
           <Brain className="w-8 h-8 text-indigo-500" />
         </div>
 
-        <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-zinc-900 to-zinc-500 dark:from-white dark:to-zinc-400 tracking-tight">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-zinc-900 to-zinc-500 dark:from-white dark:to-zinc-400 tracking-tight">
           문제 생성
         </h1>
 
@@ -538,7 +526,7 @@ export default function GeneratePage() {
 
             {errorMessage && (
               <div className="flex items-center space-x-3 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 p-4 rounded-xl border border-red-200 dark:border-red-500/20">
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <AlertCircle className="w-5 h-5 shrink-0" />
                 <p className="text-sm font-semibold">{errorMessage}</p>
               </div>
             )}
@@ -547,7 +535,7 @@ export default function GeneratePage() {
 
         <div className="lg:col-span-7">
           {isGenerating ? (
-            <div className="h-full min-h-[500px] flex flex-col items-center justify-center space-y-7 bg-white/60 dark:bg-[#09090b]/60 backdrop-blur-md rounded-3xl border border-zinc-200/50 dark:border-zinc-800/50 p-8 shadow-xl">
+            <div className="h-full min-h-125 flex flex-col items-center justify-center space-y-7 bg-white/60 dark:bg-[#09090b]/60 backdrop-blur-md rounded-3xl border border-zinc-200/50 dark:border-zinc-800/50 p-8 shadow-xl">
               <div className="relative">
                 <div className="absolute inset-0 rounded-full bg-indigo-500/20 blur-xl animate-pulse" />
                 <div className="relative w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
@@ -563,7 +551,7 @@ export default function GeneratePage() {
                     <Lightbulb className="h-6 w-6 text-indigo-500" />
                   </div>
 
-                  <p className="min-h-[56px] text-base font-semibold leading-relaxed text-zinc-800 dark:text-zinc-100">
+                  <p className="min-h-14 text-base font-semibold leading-relaxed text-zinc-800 dark:text-zinc-100">
                     {LOADING_TIPS[loadingTipIndex]}
                   </p>
                 </div>
@@ -589,7 +577,7 @@ export default function GeneratePage() {
             </div>
           ) : generatedProblem ? (
             <div className="bg-white dark:bg-[#09090b] rounded-3xl border border-zinc-200 dark:border-white/5 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-right-8 duration-500">
-              <div className="p-6 border-b border-emerald-200 dark:border-emerald-900/30 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="p-6 border-b border-emerald-200 dark:border-emerald-900/30 bg-linear-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center space-x-3 text-emerald-700 dark:text-emerald-400">
                   <CheckCircle2 className="w-6 h-6" />
                   <div>
@@ -607,7 +595,7 @@ export default function GeneratePage() {
                 </a>
               </div>
 
-              <div className="p-8 space-y-8 h-[600px] overflow-y-auto custom-scrollbar">
+              <div className="p-8 space-y-8 h-150 overflow-y-auto custom-scrollbar">
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3">
                     <span className={`px-3 py-1 rounded-full text-xs font-bold border ${difficultyColor(generatedProblem.difficulty)}`}>

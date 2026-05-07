@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
+    const supabaseAdmin = createAdminClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -133,14 +135,69 @@ export async function POST(request: Request) {
       );
     }
 
+    const now = new Date().toISOString();
+    const { data: existingGeneratedProblem, error: existingGeneratedProblemError } = await supabaseAdmin
+      .from("user_generated_problems")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("problem_id", publishedProblem.id)
+      .maybeSingle();
+
+    if (existingGeneratedProblemError) {
+      console.error("user_generated_problems lookup error:", existingGeneratedProblemError);
+
+      return NextResponse.json(
+        { success: false, message: "생성 문제 기록 확인 중 오류가 발생했습니다.", code: "GENERATED_PROBLEM_LOOKUP_ERROR" },
+        { status: 500 }
+      );
+    }
+
+    const generatedProblemMutation = existingGeneratedProblem
+      ? supabaseAdmin
+        .from("user_generated_problems")
+        .update({
+          status: "completed",
+          revealed_at: now,
+        })
+        .eq("id", existingGeneratedProblem.id)
+      : supabaseAdmin
+        .from("user_generated_problems")
+        .insert({
+          user_id: user.id,
+          problem_id: publishedProblem.id,
+          status: "completed",
+          generated_at: now,
+          revealed_at: now,
+        });
+
+    const { error: generatedProblemError } = await generatedProblemMutation;
+
+    if (generatedProblemError) {
+      console.error("user_generated_problems insert error:", generatedProblemError);
+
+      return NextResponse.json(
+        { success: false, message: "생성 문제 기록 중 오류가 발생했습니다.", code: "GENERATED_PROBLEM_RECORD_ERROR" },
+        { status: 500 }
+      );
+    }
+
     const newCount = currentCount + 1;
-    await supabase
+    const { error: countUpdateError } = await supabase
       .from("users")
       .update({
         daily_problem_create_count: newCount,
         problem_create_count_date: today
       })
       .eq("id", user.id);
+
+    if (countUpdateError) {
+      console.error("daily problem create count update error:", countUpdateError);
+
+      return NextResponse.json(
+        { success: false, message: "생성 횟수 갱신 중 오류가 발생했습니다.", code: "COUNT_UPDATE_ERROR" },
+        { status: 500 }
+      );
+    }
 
     const { data: examples } = await supabase
       .from("problem_examples")
@@ -155,7 +212,7 @@ export async function POST(request: Request) {
       remainingCount: MAX_GENERATE - newCount
     });
 
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, message: "서버 내부 오류가 발생했습니다.", code: "SERVER_ERROR" },
       { status: 500 }

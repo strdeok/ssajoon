@@ -1,10 +1,17 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import ClientForm from "./ClientForm";
+import {
+  GeneratedProblemsSection,
+  GeneratedProblemsSectionSkeleton,
+} from "@/components/mypage/GeneratedProblemsSection";
 
 export default async function Mypage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     redirect("/login");
@@ -17,8 +24,8 @@ export default async function Mypage() {
     .single();
 
   return (
-    <div className="flex-1 max-w-2xl mx-auto w-full p-8 space-y-8">
-      <div>
+    <div className="flex-1 max-w-8xl flex flex-col items-center mx-auto w-full p-8 space-y-8">
+      <div className="max-w-7xl w-full">
         <h1 className="text-3xl font-bold text-zinc-900 dark:text-white tracking-tight mb-2">
           계정 관리
         </h1>
@@ -26,12 +33,21 @@ export default async function Mypage() {
           회원님의 계정 정보를 확인하고 수정할 수 있습니다.
         </p>
       </div>
-      
-      <ClientForm 
-        initialNickname={userData?.nickname || user.user_metadata?.nickname || ""} 
-        initialSchoolNumber={userData?.school_number || user.user_metadata?.school_number || ""}
-        userEmail={user.email || ""}
-      />
+      <div className="flex flex-row gap-12 justify-center flex-1">
+        <ClientForm
+          initialNickname={
+            userData?.nickname || user.user_metadata?.nickname || ""
+          }
+          initialSchoolNumber={
+            userData?.school_number || user.user_metadata?.school_number || ""
+          }
+          userEmail={user.email || ""}
+        />
+
+        <Suspense fallback={<GeneratedProblemsSectionSkeleton />}>
+          <GeneratedProblemsSection />
+        </Suspense>
+      </div>
     </div>
   );
 }

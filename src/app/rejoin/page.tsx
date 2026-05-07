@@ -39,7 +39,7 @@ export default async function RejoinPage({
             다시 회원가입하시겠습니까?
           </h1>
           <p className="text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-            이 계정은 이전에 탈퇴 처리되었습니다. 다시 시작하면 계정과 기존 제출 내역이 복구됩니다.
+            이 계정은 이전에 탈퇴 처리되었습니다. <br/> 다시 시작하면 계정과 기존 제출 내역이 복구됩니다.
           </p>
         </div>
 

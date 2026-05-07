@@ -106,6 +106,12 @@
   }
 }
 
+@media (max-width: 1300px) {
+  html {
+    font-size: 12px;
+  }
+}
+
 .problem-markdown li {
   line-height: 1.75;
   margin: 0.5rem 0;
