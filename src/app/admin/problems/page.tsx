@@ -21,6 +21,16 @@ const DIFFICULTY_MAP: Record<string, string[]> = {
   VeryHard: ["VERY_HARD", "Very Hard"],
 };
 
+const createSpaceInsensitiveTitlePattern = (search: string) => {
+  const compactSearch = search.replace(/\s+/g, "");
+
+  if (!compactSearch) {
+    return "";
+  }
+
+  return compactSearch.split("").join("%");
+};
+
 type AdminProblemsPageProps = { // AdminProblemsPage가 받을 props 타입을 정의합니다.
   searchParams: Promise<{ // Next.js 15 기준 searchParams는 Promise이므로 Promise 타입으로 정의합니다.
     page?: string; // 현재 페이지 번호 query 값을 정의합니다.
@@ -89,10 +99,18 @@ export default async function AdminProblemsPage({ searchParams }: AdminProblemsP
   if (search.trim()) {
     const trimmed = search.trim();
     const num = parseInt(trimmed);
+    const compactTitlePattern = createSpaceInsensitiveTitlePattern(trimmed);
+    const titleFilters = [
+      `title.ilike.%${trimmed}%`,
+      compactTitlePattern && compactTitlePattern !== trimmed
+        ? `title.ilike.%${compactTitlePattern}%`
+        : "",
+    ].filter(Boolean);
+
     if (!isNaN(num)) {
-      query = query.or(`title.ilike.%${trimmed}%,id.eq.${num}`);
+      query = query.or([...titleFilters, `id.eq.${num}`].join(","));
     } else {
-      query = query.ilike("title", `%${trimmed}%`);
+      query = query.or(titleFilters.join(","));
     }
   }
 
@@ -238,4 +256,3 @@ export default async function AdminProblemsPage({ searchParams }: AdminProblemsP
     </div>
   );
 }
-

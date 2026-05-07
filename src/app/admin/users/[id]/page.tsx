@@ -9,6 +9,21 @@ import { UserProblemHistory, GroupedProblemHistory } from "@/components/admin/Us
 import { Pagination } from "@/components/common/Pagination";
 import { UserActionButton } from "@/components/admin/UserActionButton";
 
+type AdminSubmissionHistoryRow = {
+  id: string;
+  problem_id: number;
+  language: string;
+  status: string;
+  result: string;
+  submitted_at: string;
+  execution_time_ms: number | null;
+  memory_kb: number | null;
+  failed_testcase_order: number | null;
+  source_code: string | null;
+  is_deleted?: boolean;
+  problems: { title: string } | null;
+};
+
 export default async function AdminUserDetailPage({
   params,
   searchParams,
@@ -92,7 +107,7 @@ export default async function AdminUserDetailPage({
   const groupedMap = new Map<number, GroupedProblemHistory>();
   
   if (submissionsData) {
-    submissionsData.forEach((sub: any) => {
+    (submissionsData as AdminSubmissionHistoryRow[]).forEach((sub) => {
       const pId = sub.problem_id;
       if (!groupedMap.has(pId)) {
         groupedMap.set(pId, {

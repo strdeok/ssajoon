@@ -6,15 +6,23 @@ import { ChevronRight, Code2, Search } from "lucide-react";
 import { useState } from "react";
 import { getKoreanTag } from "@/utils/tagUtils";
 
+const normalizeSearchText = (value: string) => value.toLowerCase().replace(/\s+/g, "");
+
 export function ProblemList({ problems }: { problems: Problem[] }) {
   const [searchQuery, setSearchQuery] = useState("");
+  const normalizedSearchQuery = normalizeSearchText(searchQuery);
 
-  const filteredProblems = problems.filter((problem) =>
-    problem.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    problem.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    problem.tag1.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (problem.tag2 && problem.tag2.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredProblems = problems.filter((problem) => {
+    const query = searchQuery.toLowerCase();
+
+    return (
+      problem.title.toLowerCase().includes(query) ||
+      normalizeSearchText(problem.title).includes(normalizedSearchQuery) ||
+      problem.description.toLowerCase().includes(query) ||
+      problem.tag1.toLowerCase().includes(query) ||
+      (problem.tag2 && problem.tag2.toLowerCase().includes(query))
+    );
+  });
 
   return (
     <div className="flex flex-col gap-6">

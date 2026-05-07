@@ -81,6 +81,29 @@
     color: var(--foreground);
     font-family: 'Pretendard', sans-serif;
   }
+
+  button {
+    cursor: pointer;
+    transition-property: color, background-color, border-color, opacity, box-shadow, transform, filter;
+    transition-duration: 150ms;
+    transition-timing-function: ease;
+  }
+
+  button:disabled,
+  button[aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
+  @media (hover: hover) {
+    button:not(:disabled):not([aria-disabled="true"]):hover {
+      filter: brightness(0.97);
+    }
+  }
+
+  button:not(:disabled):not([aria-disabled="true"]):active {
+    transform: translateY(1px) scale(0.98);
+    filter: brightness(0.94);
+  }
 }
 
 .problem-markdown li {

@@ -39,6 +39,15 @@ export async function softDeleteUser(userId: string) {
     throw new Error("사용자 탈퇴 처리에 실패했습니다.");
   }
 
+  const { error: submissionsError } = await supabaseAdmin
+    .from("submissions")
+    .update({ is_deleted: true })
+    .eq("user_id", userId);
+
+  if (submissionsError) {
+    throw new Error("사용자 제출 내역 탈퇴 처리에 실패했습니다.");
+  }
+
   // 관리자 사용자 목록과 상세 페이지 캐시를 갱신한다.
   revalidatePath("/admin/users");
   revalidatePath(`/admin/users/${userId}`);
@@ -46,9 +55,9 @@ export async function softDeleteUser(userId: string) {
 
 export async function restoreUser(userId: string) {
   await requireAdmin();
-  const supabase = await createClient();
+  const supabaseAdmin = createAdminClient();
 
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from("users")
     .update({
       is_deleted: false,
@@ -58,6 +67,15 @@ export async function restoreUser(userId: string) {
 
   if (error) {
     throw new Error("사용자 복구 처리에 실패했습니다.");
+  }
+
+  const { error: submissionsError } = await supabaseAdmin
+    .from("submissions")
+    .update({ is_deleted: false })
+    .eq("user_id", userId);
+
+  if (submissionsError) {
+    throw new Error("사용자 제출 내역 복구 처리에 실패했습니다.");
   }
 
   revalidatePath("/admin/users");

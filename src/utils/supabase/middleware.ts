@@ -15,7 +15,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({
             request,
           })
@@ -57,15 +57,20 @@ export async function updateSession(request: NextRequest) {
       .single()
     dbUser = data
 
-    if (dbUser?.is_deleted && !request.nextUrl.pathname.startsWith('/api/auth/signout')) {
+    if (
+      dbUser?.is_deleted &&
+      !request.nextUrl.pathname.startsWith('/rejoin') &&
+      !request.nextUrl.pathname.startsWith('/api/auth/signout')
+    ) {
       const url = request.nextUrl.clone()
-      url.pathname = '/login'
-      url.searchParams.set('error', '탈퇴한 회원입니다.')
+      url.pathname = '/rejoin'
+      url.search = ''
       return NextResponse.redirect(url)
     }
 
     if (
       !user.user_metadata?.nickname && 
+      !request.nextUrl.pathname.startsWith('/rejoin') &&
       !request.nextUrl.pathname.startsWith('/onboarding') &&
       !request.nextUrl.pathname.startsWith('/api') &&
       !request.nextUrl.pathname.startsWith('/auth') &&

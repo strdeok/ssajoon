@@ -47,9 +47,6 @@ export default function WeeklySubmissionChart({ data }: Props) {
     <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl shadow-sm p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-zinc-100">제출 통계 (주간)</h2>
-        <button className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
-          상세 분석 보기
-        </button>
       </div>
 
       <div className="h-64 w-full">

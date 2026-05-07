@@ -9,6 +9,20 @@ const DIFFICULTY_FILTER: Record<string, string[]> = {
   "Very-Hard": ["VERY_HARD", "Very Hard"],
 };
 
+const createSpaceInsensitiveTitlePattern = (search: string) => {
+  const compactSearch = search.replace(/\s+/g, "");
+
+  if (!compactSearch) {
+    return "";
+  }
+
+  return compactSearch.split("").join("%");
+};
+
+type SubmissionProblemIdRow = {
+  problem_id: number | string | null;
+};
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
@@ -42,14 +56,17 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const fetchProblemIds = async (filter: (query: any) => any) => {
-      const { data, error } = await filter(
-        supabase
-          .from("submissions")
-          .select("problem_id")
-          .eq("user_id", user.id)
-          .eq("is_deleted", false)
-      );
+    const createSubmissionProblemIdQuery = () =>
+      supabase
+        .from("submissions")
+        .select("problem_id")
+        .eq("user_id", user.id)
+        .eq("is_deleted", false);
+
+    const fetchProblemIds = async (
+      filter: (query: ReturnType<typeof createSubmissionProblemIdQuery>) => ReturnType<typeof createSubmissionProblemIdQuery>
+    ) => {
+      const { data, error } = await filter(createSubmissionProblemIdQuery());
 
       if (error) {
         throw error;
@@ -57,8 +74,8 @@ export async function GET(request: Request) {
 
       return Array.from(
         new Set(
-          (data ?? [])
-            .map((row: any) => Number(row.problem_id))
+          ((data as SubmissionProblemIdRow[] | null) ?? [])
+            .map((row) => Number(row.problem_id))
             .filter((id: number) => !Number.isNaN(id))
         )
       );
@@ -105,10 +122,18 @@ export async function GET(request: Request) {
   if (search.trim()) {
     const trimmed = search.trim();
     const num = parseInt(trimmed);
+    const compactTitlePattern = createSpaceInsensitiveTitlePattern(trimmed);
+    const titleFilters = [
+      `title.ilike.%${trimmed}%`,
+      compactTitlePattern && compactTitlePattern !== trimmed
+        ? `title.ilike.%${compactTitlePattern}%`
+        : "",
+    ].filter(Boolean);
+
     if (!isNaN(num)) {
-      query = query.or(`title.ilike.%${trimmed}%,id.eq.${num}`);
+      query = query.or([...titleFilters, `id.eq.${num}`].join(","));
     } else {
-      query = query.ilike("title", `%${trimmed}%`);
+      query = query.or(titleFilters.join(","));
     }
   }
 
