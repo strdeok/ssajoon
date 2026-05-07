@@ -30,27 +30,15 @@ function calculateTopPercent(myValue: number | null, values: number[]) {
 
   const betterCount = values.filter((value) => value < myValue).length;
   const rank = betterCount + 1;
-  const total = values.length + 1;
+  const total = values.length;
 
-  return Math.max(1, Math.min(100, Math.round((rank / total) * 100)));
+  return Math.max(1, Math.min(100, Math.ceil((rank / total) * 100)));
 }
 
 function calculateBarFill(topPercent: number | null) {
   if (topPercent === null) return 0;
 
   return Math.max(6, 100 - topPercent);
-}
-
-function formatRuntime(value: number | null) {
-  if (!isValidNumber(value)) return "-";
-
-  return `${value}ms`;
-}
-
-function formatMemory(value: number | null) {
-  if (!isValidNumber(value)) return "-";
-
-  return `${value.toLocaleString()}KB`;
 }
 
 function AnalysisRow({
@@ -97,13 +85,20 @@ export default function PerformanceAnalysis({
     .map((row) => row.memory_kb)
     .filter(isValidNumber);
 
+  const runtimeValuesWithMine = isValidNumber(runtime)
+    ? [...runtimeValues, runtime]
+    : runtimeValues;
+
+  const memoryValuesWithMine = isValidNumber(memory)
+    ? [...memoryValues, memory]
+    : memoryValues;
+
   const averageRuntime = calculateAverage(runtimeValues);
-  const averageMemory = calculateAverage(memoryValues);
 
-  const runtimeTopPercent = calculateTopPercent(runtime, runtimeValues);
-  const memoryTopPercent = calculateTopPercent(memory, memoryValues);
+  const runtimeTopPercent = calculateTopPercent(runtime, runtimeValuesWithMine);
+  const memoryTopPercent = calculateTopPercent(memory, memoryValuesWithMine);
 
-  const hasComparisonData = runtimeValues.length > 0 || memoryValues.length > 0;
+  const hasComparisonData = runtimeValuesWithMine.length > 0 || memoryValuesWithMine.length > 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -123,7 +118,7 @@ export default function PerformanceAnalysis({
             </p>
 
             <p className="text-sm text-zinc-500">
-              같은 문제 · 같은 언어의 정답 제출 기준
+              같은 문제 · 같은 언어의 정답 제출 기준이며, 내 제출을 포함해 계산합니다.
             </p>
           </div>
         ) : (

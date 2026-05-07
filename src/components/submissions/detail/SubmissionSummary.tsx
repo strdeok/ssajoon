@@ -6,8 +6,12 @@ import {
   XCircle,
   Clock,
   Database,
+  OctagonX,
+  FileX2,
+  AlignJustify,
+  ServerCrash,
   Code2,
-  Calendar,
+  Calendar
 } from "lucide-react";
 import { formatTimeAgo, formatDateTime } from "@/utils/date";
 import { FailedTestcaseModal } from "@/components/submission/FailedTestcaseModal";
@@ -28,56 +32,208 @@ interface SubmissionSummaryProps {
 }
 
 const getResultInfo = (result: string) => {
+  // result가 소문자로 들어와도 비교할 수 있도록 대문자로 변환한다.
   const normalizedResult = result.toUpperCase();
+
+  // 정규화된 결과 코드에 따라 표시 정보를 분기한다.
   switch (normalizedResult) {
+    // AC는 정답을 의미한다.
     case "AC":
+
+    // ACCEPTED도 정답으로 처리한다.
     case "ACCEPTED":
+      // 정답 UI 정보를 반환한다.
       return {
+        // 사용자에게 보여줄 한글 라벨이다.
         label: "정답",
+
+        // 텍스트 색상 클래스다.
         colorClass: "text-emerald-500",
+
+        // 배경 색상 클래스다.
         bgClass: "bg-emerald-500/10",
+
+        // 정답 아이콘이다.
         icon: <CheckCircle2 className="w-8 h-8 text-emerald-500" />,
       };
+
+    // WA는 오답을 의미한다.
     case "WA":
+
+    // WRONG_ANSWER도 오답으로 처리한다.
     case "WRONG_ANSWER":
+      // 오답 UI 정보를 반환한다.
       return {
+        // 사용자에게 보여줄 한글 라벨이다.
         label: "오답",
+
+        // 텍스트 색상 클래스다.
         colorClass: "text-red-500",
+
+        // 배경 색상 클래스다.
         bgClass: "bg-red-500/10",
+
+        // 오답 아이콘이다.
         icon: <XCircle className="w-8 h-8 text-red-500" />,
       };
+
+    // TLE는 시간 초과를 의미한다.
     case "TLE":
+
+    // TIME_LIMIT_EXCEEDED도 시간 초과로 처리한다.
+    case "TIME_LIMIT_EXCEEDED":
+      // 시간 초과 UI 정보를 반환한다.
       return {
+        // 사용자에게 보여줄 한글 라벨이다.
         label: "시간 초과",
+
+        // 텍스트 색상 클래스다.
         colorClass: "text-amber-500",
+
+        // 배경 색상 클래스다.
         bgClass: "bg-amber-500/10",
+
+        // 시간 초과 아이콘이다.
         icon: <Clock className="w-8 h-8 text-amber-500" />,
       };
+
+    // MLE는 메모리 초과를 의미한다.
     case "MLE":
+
+    // MEMORY_LIMIT_EXCEEDED도 메모리 초과로 처리한다.
+    case "MEMORY_LIMIT_EXCEEDED":
+      // 메모리 초과 UI 정보를 반환한다.
       return {
+        // 사용자에게 보여줄 한글 라벨이다.
         label: "메모리 초과",
+
+        // 텍스트 색상 클래스다.
         colorClass: "text-amber-500",
+
+        // 배경 색상 클래스다.
         bgClass: "bg-amber-500/10",
+
+        // 메모리 초과 아이콘이다.
         icon: <Database className="w-8 h-8 text-amber-500" />,
       };
-    default:
+
+    // RE는 런타임 에러를 의미한다.
+    case "RE":
+
+    // RUNTIME_ERROR도 런타임 에러로 처리한다.
+    case "RUNTIME_ERROR":
+      // 런타임 에러 UI 정보를 반환한다.
       return {
-        label: result,
+        // 사용자에게 보여줄 한글 라벨이다.
+        label: "런타임 에러",
+
+        // 텍스트 색상 클래스다.
+        colorClass: "text-orange-500",
+
+        // 배경 색상 클래스다.
+        bgClass: "bg-orange-500/10",
+
+        // 런타임 에러 아이콘이다.
+        icon: <OctagonX className="w-8 h-8 text-orange-500" />,
+      };
+
+    // CE는 컴파일 에러를 의미한다.
+    case "CE":
+
+    // COMPILE_ERROR도 컴파일 에러로 처리한다.
+    case "COMPILE_ERROR":
+
+    // COMPILATION_ERROR도 컴파일 에러로 처리한다.
+    case "COMPILATION_ERROR":
+      // 컴파일 에러 UI 정보를 반환한다.
+      return {
+        // 사용자에게 보여줄 한글 라벨이다.
+        label: "컴파일 에러",
+
+        // 텍스트 색상 클래스다.
+        colorClass: "text-violet-500",
+
+        // 배경 색상 클래스다.
+        bgClass: "bg-violet-500/10",
+
+        // 컴파일 에러 아이콘이다.
+        icon: <FileX2 className="w-8 h-8 text-violet-500" />,
+      };
+
+    // PE는 출력 형식 오류를 의미한다.
+    case "PE":
+
+    // PRESENTATION_ERROR도 출력 형식 오류로 처리한다.
+    case "PRESENTATION_ERROR":
+
+    // OUTPUT_FORMAT_ERROR도 출력 형식 오류로 처리한다.
+    case "OUTPUT_FORMAT_ERROR":
+      // 출력 형식 오류 UI 정보를 반환한다.
+      return {
+        // 사용자에게 보여줄 한글 라벨이다.
+        label: "출력 형식 오류",
+
+        // 텍스트 색상 클래스다.
+        colorClass: "text-sky-500",
+
+        // 배경 색상 클래스다.
+        bgClass: "bg-sky-500/10",
+
+        // 출력 형식 오류 아이콘이다.
+        icon: <AlignJustify className="w-8 h-8 text-sky-500" />,
+      };
+
+    // SYSTEM_ERROR는 시스템 오류를 의미한다.
+    case "SYSTEM_ERROR":
+      // 시스템 오류 UI 정보를 반환한다.
+      return {
+        // 사용자에게 보여줄 한글 라벨이다.
+        label: "시스템 오류",
+
+        // 텍스트 색상 클래스다.
         colorClass: "text-zinc-500",
+
+        // 배경 색상 클래스다.
         bgClass: "bg-zinc-500/10",
+
+        // 시스템 오류 아이콘이다.
+        icon: <ServerCrash className="w-8 h-8 text-zinc-500" />,
+      };
+
+    // 위에서 처리하지 않은 결과 코드는 기본값으로 처리한다.
+    default:
+      // 기본 UI 정보를 반환한다.
+      return {
+        // 알 수 없는 결과 코드는 원본 값을 그대로 보여준다.
+        label: result,
+
+        // 기본 텍스트 색상 클래스다.
+        colorClass: "text-zinc-500",
+
+        // 기본 배경 색상 클래스다.
+        bgClass: "bg-zinc-500/10",
+
+        // 기본 아이콘 대신 원형 div를 보여준다.
         icon: <div className="w-8 h-8 rounded-full bg-zinc-500/20" />,
       };
   }
 };
 
+function isAcceptedResult(result: string | null | undefined) {
+  const normalizedResult = (result ?? "").trim().toUpperCase();
+
+  return normalizedResult === "AC" || normalizedResult === "ACCEPTED";
+}
+
 export default function SubmissionSummary({
   submission,
 }: SubmissionSummaryProps) {
   const { label, colorClass, bgClass, icon } = getResultInfo(submission.result);
+  const shouldShowPerformance = isAcceptedResult(submission.result);
 
   return (
     <>
-      <div className="flex justify-end mb-1">{(submission.result === "WA" || submission.result === "MLE" || submission.result === "TLE") && submission.failed_testcase_order && (
+      <div className="flex justify-end mb-1">{(submission.result === "WA" || submission.result === "MLE" || submission.result === "TLE" || submission.result == "RE" || submission.result == "PE") && submission.failed_testcase_order && (
         <FailedTestcaseModal
           submissionId={submission.id}
           problemId={submission.problem_id}
@@ -114,7 +270,7 @@ export default function SubmissionSummary({
                 시간
               </div>
               <div className="text-md font-bold text-zinc-900 dark:text-white">
-                {submission.execution_time_ms !== null
+                {shouldShowPerformance && submission.execution_time_ms !== null
                   ? `${submission.execution_time_ms}ms`
                   : "-"}
               </div>
@@ -125,7 +281,7 @@ export default function SubmissionSummary({
                 메모리
               </div>
               <div className="text-md font-bold text-zinc-900 dark:text-white">
-                {submission.memory_kb !== null
+                {shouldShowPerformance && submission.memory_kb !== null
                   ? `${submission.memory_kb}KB`
                   : "-"}
               </div>

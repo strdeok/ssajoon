@@ -15,6 +15,7 @@ import {
   StatusLabel,
 } from "@/components/problem/ProblemComponents";
 import { getKoreanTag } from "@/utils/tagUtils";
+import ProblemMarkdown from "@/components/common/ProblemMarkdown";
 
 type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -406,11 +407,19 @@ def binary_search(arr, target):
                       <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
                         {problem.title}
                       </p>
-                      <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5 line-clamp-1">
-                        {problem.description ||
-                          (problem.tag1 ? getKoreanTag(problem.tag1) : "") ||
-                          "설명이 없습니다."}
-                      </p>
+                      <div className="mt-0.5 line-clamp-1">
+                        {problem.description ? (
+                          <ProblemMarkdown
+                            content={problem.description}
+                            variant="compact"
+                          />
+                        ) : (
+                          <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                            {(problem.tag1 ? getKoreanTag(problem.tag1) : "") ||
+                              "설명이 없습니다."}
+                          </p>
+                        )}
+                      </div>
                     </div>
                     <div className="col-span-2">
                       <DifficultyBadge difficulty={problem.difficulty} />

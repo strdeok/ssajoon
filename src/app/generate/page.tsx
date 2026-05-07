@@ -16,6 +16,7 @@ import {
   Lightbulb,
 } from "lucide-react";
 import { getKoreanTag } from "@/utils/tagUtils";
+import ProblemMarkdown from "@/components/common/ProblemMarkdown";
 
 interface OptionItem {
   tag1: string;
@@ -636,11 +637,7 @@ export default function GeneratePage() {
                   </div>
                 </div>
 
-                <div className="prose prose-zinc dark:prose-invert max-w-none">
-                  <div className="text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap leading-relaxed">
-                    {generatedProblem.description}
-                  </div>
-                </div>
+                <ProblemMarkdown content={generatedProblem.description} />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
@@ -649,8 +646,8 @@ export default function GeneratePage() {
                       입력 설명
                     </h4>
 
-                    <div className="bg-zinc-50 dark:bg-black/40 p-4 rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 text-sm text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap">
-                      {generatedProblem.input_description}
+                    <div className="bg-zinc-50 dark:bg-black/40 p-4 rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 text-sm">
+                      <ProblemMarkdown content={generatedProblem.input_description} />
                     </div>
                   </div>
 
@@ -660,8 +657,8 @@ export default function GeneratePage() {
                       출력 설명
                     </h4>
 
-                    <div className="bg-zinc-50 dark:bg-black/40 p-4 rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 text-sm text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap">
-                      {generatedProblem.output_description}
+                    <div className="bg-zinc-50 dark:bg-black/40 p-4 rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 text-sm">
+                      <ProblemMarkdown content={generatedProblem.output_description} />
                     </div>
                   </div>
                 </div>

@@ -56,7 +56,7 @@ export function FailedTestcaseModal({
         .eq("problem_id", problemId)
         .eq("testcase_order", propFailedOrder)
         .single();
-
+      
       if (fetchError) throw fetchError;
       if (data) {
         setTestcase({
@@ -121,7 +121,6 @@ export function FailedTestcaseModal({
             <>
               <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400 p-4 rounded-xl text-sm font-medium">
                 이 제출은 {failedOrder}번 테스트케이스에서 오답 판정을 받았습니다.
-                {testcase.is_hidden && " (비공개 테스트케이스의 내용이 공개됩니다.)"}
               </div>
 
               <div>
