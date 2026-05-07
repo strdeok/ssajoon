@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { ChevronDown, ChevronUp, Loader2, Clock, HardDrive, Calendar } from "lucide-react";
 import { getSubmissionLabel } from "@/lib/submission/getSubmissionLabel";
+import { CodeEditor } from "../editor/CodeEditor";
 
 interface SubmissionSummary {
   id: string;
@@ -116,7 +117,7 @@ export function SubmissionCodeItem({ submission, isOpen, onToggle }: SubmissionC
           ) : sourceCode ? (
             <div className="overflow-x-auto overflow-y-auto custom-scrollbar rounded-md max-h-96">
               <pre className="text-sm font-mono text-zinc-800 dark:text-zinc-300 leading-relaxed m-0 p-2">
-                {sourceCode}
+                <CodeEditor language={submission.language} readOnly={true} onChange={() => {}} value={sourceCode} theme={localStorage.getItem("theme") === "dark" ? "dark" : "light"} />
               </pre>
             </div>
           ) : (
