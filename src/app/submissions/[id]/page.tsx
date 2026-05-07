@@ -91,13 +91,24 @@ export default async function SubmissionDetailPage({
     <div className="min-h-screen bg-zinc-50 dark:bg-black pb-20">
       <div className="max-w-7xl mx-auto px-4 pt-8">
         <div className="mb-8">
-          <Link
-            href="/submissions"
-            className="inline-flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-blue-600 transition-colors group"
-          >
-            <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            제출 기록으로 돌아가기
-          </Link>
+          {
+            submission.result === "AC"
+              ? <Link
+                href="/submissions"
+                className="inline-flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-blue-600 transition-colors group"
+              >
+                <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                제출 기록으로 돌아가기
+              </Link> :
+              <Link
+                href={`/problems/${formattedSubmission.problem_id}`}
+                className="inline-flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-blue-600 transition-colors group"
+              >
+                <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                문제로 돌아가기
+              </Link>
+          }
+
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-12">

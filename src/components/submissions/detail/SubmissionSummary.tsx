@@ -85,15 +85,15 @@ export default function SubmissionSummary({
         />
       )}</div>
       <div className="w-full bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/5 overflow-hidden shadow-xl">
-        <div className="p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-center gap-6">
+        <div className="p-8 flex flex-col items-start md:items-center justify-between gap-6">
+          <div className="flex items-center w-full gap-6">
             <div className={`p-4 rounded-2xl ${bgClass} shadow-inner`}>
               {icon}
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span
-                  className={`text-3xl font-black tracking-tight ${colorClass}`}
+                  className={`text-xl font-black tracking-tight ${colorClass}`}
                 >
                   {label}
                 </span>

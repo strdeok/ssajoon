@@ -20,7 +20,12 @@ const ITEMS_PER_PAGE = 10;
 const isAcceptedResult = (result: string | null) => {
   if (!result) return false;
   const lower = result.toLowerCase();
-  return lower.includes("맞았습니다") || lower === "accepted" || lower === "ac";
+  return (
+    lower.includes("맞았습니다") ||
+    lower === "accepted" ||
+    lower === "ac" ||
+    lower.includes("정답")
+  );
 };
 
 const getResultText = (result: string) => {
@@ -94,33 +99,76 @@ export default function SubmissionsPage() {
             problem_id,
             language,
             result,
+            status,
             execution_time_ms,
             memory_kb,
             submitted_at,
             problems (
               title,
-              category
+              tag1,
+              tag2
             )
           `,
           )
           .eq("user_id", user.id)
-          .eq("is_deleted", false)
+          .or("is_deleted.is.false,is_deleted.is.null")
           .order("submitted_at", { ascending: false });
 
-        if (fetchError) throw fetchError;
+        if (fetchError) {
+          console.error("Fetch submissions error:", fetchError);
+          throw fetchError;
+        }
 
         const mappedSubmissions: Submission[] = (data || []).map((sub: any) => {
           const problemData = Array.isArray(sub.problems)
             ? sub.problems[0]
             : sub.problems;
 
+          let displayResult = sub.result || sub.status || "결과 없음";
+
+          // 결과 값 정규화 (배지 스타일 일관성을 위함)
+          if (isAcceptedResult(displayResult)) {
+            displayResult = "AC";
+          } else if (
+            displayResult.includes("틀렸습니다") ||
+            displayResult === "Wrong Answer" ||
+            displayResult === "WA"
+          ) {
+            displayResult = "WA";
+          } else if (
+            displayResult.includes("시간 초과") ||
+            displayResult === "Time Limit Exceeded" ||
+            displayResult === "TLE"
+          ) {
+            displayResult = "TLE";
+          } else if (
+            displayResult.includes("메모리 초과") ||
+            displayResult === "Memory Limit Exceeded" ||
+            displayResult === "MLE"
+          ) {
+            displayResult = "MLE";
+          } else if (
+            displayResult.includes("런타임 에러") ||
+            displayResult === "Runtime Error" ||
+            displayResult === "RE"
+          ) {
+            displayResult = "RE";
+          } else if (
+            displayResult.includes("컴파일 에러") ||
+            displayResult === "Compile Error" ||
+            displayResult === "CE"
+          ) {
+            displayResult = "CE";
+          }
+
           return {
             id: sub.id,
             problemId: sub.problem_id,
             problemTitle: problemData?.title || "알 수 없는 문제",
-            category: problemData?.category || "기타",
+            tag1: problemData?.tag1 || "기타",
+            tag2: problemData?.tag2 || null,
             language: normalizeLanguage(sub.language),
-            result: sub.result || "결과 없음",
+            result: displayResult,
             runtimeMs: sub.execution_time_ms,
             memoryKb: sub.memory_kb,
             submittedAt: sub.submitted_at,
@@ -145,7 +193,8 @@ export default function SubmissionsPage() {
         const stats = calculateWeeklySubmissionStats(mappedSubmissions);
         setWeeklyStats(stats);
       } catch (err: any) {
-        // 데이터가 없는 경우는 에러로 처리하지 않음
+        console.error("Submission fetch failed:", err);
+        setError(err.message || "데이터를 불러오는 중 오류가 발생했습니다.");
         setSubmissions([]);
         setSummary({
           totalSubmissions: 0,
@@ -165,8 +214,16 @@ export default function SubmissionsPage() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const internalStats: (WeeklyStat & { fullDate: string })[] = [];
+    const internalStats: (WeeklyStat & { localDateStr: string })[] = [];
     const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
+
+    // 로컬 날짜 문자열 생성을 위한 헬퍼 (YYYY-MM-DD)
+    const getLocalDateStr = (date: Date) => {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    };
 
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
@@ -175,22 +232,22 @@ export default function SubmissionsPage() {
         date: dayNames[d.getDay()],
         count: 0,
         isToday: i === 0,
-        fullDate: d.toISOString().split("T")[0],
+        localDateStr: getLocalDateStr(d),
       });
     }
 
     subs.forEach((sub) => {
       if (!sub.submittedAt) return;
       const subDate = new Date(sub.submittedAt);
-      const dateStr = subDate.toISOString().split("T")[0];
+      const dateStr = getLocalDateStr(subDate);
 
-      const targetStat = internalStats.find((s) => s.fullDate === dateStr);
+      const targetStat = internalStats.find((s) => s.localDateStr === dateStr);
       if (targetStat) {
         targetStat.count += 1;
       }
     });
 
-    return internalStats.map(({ fullDate, ...rest }) => rest);
+    return internalStats.map(({ localDateStr, ...rest }) => rest);
   };
 
   const filteredSubmissions = useMemo(() => {
@@ -227,7 +284,9 @@ export default function SubmissionsPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
           <Loader2 className="w-10 h-10 animate-spin text-blue-500" />
-          <p className="text-gray-500 dark:text-zinc-400">제출 기록을 불러오는 중...</p>
+          <p className="text-gray-500 dark:text-zinc-400">
+            제출 기록을 불러오는 중...
+          </p>
         </div>
       </div>
     );
@@ -258,7 +317,9 @@ export default function SubmissionsPage() {
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-8">
           <div>
             {/* 큰 제목 */}
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-2">제출 기록</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-2">
+              제출 기록
+            </h1>
             {/* 설명 문구 */}
             <p className="text-sm text-gray-500 dark:text-zinc-400">
               본인이 제출한 모든 소스코드의 실행 결과와 이력을 확인하고
