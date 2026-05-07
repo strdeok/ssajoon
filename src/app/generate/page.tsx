@@ -146,7 +146,7 @@ export default function GeneratePage() {
     const checkAuth = async () => {
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
         router.push("/login?returnUrl=/generate");
       }
@@ -235,40 +235,56 @@ export default function GeneratePage() {
     };
   }, [isGenerating, loadingStartedAt]);
 
+  const difficultyOrder: Record<string, number> = {
+    "Easy": 1,
+    "Medium": 2,
+    "Hard": 3,
+    "MediumHard": 4,
+    "VeryHard": 5,
+  };
+
   const availableTag1s = useMemo(() => {
-    return Array.from(new Set(optionItems.map((item) => item.tag1))).sort();
-  }, [optionItems]);
+    let items = optionItems;
+    if (selectedDifficulty) {
+      items = items.filter((item) => item.difficulty === selectedDifficulty);
+    }
+    return Array.from(new Set(items.map((item) => item.tag1))).sort();
+  }, [optionItems, selectedDifficulty]);
 
   const availableTag2s = useMemo(() => {
     if (!selectedTag1) return [];
-    const tags = optionItems
-      .filter((item) => item.tag1 === selectedTag1 && item.tag2 !== null)
-      .map((item) => item.tag2 as string);
+    let items = optionItems.filter((item) => item.tag1 === selectedTag1 && item.tag2 !== null);
+    if (selectedDifficulty) {
+      items = items.filter((item) => item.difficulty === selectedDifficulty);
+    }
+    const tags = items.map((item) => item.tag2 as string);
     return Array.from(new Set(tags)).sort();
-  }, [selectedTag1, optionItems]);
+  }, [selectedTag1, optionItems, selectedDifficulty]);
 
   const availableDifficulties = useMemo(() => {
-    if (!selectedTag1) return [];
-  
-    return optionItems
-      .filter((item) => 
-        item.tag1 === selectedTag1 && 
-        (selectedTag2 === "" ? item.tag2 === null : item.tag2 === selectedTag2)
-      )
-      .map((item) => item.difficulty)
-      .sort();
+    let items = optionItems;
+    if (selectedTag1) {
+      items = items.filter((item) => item.tag1 === selectedTag1);
+      if (selectedTag2 !== "") {
+        items = items.filter((item) => item.tag2 === selectedTag2);
+      }
+    }
+
+    const diffs = Array.from(new Set(items.map((item) => item.difficulty)));
+    return diffs.sort((a, b) => (difficultyOrder[a] || 99) - (difficultyOrder[b] || 99));
   }, [selectedTag1, selectedTag2, optionItems]);
 
   const selectedOptionCount = useMemo(() => {
     if (!selectedTag1 || !selectedDifficulty) return 0;
-  
-    const option = optionItems.find((item) => 
-      item.tag1 === selectedTag1 && 
-      (selectedTag2 === "" ? item.tag2 === null : item.tag2 === selectedTag2) && 
-      item.difficulty === selectedDifficulty
+
+    const filtered = optionItems.filter(
+      (item) =>
+        item.tag1 === selectedTag1 &&
+        (selectedTag2 === "" ? true : item.tag2 === selectedTag2) &&
+        item.difficulty === selectedDifficulty,
     );
-  
-    return option?.count ?? 0;
+
+    return filtered.reduce((sum, item) => sum + item.count, 0);
   }, [selectedTag1, selectedTag2, selectedDifficulty, optionItems]);
 
   const canGenerate =
@@ -475,10 +491,10 @@ export default function GeneratePage() {
                 <select
                   value={selectedDifficulty}
                   onChange={(event) => setSelectedDifficulty(event.target.value)}
-                  disabled={!selectedTag1 || isLoadingOptions || isGenerating}
+                  disabled={isLoadingOptions || isGenerating}
                   className="w-full appearance-none bg-zinc-50 dark:bg-black/50 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 block px-4 py-3.5 outline-none transition-all cursor-pointer font-medium disabled:opacity-50"
                 >
-                  <option value="">{selectedTag1 ? "난이도를 선택하세요" : "알고리즘을 먼저 선택하세요"}</option>
+                  <option value="">{isLoadingOptions ? "불러오는 중..." : "난이도를 선택하세요"}</option>
 
                   {availableDifficulties.map((difficulty) => (
                     <option key={difficulty} value={difficulty}>

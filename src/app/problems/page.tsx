@@ -38,7 +38,7 @@ type ProblemStats = {
   acceptance_rate: number;
 };
 
-const DIFFICULTIES = ["전체", "Easy", "Medium", "Medium-Hard", "Hard"];
+const DIFFICULTIES = ["전체", "Easy", "Medium", "Medium-Hard", "Hard", "Very-Hard"];
 const PAGE_SIZE = 20;
 
 function ProblemsContent() {

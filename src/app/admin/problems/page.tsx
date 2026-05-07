@@ -18,6 +18,7 @@ const DIFFICULTY_MAP: Record<string, string[]> = {
   Medium: ["MEDIUM", "Medium"],
   "Medium-Hard": ["MEDIUM_HARD", "Medium Hard"],
   Hard: ["HARD", "Hard"],
+  VeryHard: ["VERY_HARD", "Very Hard"],
 };
 
 type AdminProblemsPageProps = { // AdminProblemsPage가 받을 props 타입을 정의합니다.

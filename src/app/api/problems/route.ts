@@ -6,6 +6,7 @@ const DIFFICULTY_FILTER: Record<string, string[]> = {
   Medium: ["MEDIUM", "Medium"],
   "Medium-Hard": ["MEDIUM_HARD", "Medium Hard"],
   Hard: ["HARD", "Hard"],
+  "Very-Hard": ["VERY_HARD", "Very Hard"],
 };
 
 export async function GET(request: Request) {

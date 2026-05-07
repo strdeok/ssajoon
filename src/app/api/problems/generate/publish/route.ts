@@ -64,6 +64,7 @@ export async function POST(request: Request) {
       });
 
     if (publishError) {
+      console.error("RPC Error 상세 내역:", publishError);
       return NextResponse.json(
         { success: false, message: "문제 생성 중 오류가 발생했습니다.", code: "RPC_ERROR" },
         { status: 500 }

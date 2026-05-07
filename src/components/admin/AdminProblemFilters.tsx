@@ -17,7 +17,7 @@ export function AdminProblemFilters({ categories }: AdminProblemFiltersProps) {
   const currentStatus = searchParams.get("status") || "전체";
   const currentSort = searchParams.get("sort") || "newest";
 
-  const DIFFICULTIES = ["전체", "Easy", "Medium", "Medium-Hard", "Hard"];
+  const DIFFICULTIES = ["전체", "Easy", "Medium", "Medium-Hard", "Hard", "Very-Hard"];
   const STATUSES = [
     { label: "전체", value: "전체" },
     { label: "활성", value: "active" },

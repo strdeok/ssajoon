@@ -116,7 +116,7 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
     <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link 
+          <Link
             href="/admin/problems"
             className="p-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-colors"
           >
@@ -150,7 +150,7 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
                   required
                   type="text"
                   value={formData.title}
-                  onChange={e => setFormData({...formData, title: e.target.value})}
+                  onChange={e => setFormData({ ...formData, title: e.target.value })}
                   className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-lg px-4 py-2 text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
                   placeholder="문제 제목을 입력하세요"
                 />
@@ -162,7 +162,7 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
                     required
                     type="text"
                     value={formData.tag1}
-                    onChange={e => setFormData({...formData, tag1: e.target.value})}
+                    onChange={e => setFormData({ ...formData, tag1: e.target.value })}
                     className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-lg px-4 py-2 text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="예: BFS, DP (필수)"
                   />
@@ -172,7 +172,7 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
                   <input
                     type="text"
                     value={formData.tag2 || ""}
-                    onChange={e => setFormData({...formData, tag2: e.target.value})}
+                    onChange={e => setFormData({ ...formData, tag2: e.target.value })}
                     className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-lg px-4 py-2 text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="추가 알고리즘 (선택)"
                   />
@@ -186,13 +186,14 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">난이도</label>
                   <select
                     value={formData.difficulty}
-                    onChange={e => setFormData({...formData, difficulty: e.target.value})}
+                    onChange={e => setFormData({ ...formData, difficulty: e.target.value })}
                     className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-lg px-4 py-2 text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="Basic">Basic</option>
                     <option value="Easy">Easy</option>
                     <option value="Medium">Medium</option>
                     <option value="Hard">Hard</option>
+                    <option value="Very Hard">Very Hard</option>
                   </select>
                 </div>
               </div>
@@ -208,7 +209,7 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
                   required
                   rows={6}
                   value={formData.description}
-                  onChange={e => setFormData({...formData, description: e.target.value})}
+                  onChange={e => setFormData({ ...formData, description: e.target.value })}
                   className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-lg px-4 py-3 text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-blue-500 resize-y"
                   placeholder="문제에 대한 자세한 설명을 입력하세요"
                 />
@@ -220,7 +221,7 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
                     required
                     rows={4}
                     value={formData.input_description}
-                    onChange={e => setFormData({...formData, input_description: e.target.value})}
+                    onChange={e => setFormData({ ...formData, input_description: e.target.value })}
                     className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-lg px-4 py-3 text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-blue-500 resize-y"
                   />
                 </div>
@@ -230,7 +231,7 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
                     required
                     rows={4}
                     value={formData.output_description}
-                    onChange={e => setFormData({...formData, output_description: e.target.value})}
+                    onChange={e => setFormData({ ...formData, output_description: e.target.value })}
                     className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-lg px-4 py-3 text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-blue-500 resize-y"
                   />
                 </div>
@@ -361,7 +362,7 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
                     min="100"
                     step="100"
                     value={formData.time_limit_ms}
-                    onChange={e => setFormData({...formData, time_limit_ms: Number(e.target.value)})}
+                    onChange={e => setFormData({ ...formData, time_limit_ms: Number(e.target.value) })}
                     className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-lg px-4 py-2 pr-12 text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                   />
                   <span className="absolute right-4 top-2 text-zinc-500 text-sm">ms</span>
@@ -376,7 +377,7 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
                     min="16"
                     step="16"
                     value={formData.memory_limit_mb}
-                    onChange={e => setFormData({...formData, memory_limit_mb: Number(e.target.value)})}
+                    onChange={e => setFormData({ ...formData, memory_limit_mb: Number(e.target.value) })}
                     className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-lg px-4 py-2 pr-12 text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                   />
                   <span className="absolute right-4 top-2 text-zinc-500 text-sm">MB</span>
