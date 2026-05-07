@@ -83,6 +83,20 @@
   }
 }
 
+.problem-markdown li {
+  line-height: 1.75;
+  margin: 0.5rem 0;
+}
+
+.problem-markdown li::marker {
+  line-height: 1.75;
+  vertical-align: text-top;
+}
+
+.problem-markdown li p {
+  margin-top: -1.75rem;
+}
+
 
 
 .custom-scrollbar::-webkit-scrollbar {
