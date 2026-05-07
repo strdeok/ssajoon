@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     }
 
     const today = new Date().toISOString().split("T")[0];
-    
+
     let currentCount = userData.daily_problem_create_count || 0;
     const lastCreateDate = userData.problem_create_count_date;
 
@@ -47,32 +47,32 @@ export async function POST(request: Request) {
     const MAX_GENERATE = 3;
     if (currentCount >= MAX_GENERATE) {
       return NextResponse.json(
-        { 
-          success: false, 
-          message: "하루 최대 문제 생성 횟수(3회)를 초과했습니다. 내일 다시 시도해주세요.", 
-          code: "DAILY_LIMIT_EXCEEDED" 
+        {
+          success: false,
+          message: "하루 최대 문제 생성 횟수(3회)를 초과했습니다. 내일 다시 시도해주세요.",
+          code: "DAILY_LIMIT_EXCEEDED"
         },
         { status: 429 }
       );
     }
 
     const { data: publishedProblem, error: publishError } = await supabase
-      .rpc('publish_hidden_problem', { 
+      .rpc('publish_hidden_problem', {
         p_tag1: tag1,
         p_tag2: tag2 || null,
-        p_difficulty: difficulty 
+        p_difficulty: difficulty
       });
 
     if (publishError) {
       return NextResponse.json(
-        { success: false, message: "문제 생성 중 오류가 발생했습니다. 조건에 맞는 비공개 문제가 없을 수 있습니다.", code: "RPC_ERROR" },
+        { success: false, message: "문제 생성 중 오류가 발생했습니다.", code: "RPC_ERROR" },
         { status: 500 }
       );
     }
 
     if (!publishedProblem || !publishedProblem.id) {
       return NextResponse.json(
-        { success: false, message: "해당 조건의 비공개 문제가 남아있지 않습니다.", code: "NO_HIDDEN_PROBLEMS" },
+        { success: false, message: "서버 오류가 발생했습니다.", code: "NO_HIDDEN_PROBLEMS" },
         { status: 404 }
       );
     }
