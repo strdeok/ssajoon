@@ -15,7 +15,7 @@ import {
   Copy,
   Lightbulb,
 } from "lucide-react";
-import { getKoreanTag } from "@/utils/tagUtils";
+import { getKoreanTag, DIFFICULTY_ORDER } from "@/utils/tagUtils";
 import ProblemMarkdown from "@/components/common/ProblemMarkdown";
 
 interface OptionItem {
@@ -236,13 +236,10 @@ export default function GeneratePage() {
     };
   }, [isGenerating, loadingStartedAt]);
 
-  const difficultyOrder: Record<string, number> = {
-    "Easy": 1,
-    "Medium": 2,
-    "Hard": 3,
-    "MediumHard": 4,
-    "VeryHard": 5,
-  };
+  const allAvailableDifficulties = useMemo(() => {
+    const diffs = Array.from(new Set(optionItems.map((item) => item.difficulty)));
+    return diffs.sort((a, b) => (DIFFICULTY_ORDER[a] || 99) - (DIFFICULTY_ORDER[b] || 99));
+  }, [optionItems]);
 
   const availableTag1s = useMemo(() => {
     let items = optionItems;
@@ -272,7 +269,7 @@ export default function GeneratePage() {
     }
 
     const diffs = Array.from(new Set(items.map((item) => item.difficulty)));
-    return diffs.sort((a, b) => (difficultyOrder[a] || 99) - (difficultyOrder[b] || 99));
+    return diffs.sort((a, b) => (DIFFICULTY_ORDER[a] || 99) - (DIFFICULTY_ORDER[b] || 99));
   }, [selectedTag1, selectedTag2, optionItems]);
 
   const selectedOptionCount = useMemo(() => {
@@ -497,7 +494,7 @@ export default function GeneratePage() {
                 >
                   <option value="">{isLoadingOptions ? "불러오는 중..." : "난이도를 선택하세요"}</option>
 
-                  {availableDifficulties.map((difficulty) => (
+                  {allAvailableDifficulties.map((difficulty) => (
                     <option key={difficulty} value={difficulty}>
                       {difficulty}
                     </option>

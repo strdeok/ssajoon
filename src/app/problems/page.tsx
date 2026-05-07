@@ -18,7 +18,7 @@ import {
   isAcceptedResult,
   StatusIcon
 } from "@/components/problem/ProblemComponents";
-import { getKoreanTag } from "@/utils/tagUtils";
+import { getKoreanTag, DIFFICULTY_OPTIONS } from "@/utils/tagUtils";
 
 type ProblemStatus = "solved" | "wrong" | "none";
 
@@ -38,7 +38,7 @@ type ProblemStats = {
   acceptance_rate: number;
 };
 
-const DIFFICULTIES = ["전체", "Easy", "Medium", "Medium-Hard", "Hard", "Very-Hard"];
+const DIFFICULTIES = ["전체", ...DIFFICULTY_OPTIONS];
 const PAGE_SIZE = 20;
 
 function ProblemsContent() {

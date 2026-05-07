@@ -5,6 +5,7 @@ import { saveProblem } from "@/app/admin/problems/actions";
 import { Plus, Trash2, Loader2, Save, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { DIFFICULTY_OPTIONS } from "@/utils/tagUtils";
 
 interface Example {
   input_text: string;
@@ -26,7 +27,7 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
     title: initialData?.title || "",
     tag1: initialData?.tag1 || "",
     tag2: initialData?.tag2 || "",
-    difficulty: initialData?.difficulty || "Basic",
+    difficulty: initialData?.difficulty || "Easy",
     description: initialData?.description || "",
     input_description: initialData?.input_description || "",
     output_description: initialData?.output_description || "",
@@ -189,11 +190,11 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
                     onChange={e => setFormData({ ...formData, difficulty: e.target.value })}
                     className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-lg px-4 py-2 text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="Basic">Basic</option>
-                    <option value="Easy">Easy</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Hard">Hard</option>
-                    <option value="Very Hard">Very Hard</option>
+                    {DIFFICULTY_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

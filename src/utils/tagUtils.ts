@@ -9,6 +9,16 @@ export const TAG_MAP: Record<string, string> = {
   "two pointers": "투 포인터"
 };
 
+export const DIFFICULTY_OPTIONS = ["Easy", "Medium", "Medium-Hard", "Hard", "Very-Hard"];
+
+export const DIFFICULTY_ORDER: Record<string, number> = {
+  "Easy": 1,
+  "Medium": 2,
+  "Medium-Hard": 3,
+  "Hard": 4,
+  "Very-Hard": 5,
+};
+
 export function getKoreanTag(tag: string | null | undefined): string {
   if (!tag) return "";
   const lowerTag = tag.toLowerCase().trim();

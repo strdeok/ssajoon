@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { getKoreanTag } from "@/utils/tagUtils";
+import { getKoreanTag, DIFFICULTY_OPTIONS } from "@/utils/tagUtils";
 
 interface AdminProblemFiltersProps {
   categories: string[];
@@ -17,7 +17,7 @@ export function AdminProblemFilters({ categories }: AdminProblemFiltersProps) {
   const currentStatus = searchParams.get("status") || "전체";
   const currentSort = searchParams.get("sort") || "newest";
 
-  const DIFFICULTIES = ["전체", "Easy", "Medium", "Medium-Hard", "Hard", "Very-Hard"];
+  const DIFFICULTIES = ["전체", ...DIFFICULTY_OPTIONS];
   const STATUSES = [
     { label: "전체", value: "전체" },
     { label: "활성", value: "active" },
