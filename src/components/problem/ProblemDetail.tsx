@@ -77,7 +77,8 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
       <div className="flex-shrink-0 border-b border-zinc-200 dark:border-white/10 bg-white/90 dark:bg-zinc-900/80 sticky top-0 backdrop-blur-md z-10">
         <div className="p-8 pb-4 flex items-center gap-4 flex-wrap">
           <h1 className="text-3xl font-bold text-zinc-900 dark:text-white tracking-tight">
-            {problem.problem_no ? `${problem.problem_no}. ${problem.title}` : problem.title}
+            <span className="mr-2">#{problem.id}</span>
+            {problem.title}
           </h1>
           <div className="flex gap-2">
             <span className="px-3 py-1 rounded-full text-sm font-bold bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 shadow-sm cursor-default">

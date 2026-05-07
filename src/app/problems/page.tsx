@@ -457,7 +457,7 @@ function ProblemsContent() {
               return (
                 <div key={problem.id} className="group grid grid-cols-12 gap-4 items-center px-6 py-4 hover:bg-[#F8FAFC] dark:hover:bg-zinc-800/20 transition-colors border-b border-[#E2E8F0] dark:border-zinc-800 last:border-0">
                   <div className="col-span-1 text-sm text-zinc-400 dark:text-zinc-500 font-medium">
-                    {problem.problem_no ?? (currentPage - 1) * PAGE_SIZE + i + 1}
+                    {problem.id ?? (currentPage - 1) * PAGE_SIZE + i + 1}
                   </div>
                   <div className={user ? "col-span-5" : "col-span-6"}>
                     <Link href={`/problems/${problem.id}`} className="block">

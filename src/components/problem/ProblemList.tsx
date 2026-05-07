@@ -63,7 +63,7 @@ export function ProblemList({ problems }: { problems: Problem[] }) {
                 
                 <div className="mt-6 flex flex-wrap items-center gap-2">
                   <span className="text-xs font-medium px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-full">
-                    No. {problem.problem_no || problem.id}
+                    No. {problem.id}
                   </span>
                   <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
                     {getKoreanTag(problem.tag1)}
