@@ -85,7 +85,6 @@ export function CodeEditor({ // CodeEditor 컴포넌트를 정의한다.
           automaticLayout: true, // 부모 크기 변경 시 Monaco가 자동으로 레이아웃을 다시 계산하게 한다.
           tabSize: 4, // 탭 크기를 4칸으로 설정한다.
           insertSpaces: true, // 탭 입력 시 공백을 사용하도록 설정한다.
-          wordWrap: "on", // 긴 줄을 자동 줄바꿈한다.
         }} // Monaco Editor 옵션 설정을 종료한다.
         loading={ // Monaco Editor 자체가 로딩 중일 때 보여줄 UI를 설정한다.
           <div className="flex h-full items-center justify-center text-zinc-500 animate-pulse"> {/* 에디터 로딩 UI를 렌더링한다. */}

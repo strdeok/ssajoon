@@ -292,13 +292,13 @@ export default function ProblemPage({
   }
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row lg:h-[calc(100vh-64px)] bg-zinc-50 dark:bg-black p-4 gap-4">
-      <div className="flex-1 lg:w-1/2 flex flex-col min-h-0 bg-white dark:bg-[#09090b] rounded-xl shadow-2xl border border-zinc-200 dark:border-white/5 relative">
+    <div className="flex-1 flex flex-col lg:flex-row lg:h-full bg-zinc-50 dark:bg-black p-4 gap-4">
+      <div className="flex-1 lg:w-1/2 h-[calc(100dvh-120px)] overflow-y-scroll flex flex-col min-h-0 bg-white dark:bg-[#09090b] rounded-xl shadow-2xl border border-zinc-200 dark:border-white/5 relative">
         <ProblemDetail problem={problem} />
       </div>
 
       <div id="code-editor-section" className="flex-1 lg:w-1/2 flex flex-col gap-4 relative scroll-mt-20">
-        <div className={`min-h-60 flex-1 flex flex-col relative rounded-xl border-2 transition-all duration-300 ${editorBorderClass} lg:overflow-hidden`}>
+        <div className={`h-full flex flex-col relative rounded-xl border-2 transition-all duration-300 ${editorBorderClass} lg:overflow-hidden`}>
           <button
             onClick={() => setEditorTheme(editorTheme === "light" ? "dark" : "light")}
             className="absolute top-4 right-4 z-20 p-2 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 transition-all shadow-md backdrop-blur-sm border border-zinc-200 dark:border-zinc-700"

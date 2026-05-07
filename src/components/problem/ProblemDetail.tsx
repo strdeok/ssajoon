@@ -68,7 +68,7 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
 
   const isExpanded = activeTab === "submissions" && isSubmissionExpanded;
   const containerClass = isExpanded
-    ? "flex flex-col h-auto bg-white dark:bg-zinc-900/50 rounded-xl"
+    ? "flex flex-col h-screen bg-white dark:bg-zinc-900/50 rounded-xl"
     : "flex flex-col lg:h-full h-auto bg-white dark:bg-zinc-900/50 rounded-xl lg:overflow-hidden";
 
   return (
