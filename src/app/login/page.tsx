@@ -1,10 +1,39 @@
 "use client";
 
 import { login } from "./actions";
-import { use } from "react";
+import { use, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
+import { Loader2 } from "lucide-react";
 
 export default function LoginPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
   const params = use(searchParams);
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        router.push("/");
+        return;
+      }
+
+      setIsLoading(false);
+    };
+
+    checkAuthStatus();
+  }, [router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-zinc-50 dark:bg-black">
+        <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4 bg-zinc-50 dark:bg-black min-h-[calc(100vh-64px)]">
