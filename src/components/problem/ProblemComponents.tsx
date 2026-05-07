@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, XCircle, Clock } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, CircleMinus } from "lucide-react";
 
 export function normalizeResult(result: string | null | undefined) {
   return (result ?? "").trim().toUpperCase();
@@ -58,7 +58,11 @@ export function StatusIcon({ result }: { result: string | null }) {
     return <Clock className="w-4 h-4 text-blue-400 animate-spin" />;
   }
 
-  return <XCircle className="w-4 h-4 text-red-400" />;
+  if (normalizedResult === "WA") {
+    return  <XCircle className="w-4 h-4 text-red-400" />;
+  }
+
+  return <CircleMinus className="w-4 h-4 text-gray-400" />;
 }
 
 export function StatusLabel({ result }: { result: string | null }) {
