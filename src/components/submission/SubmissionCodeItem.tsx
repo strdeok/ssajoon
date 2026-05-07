@@ -61,8 +61,8 @@ export function SubmissionCodeItem({ submission, isOpen, onToggle }: SubmissionC
   const badgeClass = isSuccess
     ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20"
     : isPending
-    ? "bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border-blue-200 dark:border-blue-500/20 animate-pulse"
-    : "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400 border-red-200 dark:border-red-500/20";
+      ? "bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border-blue-200 dark:border-blue-500/20 animate-pulse"
+      : "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400 border-red-200 dark:border-red-500/20";
 
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-700">
@@ -115,10 +115,9 @@ export function SubmissionCodeItem({ submission, isOpen, onToggle }: SubmissionC
           ) : error ? (
             <div className="text-red-500 text-sm py-4 text-center">{error}</div>
           ) : sourceCode ? (
-            <div className="overflow-x-auto overflow-y-auto custom-scrollbar rounded-md max-h-96">
-              <pre className="text-sm font-mono text-zinc-800 dark:text-zinc-300 leading-relaxed m-0 p-2">
-                <CodeEditor language={submission.language} readOnly={true} onChange={() => {}} value={sourceCode} theme={localStorage.getItem("theme") === "dark" ? "dark" : "light"} />
-              </pre>
+            <div className="overflow-x-auto overflow-y-auto custom-scrollbar rounded-md">
+              <CodeEditor language={submission.language} readOnly={true} onChange={() => { }} value={sourceCode} theme={localStorage.getItem("theme") === "dark" ? "dark" : "light"} />
+
             </div>
           ) : (
             <div className="text-zinc-500 text-sm py-4 text-center">코드가 존재하지 않습니다.</div>
