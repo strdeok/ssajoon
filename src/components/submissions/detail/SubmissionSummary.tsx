@@ -77,7 +77,7 @@ export default function SubmissionSummary({
 
   return (
     <>
-      <div className="flex justify-end mb-1">{(submission.result === "WA") && submission.failed_testcase_order && (
+      <div className="flex justify-end mb-1">{(submission.result === "WA" || submission.result === "MLE" || submission.result === "TLE") && submission.failed_testcase_order && (
         <FailedTestcaseModal
           submissionId={submission.id}
           problemId={submission.problem_id}
