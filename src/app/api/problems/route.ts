@@ -17,6 +17,7 @@ export async function GET(request: Request) {
     Math.max(1, parseInt(searchParams.get("pageSize") || "20")),
   );
   const difficulty = searchParams.get("difficulty") || "";
+  const status = searchParams.get("status") || "";
   const tag = searchParams.get("tag") || searchParams.get("category") || "";
   const search = searchParams.get("search") || "";
 
@@ -34,6 +35,64 @@ export async function GET(request: Request) {
     .eq("is_deleted", false)
     .eq("is_hidden", false)
     .order("id", { ascending: true });
+
+  if (status) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const fetchProblemIds = async (filter: (query: any) => any) => {
+      const { data, error } = await filter(
+        supabase
+          .from("submissions")
+          .select("problem_id")
+          .eq("user_id", user.id)
+          .eq("is_deleted", false)
+      );
+
+      if (error) {
+        throw error;
+      }
+
+      return Array.from(
+        new Set(
+          (data ?? [])
+            .map((row: any) => Number(row.problem_id))
+            .filter((id: number) => !Number.isNaN(id))
+        )
+      );
+    };
+
+    const acceptedProblemIds = await fetchProblemIds((q) =>
+      q.in("result", ["AC", "ACCEPTED"])
+    );
+    const attemptedProblemIds = await fetchProblemIds((q) => q);
+
+    if (status === "풀었음") {
+      if (acceptedProblemIds.length === 0) {
+        return NextResponse.json({ data: [], totalCount: totalCount ?? 0, filteredCount: 0 });
+      }
+      query = query.in("id", acceptedProblemIds);
+    }
+
+    if (status === "틀렸음") {
+      const wrongProblemIds = attemptedProblemIds.filter(
+        (id) => !acceptedProblemIds.includes(id)
+      );
+
+      if (wrongProblemIds.length === 0) {
+        return NextResponse.json({ data: [], totalCount: totalCount ?? 0, filteredCount: 0 });
+      }
+      query = query.in("id", wrongProblemIds);
+    }
+
+    if (status === "안 풀었음") {
+      if (attemptedProblemIds.length > 0) {
+        query = query.not("id", "in", `(${attemptedProblemIds.join(",")})`);
+      }
+    }
+  }
 
   if (difficulty && DIFFICULTY_FILTER[difficulty]) {
     query = query.in("difficulty", DIFFICULTY_FILTER[difficulty]);

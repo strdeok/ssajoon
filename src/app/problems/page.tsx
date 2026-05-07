@@ -201,6 +201,7 @@ function ProblemsContent() {
 
     if (selectedDifficulty !== "전체") params.set("difficulty", selectedDifficulty);
     if (selectedCategory !== "전체") params.set("category", selectedCategory);
+    if (selectedStatus !== "전체") params.set("status", selectedStatus);
     if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
 
     try {
@@ -217,7 +218,7 @@ function ProblemsContent() {
     } finally {
       setIsFetching(false);
     }
-  }, [currentPage, selectedDifficulty, selectedCategory, debouncedSearch]);
+  }, [currentPage, selectedDifficulty, selectedCategory, selectedStatus, debouncedSearch]);
 
   useEffect(() => {
     fetchProblems();
@@ -246,14 +247,23 @@ function ProblemsContent() {
       const nextStatusMap = new Map<ProblemId, ProblemStatus>();
       problems.forEach((p) => nextStatusMap.set(p.id, "none"));
 
+      const parseProblemId = (value: number | string): number | null => {
+        if (typeof value === "number") return value;
+        const parsed = Number(value);
+        return Number.isNaN(parsed) ? null : parsed;
+      };
+
       ((data as SubmissionStatusRow[] | null) ?? []).forEach((s) => {
-        const current = nextStatusMap.get(s.problem_id);
+        const problemId = parseProblemId(s.problem_id);
+        if (problemId === null) return;
+
+        const current = nextStatusMap.get(problemId);
         if (current === "solved") return;
         if (isAcceptedResult(s.result)) {
-          nextStatusMap.set(s.problem_id, "solved");
+          nextStatusMap.set(problemId, "solved");
           return;
         }
-        nextStatusMap.set(s.problem_id, "wrong");
+        nextStatusMap.set(problemId, "wrong");
       });
 
       setProblemStatusMap(nextStatusMap);
