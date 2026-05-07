@@ -45,9 +45,28 @@ export default async function SubmissionDetailPage({
     )
     .eq("id", submissionId)
     .single();
-
+  console.log(submission);
+  console.log(error)
   if (error || !submission) {
-    notFound();
+    return (
+      <div className="min-h-screen bg-zinc-50 dark:bg-black flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">
+            존재하지 않는 제출내역입니다
+          </h1>
+          <p className="text-zinc-600 dark:text-zinc-400">
+            요청하신 제출내역은 존재하지 않거나 삭제되었을 수 있습니다.
+          </p>
+          <Link
+            href="/submissions"
+            className="inline-flex items-center mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            제출내역 목록으로 돌아가기
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const isAcceptedSubmission = isAcceptedResult(submission.result);

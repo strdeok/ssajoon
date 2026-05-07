@@ -41,7 +41,7 @@ export default function ProblemPage({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
   const [progress, setProgress] = useState<JudgeEventPayload | null>(null);
-  const [editorTheme, setEditorTheme] = useState<"light" | "dark" | null>(null);
+  const [editorTheme, setEditorTheme] = useState<"light" | "dark">(localStorage.getItem("editorTheme") === "light" ? "light" : "dark");
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const receivedDoneRef = useRef(false);
@@ -139,6 +139,11 @@ export default function ProblemPage({
     const fetchProblem = async () => {
       setIsLoading(true);
       const response = await fetch(`/api/problems/${id}`);
+      if (response.status === 404) {
+        setProblem(null);
+        setIsLoading(false);
+        return;
+      }
       const data = await response.json();
       setProblem(data);
       setIsLoading(false);
@@ -263,10 +268,25 @@ export default function ProblemPage({
     editorBorderClass = "border-blue-500 ring-4 ring-blue-500/20";
   }
 
-  if (isLoading || !problem) {
+  if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-zinc-50 dark:bg-black">
         <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
+      </div>
+    );
+  }
+
+  if (!problem) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-zinc-50 dark:bg-black">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">
+            문제가 존재하지 않습니다
+          </h1>
+          <p className="text-zinc-600 dark:text-zinc-400">
+            요청하신 문제는 존재하지 않거나 삭제되었을 수 있습니다.
+          </p>
+        </div>
       </div>
     );
   }
