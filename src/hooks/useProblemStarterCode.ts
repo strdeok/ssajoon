@@ -92,47 +92,57 @@ export function useProblemStarterCode({ problemId, userId, language }: UseProble
 
         const languageAliases = getLanguageAliases(selectedLanguage);
 
-        const { data, error } = await supabase
+        // 1. Try to find the latest AC submission for this language
+        const { data: acData, error: acError } = await supabase
             .from("submissions")
-            .select("source_code, language, submitted_at")
+            .select("source_code, language, submitted_at, result")
             .eq("problem_id", problemId)
             .eq("user_id", userId)
             .eq("is_deleted", false)
             .eq("result", "AC")
             .in("language", languageAliases)
             .order("submitted_at", { ascending: false })
-            .limit(5);
+            .limit(1)
+            .maybeSingle();
 
-        if (requestIdRef.current !== currentRequestId) {
-            return;
-        }
-
+        if (requestIdRef.current !== currentRequestId) return;
         if (userEditedRef.current) {
             setIsCodeLoading(false);
             return;
         }
 
-        if (error) {
-            setCode(defaultTemplate);
+        if (!acError && acData?.source_code) {
+            setCode(acData.source_code);
             setIsCodeLoading(false);
             return;
         }
 
-        const matchedSubmission = (data ?? []).find((row) => {
-            return isSameLanguage(selectedLanguage, row.language);
-        });
+        // 2. If no AC, find the latest submission of any result for this language
+        const { data: latestData, error: latestError } = await supabase
+            .from("submissions")
+            .select("source_code, language, submitted_at, result")
+            .eq("problem_id", problemId)
+            .eq("user_id", userId)
+            .eq("is_deleted", false)
+            .in("language", languageAliases)
+            .order("submitted_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
-        const latestSourceCode = matchedSubmission?.source_code?.trim()
-            ? matchedSubmission.source_code
-            : null;
-
-        if (!matchedSubmission) {
-            setCode(defaultTemplate);
+        if (requestIdRef.current !== currentRequestId) return;
+        if (userEditedRef.current) {
             setIsCodeLoading(false);
             return;
         }
 
-        setCode(latestSourceCode ?? defaultTemplate);
+        if (!latestError && latestData?.source_code) {
+            setCode(latestData.source_code);
+            setIsCodeLoading(false);
+            return;
+        }
+
+        // 3. Fallback to default template
+        setCode(defaultTemplate);
         setIsCodeLoading(false);
     }, [language, problemId, userId]);
 

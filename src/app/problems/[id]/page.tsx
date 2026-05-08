@@ -178,7 +178,7 @@ export default function ProblemPage({
     const initializeLanguage = async () => {
       const supabase = createClient();
 
-      // 1. Check for most recent AC submission
+      // 1. Check for most recent AC submission (any language)
       const { data: latestAc } = await supabase
         .from("submissions")
         .select("language")
@@ -196,7 +196,24 @@ export default function ProblemPage({
         return;
       }
 
-      // 2. Check user's preferred language
+      // 2. No AC submission, check for most recent submission of any result (any language)
+      const { data: latestAny } = await supabase
+        .from("submissions")
+        .select("language")
+        .eq("problem_id", id)
+        .eq("user_id", user.id)
+        .eq("is_deleted", false)
+        .order("submitted_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (latestAny?.language) {
+        setLanguage(normalizeLanguage(latestAny.language));
+        hasInitializedRef.current = true;
+        return;
+      }
+
+      // 3. No submissions at all, check user's preferred language
       const { data: userData } = await supabase
         .from("users")
         .select("preferred_language")
