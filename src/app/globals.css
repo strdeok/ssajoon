@@ -106,7 +106,7 @@
   }
 }
 
-@media (max-width: 1300px) {
+@media (max-width: 1024px) {
   html {
     font-size: 12px;
   }
