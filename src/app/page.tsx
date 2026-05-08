@@ -164,7 +164,7 @@ async function getRecentVisibleProblems(supabase: ServerSupabaseClient) {
       .from("problems")
       .select("id, title, difficulty, description, tag1, tag2, created_at")
       .eq("is_deleted", false)
-      .order("updated_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false, nullsFirst: false })
       .limit(10);
 
     if (fallbackError) {
@@ -432,10 +432,10 @@ def binary_search(arr, target):
                         )}
                       </div>
                     </div>
-                    <div className="col-span-2">
+                    <div className="col-span-3">
                       <DifficultyBadge difficulty={problem.difficulty} />
                     </div>
-                    <div className="col-span-3 flex justify-end">
+                    <div className="col-span-2 flex justify-end">
                       <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 bg-blue-50 dark:bg-blue-900/20 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 px-3 py-1.5 rounded-lg transition-all">
                         풀기 <ChevronRight className="w-3.5 h-3.5" />
                       </span>
