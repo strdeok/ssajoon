@@ -289,7 +289,7 @@ export default async function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC] dark:bg-zinc-950 transition-colors duration-300">
+    <div className="min-h-screen bg-[#F7F9FC] dark:bg-zinc-950 transition-colors duration-300 px-16">
       <section className="relative overflow-hidden mx-6 mt-6 rounded-xl h-[400px] bg-[#253EEB] dark:bg-indigo-700 flex items-center shadow-2xl shadow-blue-500/10">
         <div className="absolute inset-0 opacity-10 dark:opacity-5 select-none pointer-events-none overflow-hidden">
           <pre className="text-[11px] text-white leading-5 font-mono p-8 whitespace-pre-wrap break-all">
