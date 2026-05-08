@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { formatTimeAgo, formatDateTime } from "@/utils/date";
 import { FailedTestcaseModal } from "@/components/submission/FailedTestcaseModal";
+import Link from "next/link";
 
 
 interface SubmissionSummaryProps {
@@ -257,8 +258,10 @@ export default function SubmissionSummary({
                   #{submission.id}
                 </span>
               </div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-white">
-                {submission.problem_title}
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-white hover:cursor-pointer hover:underline">
+                <Link href={`/problems/${submission.problem_id}`}>
+                  {submission.problem_title}
+                </Link>
               </h1>
             </div>
           </div>

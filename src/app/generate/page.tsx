@@ -117,10 +117,6 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function getRemainingLoadingTime(startedAt: number) {
-  const elapsed = Date.now() - startedAt;
-  return Math.max(0, MIN_GENERATE_LOADING_MS - elapsed);
-}
 
 export default function GeneratePage() {
   const router = useRouter();
@@ -258,7 +254,7 @@ export default function GeneratePage() {
 
   const availableTag1s = useMemo(() => {
     let items = optionItems;
-    if (selectedDifficulty) {
+    if (selectedDifficulty && selectedDifficulty !== "전체") {
       items = items.filter((item) => item.difficulty === selectedDifficulty);
     }
     if (selectedTag2) {
@@ -270,7 +266,7 @@ export default function GeneratePage() {
   const availableTag2s = useMemo(() => {
     if (!selectedTag1) return [];
     let items = optionItems.filter((item) => item.tag1 === selectedTag1 && item.tag2 !== null);
-    if (selectedDifficulty) {
+    if (selectedDifficulty && selectedDifficulty !== "전체") {
       items = items.filter((item) => item.difficulty === selectedDifficulty);
     }
     const tags = items.map((item) => item.tag2 as string);
@@ -285,7 +281,7 @@ export default function GeneratePage() {
       (item) =>
         item.tag1 === selectedTag1 &&
         (selectedTag2 === "" ? true : item.tag2 === selectedTag2) &&
-        item.difficulty === selectedDifficulty,
+        (selectedDifficulty === "전체" ? true : item.difficulty === selectedDifficulty),
     );
 
     return filtered.reduce((sum, item) => sum + item.count, 0);
@@ -338,13 +334,19 @@ export default function GeneratePage() {
     if (!isComponentMounted.current) return;
 
     try {
+      let difficultyToUse = selectedDifficulty;
+      if (difficultyToUse === "전체") {
+        const actualDiffs = allAvailableDifficulties;
+        difficultyToUse = actualDiffs[Math.floor(Math.random() * actualDiffs.length)];
+      }
+
       const response = await fetch("/api/problems/generate/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tag1: selectedTag1,
           tag2: selectedTag2 || null,
-          difficulty: selectedDifficulty,
+          difficulty: difficultyToUse,
         }),
       });
 
@@ -484,6 +486,10 @@ export default function GeneratePage() {
                   className="w-full appearance-none bg-zinc-50 dark:bg-black/50 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 block px-4 py-3.5 outline-none transition-all cursor-pointer font-medium disabled:opacity-50"
                 >
                   <option value="">{isLoadingOptions ? "불러오는 중..." : "난이도를 선택하세요"}</option>
+
+                  {allAvailableDifficulties.length > 0 && (
+                    <option value="전체">전체</option>
+                  )}
 
                   {allAvailableDifficulties.map((difficulty) => (
                     <option key={difficulty} value={difficulty}>

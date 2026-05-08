@@ -88,6 +88,15 @@ function getDateKey(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
+function getStartOfCurrentWeek(date: Date) {
+  const result = new Date(date);
+  const day = result.getDay(); // 0(일) ~ 6(토)
+  const diff = day === 0 ? -6 : 1 - day; // 월요일로 맞춤
+  result.setDate(result.getDate() + diff);
+  result.setHours(0, 0, 0, 0);
+  return result;
+}
+
 function calculateStreakDays(submissions: SubmissionRow[]) {
   const submissionDateKeys = new Set(
     submissions
@@ -194,11 +203,12 @@ function calculateUserStats(allSubmissions: SubmissionRow[]) {
   const uniqueSolved = new Set(
     acceptedSubmissions.map((submission) => submission.problem_id),
   ).size;
-  const now = new Date();
-  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  const startOfWeek = getStartOfCurrentWeek(new Date());
+
   const recentCount = allSubmissions.filter((submission) => {
     if (!submission.submitted_at) return false;
-    return new Date(submission.submitted_at) > sevenDaysAgo;
+    return new Date(submission.submitted_at) >= startOfWeek;
   }).length;
 
   return {
@@ -264,7 +274,7 @@ export default async function Home() {
     },
     {
       icon: <TrendingUp className="w-5 h-5 text-violet-500" />,
-      label: "최근 7일 제출",
+      label: "이번 주 제출",
       value: user ? stats.recentCount : "-",
       unit: "회",
       bg: "bg-violet-50",

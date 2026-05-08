@@ -2,6 +2,7 @@
 
 import { getKoreanTag } from "@/utils/tagUtils";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export type Submission = {
   id: number;
@@ -79,6 +80,7 @@ function formatToReadableDate(isoString: string): string {
 }
 
 export default function SubmissionTable({ submissions }: Props) {
+  const router = useRouter();
   return (
     <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden mb-6">
       <div className="overflow-x-auto">
@@ -126,29 +128,30 @@ export default function SubmissionTable({ submissions }: Props) {
             ) : (
               submissions.map((sub) => (
                 <tr
+                  onClick={() => {
+                    router.push(`/submissions/${sub.id}`);
+                  }}
                   key={sub.id}
-                  className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+                  className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors hover:cursor-pointer"
                 >
                   <td className="px-6 py-4 font-mono">
-                    <Link
-                      href={`/submissions/${sub.id}`}
-                      className="text-gray-500 dark:text-zinc-500 hover:text-blue-600 dark:hover:text-blue-400 hover:underline transition-colors"
+                    <span
+                      className="text-gray-500 dark:text-zinc-500 transition-colors"
                     >
                       {sub.id}
-                    </Link>
+                    </span>
                   </td>
 
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <Link
-                        href={`/problems/${sub.problemId}`}
-                        className="font-medium text-gray-900 dark:text-zinc-100 hover:text-blue-600 dark:hover:text-blue-400 hover:underline transition-colors"
+                      <span
+                        className="font-medium text-gray-900 dark:text-zinc-100 "
                       >
                         {sub.problemTitle}{" "}
                         <span className="text-gray-400 dark:text-zinc-500 font-normal">
                           #{sub.problemId}
                         </span>
-                      </Link>
+                      </span>
                       <div className="flex gap-1 mt-0.5">
                         <span className="text-xs text-gray-500 dark:text-zinc-500">
                           {getKoreanTag(sub.tag1)}

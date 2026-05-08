@@ -225,13 +225,26 @@ export default function SubmissionsPage() {
       return `${y}-${m}-${d}`;
     };
 
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(d.getDate() - i);
+    // 이번 주 월요일 찾기
+    const getStartOfCurrentWeek = (date: Date) => {
+      const result = new Date(date);
+      const day = result.getDay(); // 0(일) ~ 6(토)
+      const diff = day === 0 ? -6 : 1 - day; // 월요일로 맞춤
+      result.setDate(result.getDate() + diff);
+      result.setHours(0, 0, 0, 0);
+      return result;
+    };
+
+    const startOfWeek = getStartOfCurrentWeek(today);
+
+    // 월요일부터 일요일까지 7일간의 데이터 초기화
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(startOfWeek);
+      d.setDate(d.getDate() + i);
       internalStats.push({
         date: dayNames[d.getDay()],
         count: 0,
-        isToday: i === 0,
+        isToday: d.getTime() === today.getTime(),
         localDateStr: getLocalDateStr(d),
       });
     }
