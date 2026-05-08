@@ -74,6 +74,17 @@ export default function SubmissionsPage() {
   const [statusFilter, setStatusFilter] = useState("모든 상태");
   const [languageFilter, setLanguageFilter] = useState("모든 언어");
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState<keyof Submission>("submittedAt");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
+  const handleSort = (field: keyof Submission) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("desc");
+    }
+  };
 
   useEffect(() => {
     async function fetchSubmissions() {
@@ -177,6 +188,45 @@ export default function SubmissionsPage() {
 
         setSubmissions(mappedSubmissions);
 
+        // 추가: 맞힌 사람 수(solved_users) 데이터를 가져와서 submissions 보완
+        if (mappedSubmissions.length > 0) {
+          const problemIds = Array.from(
+            new Set(mappedSubmissions.map((s) => String(s.problemId))),
+          );
+
+          // API 제한(50개)을 고려하여 청크 단위로 요청
+          const CHUNK_SIZE = 50;
+          const statsMap = new Map<string, number>();
+
+          for (let i = 0; i < problemIds.length; i += CHUNK_SIZE) {
+            const chunk = problemIds.slice(i, i + CHUNK_SIZE);
+            try {
+              const res = await fetch("/api/problems/stats", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ problemIds: chunk }),
+              });
+              if (res.ok) {
+                const json = await res.json();
+                (json.data ?? []).forEach((stat: any) => {
+                  statsMap.set(String(stat.problem_id), stat.solved_users);
+                });
+              }
+            } catch (err) {
+              console.error("Failed to fetch problem stats for chunk:", err);
+            }
+          }
+
+          if (statsMap.size > 0) {
+            setSubmissions((prev) =>
+              prev.map((s) => ({
+                ...s,
+                solvedUsersCount: statsMap.get(String(s.problemId)) ?? 0,
+              })),
+            );
+          }
+        }
+
         const total = mappedSubmissions.length;
         const accepted = mappedSubmissions.filter((s) =>
           isAcceptedResult(s.result),
@@ -264,7 +314,7 @@ export default function SubmissionsPage() {
   };
 
   const filteredSubmissions = useMemo(() => {
-    return submissions.filter((sub) => {
+    const filtered = submissions.filter((sub) => {
       const matchesSearch =
         sub.problemTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
         sub.problemId.toString().includes(searchQuery);
@@ -279,7 +329,20 @@ export default function SubmissionsPage() {
 
       return matchesSearch && matchesStatus && matchesLanguage;
     });
-  }, [submissions, searchQuery, statusFilter, languageFilter]);
+
+    // 정렬 로직 적용
+    return [...filtered].sort((a, b) => {
+      const aVal = a[sortField];
+      const bVal = b[sortField];
+
+      if (aVal === null || aVal === undefined) return sortOrder === "asc" ? -1 : 1;
+      if (bVal === null || bVal === undefined) return sortOrder === "asc" ? 1 : -1;
+
+      if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [submissions, searchQuery, statusFilter, languageFilter, sortField, sortOrder]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -325,7 +388,7 @@ export default function SubmissionsPage() {
     // 페이지 전체 배경은 아주 연한 회색(bg-gray-50), 최소 높이는 화면 전체(min-h-screen)
     <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
       {/* 넉넉한 spacing을 가진 중앙 정렬 컨테이너 */}
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         {/* 1. 상단 헤더 및 요약 통계 섹션 */}
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-8">
           <div>
@@ -354,7 +417,11 @@ export default function SubmissionsPage() {
         />
 
         {/* 3. 제출 목록 테이블 섹션 (페이징된 데이터 전달) */}
-        <SubmissionTable submissions={paginatedSubmissions} />
+        <SubmissionTable
+          submissions={paginatedSubmissions}
+          onSort={handleSort}
+          currentSort={{ field: sortField, order: sortOrder }}
+        />
 
         {/* 4. 페이지네이션 섹션 */}
         <SubmissionPagination

@@ -3,6 +3,7 @@
 import { getKoreanTag } from "@/utils/tagUtils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ArrowUpDown, ArrowUp, ArrowDown, Users } from "lucide-react";
 
 export type Submission = {
   id: number;
@@ -15,10 +16,13 @@ export type Submission = {
   runtimeMs: number | null;
   memoryKb: number | null;
   submittedAt: string;
+  solvedUsersCount?: number | null;
 };
 
 type Props = {
   submissions: Submission[];
+  onSort: (field: keyof Submission) => void;
+  currentSort: { field: keyof Submission; order: "asc" | "desc" };
 };
 
 const getResultBadgeStyle = (result: string) => {
@@ -79,21 +83,56 @@ function formatToReadableDate(isoString: string): string {
   return new Intl.DateTimeFormat("ko-KR", options).format(date);
 }
 
-export default function SubmissionTable({ submissions }: Props) {
+export default function SubmissionTable({ submissions, onSort, currentSort }: Props) {
   const router = useRouter();
+
+  const SortHeader = ({
+    field,
+    label,
+    className = "",
+  }: {
+    field: keyof Submission;
+    label: string;
+    className?: string;
+  }) => {
+    const isActive = currentSort.field === field;
+    return (
+      <th
+        className={`px-6 py-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-700/50 transition-colors group ${className}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSort(field);
+        }}
+      >
+        <div className="flex items-center space-x-1">
+          <span>{label}</span>
+          <span className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-zinc-300 transition-colors">
+            {!isActive ? (
+              <ArrowUpDown className="w-3 h-3 opacity-0 group-hover:opacity-100" />
+            ) : currentSort.order === "asc" ? (
+              <ArrowUp className="w-3 h-3 text-blue-500" />
+            ) : (
+              <ArrowDown className="w-3 h-3 text-blue-500" />
+            )}
+          </span>
+        </div>
+      </th>
+    );
+  };
   return (
     <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden mb-6">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm text-gray-600 dark:text-zinc-400">
           <thead className="bg-gray-50 dark:bg-zinc-800/50 border-b border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-zinc-400 font-medium">
             <tr>
-              <th className="px-6 py-4">제출 ID</th>
-              <th className="px-6 py-4">문제</th>
-              <th className="px-6 py-4">언어</th>
-              <th className="px-6 py-4">결과</th>
-              <th className="px-6 py-4">실행 시간</th>
-              <th className="px-6 py-4">메모리</th>
-              <th className="px-6 py-4">제출 시간</th>
+              <SortHeader field="id" label="제출 ID" />
+              <SortHeader field="problemTitle" label="문제" />
+              <SortHeader field="language" label="언어" />
+              <SortHeader field="result" label="결과" />
+              <SortHeader field="runtimeMs" label="실행 시간" />
+              <SortHeader field="memoryKb" label="메모리" />
+              <SortHeader field="solvedUsersCount" label="맞힌 사람 수" />
+              <SortHeader field="submittedAt" label="제출 시간" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
@@ -196,7 +235,16 @@ export default function SubmissionTable({ submissions }: Props) {
                       : "-"}
                   </td>
 
-                  <td className="px-6 py-4 text-gray-500 dark:text-zinc-500">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center space-x-1.5 text-zinc-600 dark:text-zinc-400">
+                      <Users className="w-3.5 h-3.5 text-zinc-400" />
+                      <span className="font-medium">
+                        {sub.solvedUsersCount?.toLocaleString() ?? "-"}
+                      </span>
+                    </div>
+                  </td>
+
+                  <td className="px-6 py-4 text-gray-500 dark:text-zinc-500 whitespace-nowrap">
                     {formatToReadableDate(sub.submittedAt)}
                   </td>
                 </tr>

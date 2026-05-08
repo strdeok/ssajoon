@@ -352,7 +352,8 @@ def binary_search(arr, target):
           (
             { icon, label, value, unit, bg },
           ) => (
-            <div
+            <Link
+              href={label === "총 문제 수" ? "/problems" : "submissions"}
               key={label}
               className="bg-white dark:bg-zinc-900 border border-[#E2E8F0] dark:border-zinc-800 rounded-lg p-6 flex flex-col gap-2 shadow-sm transition-all hover:shadow-md"
             >
@@ -372,7 +373,7 @@ def binary_search(arr, target):
                   {unit}
                 </span>
               </div>
-            </div>
+            </Link>
           ),
         )}
       </section>
