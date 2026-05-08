@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import {
@@ -142,6 +142,14 @@ export default function GeneratePage() {
   const [loadingTipIndex, setLoadingTipIndex] = useState(0);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingStartedAt, setLoadingStartedAt] = useState<number | null>(null);
+  const isComponentMounted = useRef(true);
+
+  useEffect(() => {
+    isComponentMounted.current = true;
+    return () => {
+      isComponentMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -237,17 +245,27 @@ export default function GeneratePage() {
   }, [isGenerating, loadingStartedAt]);
 
   const allAvailableDifficulties = useMemo(() => {
-    const diffs = Array.from(new Set(optionItems.map((item) => item.difficulty)));
+    let items = optionItems;
+    if (selectedTag1) {
+      items = items.filter((item) => item.tag1 === selectedTag1);
+    }
+    if (selectedTag2) {
+      items = items.filter((item) => item.tag2 === selectedTag2);
+    }
+    const diffs = Array.from(new Set(items.map((item) => item.difficulty)));
     return diffs.sort((a, b) => (DIFFICULTY_ORDER[a] || 99) - (DIFFICULTY_ORDER[b] || 99));
-  }, [optionItems]);
+  }, [optionItems, selectedTag1, selectedTag2]);
 
   const availableTag1s = useMemo(() => {
     let items = optionItems;
     if (selectedDifficulty) {
       items = items.filter((item) => item.difficulty === selectedDifficulty);
     }
+    if (selectedTag2) {
+      items = items.filter((item) => item.tag2 === selectedTag2);
+    }
     return Array.from(new Set(items.map((item) => item.tag1))).sort();
-  }, [optionItems, selectedDifficulty]);
+  }, [optionItems, selectedDifficulty, selectedTag2]);
 
   const availableTag2s = useMemo(() => {
     if (!selectedTag1) return [];
@@ -312,19 +330,15 @@ export default function GeneratePage() {
     setGeneratedProblem(null);
     setProblemExamples([]);
 
-    let response: Response | null = null;
-    let data: {
-      success?: boolean;
-      message?: string;
-      code?: string;
-      problem?: GeneratedProblem;
-      examples?: ProblemExample[];
-      remainingCount?: number;
-    } | null = null;
-    let requestError: unknown = null;
+    // 사용자가 30초 동안 대기하도록 먼저 기다립니다.
+    // 이 시간 동안 페이지를 나가면 아래 로직이 실행되지 않아야 합니다.
+    await sleep(MIN_GENERATE_LOADING_MS);
+
+    // 컴포넌트가 언마운트되었거나 생성이 취소되었는지 확인합니다.
+    if (!isComponentMounted.current) return;
 
     try {
-      response = await fetch("/api/problems/generate/publish", {
+      const response = await fetch("/api/problems/generate/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -334,46 +348,35 @@ export default function GeneratePage() {
         }),
       });
 
-      data = await response.json();
-    } catch (error) {
-      requestError = error;
-    }
+      const data = await response.json();
 
-    const remainingLoadingTime = getRemainingLoadingTime(startedAt);
+      if (!response.ok || !data.success) {
+        setErrorMessage(data?.message || "문제 생성 중 오류가 발생했습니다.");
 
-    if (remainingLoadingTime > 0) {
-      await sleep(remainingLoadingTime);
-    }
+        if (data?.code === "DAILY_LIMIT_EXCEEDED") {
+          setRemainingCount(0);
+        }
 
-    if (requestError) {
-      setErrorMessage("네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
-      setIsGenerating(false);
-      setLoadingStartedAt(null);
-      return;
-    }
-
-    if (!response || !data || !response.ok || !data.success) {
-      setErrorMessage(data?.message || "문제 생성 중 오류가 발생했습니다.");
-
-      if (data?.code === "DAILY_LIMIT_EXCEEDED") {
-        setRemainingCount(0);
+        void fetchUsage();
+        return;
       }
 
+      setGeneratedProblem(data.problem ?? null);
+      setProblemExamples(data.examples ?? []);
+      setRemainingCount(data.remainingCount ?? Math.max(remainingCount - 1, 0));
+
+      void fetchOptions();
       void fetchUsage();
-      setIsGenerating(false);
-      setLoadingStartedAt(null);
-      return;
+    } catch (error) {
+      console.error("Generate error:", error);
+      setErrorMessage("네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      // 컴포넌트가 여전히 마운트된 상태일 때만 상태를 업데이트합니다.
+      if (isComponentMounted.current) {
+        setIsGenerating(false);
+        setLoadingStartedAt(null);
+      }
     }
-
-    setGeneratedProblem(data.problem ?? null);
-    setProblemExamples(data.examples ?? []);
-    setRemainingCount(data.remainingCount ?? Math.max(remainingCount - 1, 0));
-
-    void fetchOptions();
-    void fetchUsage();
-
-    setIsGenerating(false);
-    setLoadingStartedAt(null);
   };
 
   const copyToClipboard = (text: string) => {
