@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, Suspense } from "react";
+import { useEffect, useState, useCallback, Suspense, useMemo } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Problem } from "@/types/problem";
@@ -12,13 +12,16 @@ import {
   BookOpen,
   Trophy,
   BarChart2,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import {
   DifficultyBadge,
   isAcceptedResult,
   StatusIcon
 } from "@/components/problem/ProblemComponents";
-import { getKoreanTag, DIFFICULTY_OPTIONS } from "@/utils/tagUtils";
+import { getKoreanTag, DIFFICULTY_OPTIONS, DIFFICULTY_ORDER } from "@/utils/tagUtils";
 
 type ProblemStatus = "solved" | "wrong" | "none";
 
@@ -61,6 +64,18 @@ function ProblemsContent() {
   const [selectedStatus, setStatus] = useState("전체");
   const [searchInput, setSearchInput] = useState(initialQuery);
   const [debouncedSearch, setDebouncedSearch] = useState(initialQuery);
+
+  const [sortField, setSortField] = useState<string>("id");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -309,6 +324,40 @@ function ProblemsContent() {
         ? problems.filter((p) => (problemStatusMap.get(p.id) ?? "none") === "none")
         : problems;
 
+  const sortedDisplayed = useMemo(() => {
+    return [...displayed].sort((a, b) => {
+      let aVal: any;
+      let bVal: any;
+
+      if (sortField === "acceptanceRate") {
+        const aStats = problemStatsMap.get(String(a.id));
+        const bStats = problemStatsMap.get(String(b.id));
+        aVal = aStats?.acceptance_rate ?? -1;
+        bVal = bStats?.acceptance_rate ?? -1;
+      } else if (sortField === "difficulty") {
+        aVal = DIFFICULTY_ORDER[a.difficulty || ""] || 0;
+        bVal = DIFFICULTY_ORDER[b.difficulty || ""] || 0;
+      } else if (sortField === "tag") {
+        aVal = getKoreanTag(a.tag1);
+        bVal = getKoreanTag(b.tag1);
+      } else if (sortField === "status") {
+        const statusOrder: Record<string, number> = { solved: 1, wrong: 2, none: 3 };
+        aVal = statusOrder[problemStatusMap.get(a.id) ?? "none"];
+        bVal = statusOrder[problemStatusMap.get(b.id) ?? "none"];
+      } else {
+        aVal = a[sortField as keyof Problem];
+        bVal = b[sortField as keyof Problem];
+      }
+
+      if (aVal === bVal) return 0;
+      if (aVal === null || aVal === undefined) return sortOrder === "asc" ? -1 : 1;
+      if (bVal === null || bVal === undefined) return sortOrder === "asc" ? 1 : -1;
+
+      const res = aVal < bVal ? -1 : 1;
+      return sortOrder === "asc" ? res : -res;
+    });
+  }, [displayed, sortField, sortOrder, problemStatsMap]);
+
   const totalPages = Math.max(1, Math.ceil(filteredCount / PAGE_SIZE));
 
   const resetFilters = () => {
@@ -317,6 +366,8 @@ function ProblemsContent() {
     setStatus("전체");
     setSearchInput("");
     setDebouncedSearch("");
+    setSortField("id");
+    setSortOrder("asc");
     setCurrentPage(1);
   };
 
@@ -326,7 +377,7 @@ function ProblemsContent() {
   };
 
   return (
-    <div className="w-full mx-auto px-6 pt-8 pb-20 space-y-6">
+    <div className="w-full mx-auto px-24 pt-8 pb-20 space-y-6">
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
@@ -425,12 +476,74 @@ function ProblemsContent() {
 
       <div className="bg-white dark:bg-[#18181b] border border-[#E2E8F0] dark:border-zinc-800 rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.05)] overflow-hidden">
         <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-[#F8FAFC] dark:bg-zinc-800/30 border-b border-[#E2E8F0] dark:border-zinc-800">
-          <div className="col-span-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">#</div>
-          <div className={`${user ? "col-span-5" : "col-span-6"} text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide`}>제목</div>
-          <div className="col-span-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">태그</div>
-          <div className="col-span-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">난이도</div>
-          <div className="col-span-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide text-right">정답률</div>
-          {user && <div className="col-span-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide text-center">상태</div>}
+          <div
+            className="col-span-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors flex items-center gap-1 group"
+            onClick={() => handleSort("id")}
+          >
+            #
+            <span className="opacity-0 group-hover:opacity-100 transition-opacity">
+              {sortField === "id" ? (
+                sortOrder === "asc" ? <ArrowUp className="w-3 h-3 text-blue-500" /> : <ArrowDown className="w-3 h-3 text-blue-500" />
+              ) : <ArrowUpDown className="w-3 h-3" />}
+            </span>
+          </div>
+          <div
+            className={`${user ? "col-span-5" : "col-span-6"} text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors flex items-center gap-1 group`}
+            onClick={() => handleSort("title")}
+          >
+            제목
+            <span className="opacity-0 group-hover:opacity-100 transition-opacity">
+              {sortField === "title" ? (
+                sortOrder === "asc" ? <ArrowUp className="w-3 h-3 text-blue-500" /> : <ArrowDown className="w-3 h-3 text-blue-500" />
+              ) : <ArrowUpDown className="w-3 h-3" />}
+            </span>
+          </div>
+          <div
+            className="col-span-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors flex items-center gap-1 group"
+            onClick={() => handleSort("tag")}
+          >
+            태그
+            <span className="opacity-0 group-hover:opacity-100 transition-opacity">
+              {sortField === "tag" ? (
+                sortOrder === "asc" ? <ArrowUp className="w-3 h-3 text-blue-500" /> : <ArrowDown className="w-3 h-3 text-blue-500" />
+              ) : <ArrowUpDown className="w-3 h-3" />}
+            </span>
+          </div>
+          <div
+            className="col-span-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors flex items-center gap-1 group"
+            onClick={() => handleSort("difficulty")}
+          >
+            난이도
+            <span className="opacity-0 group-hover:opacity-100 transition-opacity">
+              {sortField === "difficulty" ? (
+                sortOrder === "asc" ? <ArrowUp className="w-3 h-3 text-blue-500" /> : <ArrowDown className="w-3 h-3 text-blue-500" />
+              ) : <ArrowUpDown className="w-3 h-3" />}
+            </span>
+          </div>
+          <div
+            className="col-span-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide text-right cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors flex items-center justify-end gap-1 group"
+            onClick={() => handleSort("acceptanceRate")}
+          >
+            정답률
+            <span className="opacity-0 group-hover:opacity-100 transition-opacity">
+              {sortField === "acceptanceRate" ? (
+                sortOrder === "asc" ? <ArrowUp className="w-3 h-3 text-blue-500" /> : <ArrowDown className="w-3 h-3 text-blue-500" />
+              ) : <ArrowUpDown className="w-3 h-3" />}
+            </span>
+          </div>
+          {user && (
+            <div
+              className="col-span-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide text-center cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors flex items-center justify-center gap-1 group"
+              onClick={() => handleSort("status")}
+            >
+              상태
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity">
+                {sortField === "status" ? (
+                  sortOrder === "asc" ? <ArrowUp className="w-3 h-3 text-blue-500" /> : <ArrowDown className="w-3 h-3 text-blue-500" />
+                ) : <ArrowUpDown className="w-3 h-3" />}
+              </span>
+            </div>
+          )}
         </div>
 
         {isFetching ? (
@@ -459,7 +572,7 @@ function ProblemsContent() {
           </div>
         ) : (
           <div className="divide-y divide-[#E2E8F0] dark:divide-zinc-800">
-            {displayed.map((problem, i) => {
+            {sortedDisplayed.map((problem, i) => {
               const status = problemStatusMap.get(problem.id) ?? "none";
               const stats = problemStatsMap.get(String(problem.id));
               const acceptanceRate = !stats || stats.attempted_users === 0 ? "-" : `${stats.acceptance_rate}%`;
