@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 export async function updateProfile(formData: FormData) {
   const nickname = String(formData.get("nickname") || "").trim();
   const schoolNumber = String(formData.get("school_number") || "").trim();
+  const preferredLanguage = String(formData.get("preferred_language") || "").trim();
   
   if (!nickname) {
     return { success: false, message: "닉네임을 입력해주세요." };
@@ -62,7 +63,7 @@ export async function updateProfile(formData: FormData) {
 
     // 1. auth.users 메타데이터 업데이트
     const { error: authError } = await supabase.auth.updateUser({
-      data: { nickname, school_number: schoolNumber }
+      data: { nickname, school_number: schoolNumber, preferred_language: preferredLanguage }
     });
 
     if (authError) throw authError;
@@ -70,7 +71,11 @@ export async function updateProfile(formData: FormData) {
     // 2. public.users 테이블 업데이트
     const { error: dbError } = await supabase
       .from("users")
-      .update({ nickname, school_number: schoolNumber })
+      .update({ 
+        nickname, 
+        school_number: schoolNumber,
+        preferred_language: preferredLanguage || null
+      })
       .eq("id", user.id);
 
     if (dbError) {

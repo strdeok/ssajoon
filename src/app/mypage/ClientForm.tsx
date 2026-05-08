@@ -13,17 +13,20 @@ import { useRouter } from "next/navigation";
 interface ClientFormProps {
   initialNickname: string;
   initialSchoolNumber: string;
+  initialPreferredLanguage: string;
   userEmail: string;
 }
 
 type CheckStatus = "idle" | "checking" | "available" | "duplicate" | "error";
 
-export default function ClientForm({ initialNickname, initialSchoolNumber, userEmail }: ClientFormProps) {
+export default function ClientForm({ initialNickname, initialSchoolNumber, initialPreferredLanguage, userEmail }: ClientFormProps) {
   const router = useRouter();
   const [savedNickname, setSavedNickname] = useState(initialNickname.trim());
   const [savedSchoolNumber, setSavedSchoolNumber] = useState(String(initialSchoolNumber || "").trim());
+  const [savedPreferredLanguage, setSavedPreferredLanguage] = useState(initialPreferredLanguage || "");
   const [nickname, setNickname] = useState(initialNickname.trim());
   const [schoolNumber, setSchoolNumber] = useState(String(initialSchoolNumber || ""));
+  const [preferredLanguage, setPreferredLanguage] = useState(initialPreferredLanguage || "");
   const [nicknameStatus, setNicknameStatus] = useState<CheckStatus>("idle");
   const [schoolNumberStatus, setSchoolNumberStatus] = useState<CheckStatus>("idle");
   const [isSaving, setIsSaving] = useState(false);
@@ -36,7 +39,8 @@ export default function ClientForm({ initialNickname, initialSchoolNumber, userE
   const normalizedSchoolNumber = schoolNumber.trim();
   const isNicknameChanged = normalizedNickname !== savedNickname;
   const isSchoolNumberChanged = normalizedSchoolNumber !== savedSchoolNumber;
-  const hasChanges = isNicknameChanged || isSchoolNumberChanged;
+  const isPreferredLanguageChanged = preferredLanguage !== savedPreferredLanguage;
+  const hasChanges = isNicknameChanged || isSchoolNumberChanged || isPreferredLanguageChanged;
   const isNicknameReady = !isNicknameChanged || nicknameStatus === "available";
   const isSchoolNumberReady = !isSchoolNumberChanged || schoolNumberStatus === "available";
   const isSchoolNumberInvalid = Boolean(normalizedSchoolNumber) && !/^\d{7}$/.test(normalizedSchoolNumber);
@@ -59,6 +63,11 @@ export default function ClientForm({ initialNickname, initialSchoolNumber, userE
     setSchoolNumber(value);
     setMessage(null);
     setSchoolNumberStatus(value.trim() === savedSchoolNumber ? "available" : "idle");
+  };
+
+  const handlePreferredLanguageChange = (value: string) => {
+    setPreferredLanguage(value);
+    setMessage(null);
   };
 
   const checkNickname = async () => {
@@ -158,14 +167,17 @@ export default function ClientForm({ initialNickname, initialSchoolNumber, userE
     const formData = new FormData();
     formData.append("nickname", normalizedNickname);
     formData.append("school_number", normalizedSchoolNumber);
+    formData.append("preferred_language", preferredLanguage);
 
     const result = await updateProfile(formData);
 
     if (result.success) {
       setSavedNickname(normalizedNickname);
       setSavedSchoolNumber(normalizedSchoolNumber);
+      setSavedPreferredLanguage(preferredLanguage);
       setNickname(normalizedNickname);
       setSchoolNumber(normalizedSchoolNumber);
+      setPreferredLanguage(preferredLanguage);
       setNicknameStatus("available");
       setSchoolNumberStatus("available");
       setMessage({ type: "success", text: result.message });
@@ -325,6 +337,23 @@ export default function ClientForm({ initialNickname, initialSchoolNumber, userE
                 이미 사용 중인 학번입니다.
               </div>
             )}
+          </div>
+
+          <div>
+            <label htmlFor="preferredLanguage" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+              선호 언어
+            </label>
+            <select
+              id="preferredLanguage"
+              value={preferredLanguage}
+              onChange={(e) => handlePreferredLanguageChange(e.target.value)}
+              className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 outline-none transition-all"
+            >
+              <option value="">선택 안 함</option>
+              <option value="JAVA">JAVA</option>
+              <option value="PYTHON">PYTHON</option>
+              <option value="C++">C++</option>
+            </select>
           </div>
 
           <div className="flex items-center justify-between">

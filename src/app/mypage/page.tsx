@@ -19,7 +19,7 @@ export default async function Mypage() {
 
   const { data: userData } = await supabase
     .from("users")
-    .select("nickname, school_number, created_at")
+    .select("nickname, school_number, created_at, preferred_language")
     .eq("id", user.id)
     .single();
 
@@ -40,6 +40,9 @@ export default async function Mypage() {
           }
           initialSchoolNumber={
             userData?.school_number || user.user_metadata?.school_number || ""
+          }
+          initialPreferredLanguage={
+            userData?.preferred_language || user.user_metadata?.preferred_language || ""
           }
           userEmail={user.email || ""}
         />

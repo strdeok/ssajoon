@@ -15,6 +15,11 @@ import type { SubmissionStatus } from "@/types/submission";
 import { createClient } from "@/utils/supabase/client";
 import { getSubmissionLabel } from "@/lib/submission/getSubmissionLabel";
 import { useProblemStarterCode } from "@/hooks/useProblemStarterCode";
+import { 
+  preferredLanguageToEditorLanguage, 
+  PreferredLanguage,
+  normalizeLanguage 
+} from "@/lib/codeTemplates";
 type JudgeEventPayload = {
   submissionId: string | number;
   phase: SubmissionStatus;
@@ -43,6 +48,7 @@ export default function ProblemPage({
   const [editorTheme, setEditorTheme] = useState<"light" | "dark">("dark");
   const eventSourceRef = useRef<EventSource | null>(null);
   const receivedDoneRef = useRef(false);
+  const hasInitializedRef = useRef(false);
   const isLoggedIn = Boolean(user?.id);
   const isCodeSectionLocked = isAuthLoading || !isLoggedIn;
   const shouldShowLoginModal = !isAuthLoading && !isLoggedIn;
@@ -165,6 +171,49 @@ export default function ProblemPage({
       reset();
     };
   }, [closeEventSource, id, reset]);
+
+  useEffect(() => {
+    if (isAuthLoading || !user || hasInitializedRef.current) return;
+
+    const initializeLanguage = async () => {
+      const supabase = createClient();
+
+      // 1. Check for most recent AC submission
+      const { data: latestAc } = await supabase
+        .from("submissions")
+        .select("language")
+        .eq("problem_id", id)
+        .eq("user_id", user.id)
+        .eq("is_deleted", false)
+        .eq("result", "AC")
+        .order("submitted_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (latestAc?.language) {
+        setLanguage(normalizeLanguage(latestAc.language));
+        hasInitializedRef.current = true;
+        return;
+      }
+
+      // 2. Check user's preferred language
+      const { data: userData } = await supabase
+        .from("users")
+        .select("preferred_language")
+        .eq("id", user.id)
+        .single();
+
+      if (userData?.preferred_language) {
+        const mappedLang = preferredLanguageToEditorLanguage[userData.preferred_language as PreferredLanguage];
+        if (mappedLang) {
+          setLanguage(mappedLang);
+        }
+      }
+      hasInitializedRef.current = true;
+    };
+
+    void initializeLanguage();
+  }, [user, isAuthLoading, id]);
   useEffect(() => {
     const savedTheme = localStorage.getItem("editorTheme");
     if (savedTheme === "light" || savedTheme === "dark") {

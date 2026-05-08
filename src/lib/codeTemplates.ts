@@ -19,6 +19,20 @@ int main() {
 }`,
 };
 
+export const preferredLanguageToEditorLanguage = {
+    JAVA: "java",
+    PYTHON: "python",
+    "C++": "cpp",
+} as const;
+
+export const editorLanguageToPreferredLanguage = {
+    java: "JAVA",
+    python: "PYTHON",
+    cpp: "C++",
+} as const;
+
+export type PreferredLanguage = keyof typeof preferredLanguageToEditorLanguage;
+
 export function normalizeLanguage(language: string | undefined | null) {
     const normalized = (language ?? "python").trim().toLowerCase();
 
@@ -47,4 +61,4 @@ export function getLanguageQueryValues(language: string | undefined | null) {
     if (normalizedLanguage === "cpp") return ["cpp", "c++", "C++", "CPP", "Cpp"];
 
     return [normalizedLanguage];
-}
+}
