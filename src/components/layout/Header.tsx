@@ -24,8 +24,8 @@ export async function Header() {
   }
 
   return (
-    <header className="h-16 border-b border-zinc-200 dark:border-white/5 bg-white dark:bg-[#09090b] flex items-center justify-center shadow-sm sticky top-0 z-50 px-24">
-      <div className="w-full max-w-7xl flex items-center justify-between gap-4">
+    <header className="h-16 border-b border-zinc-200 dark:border-white/5 bg-white dark:bg-[#09090b] flex items-center justify-between shadow-sm sticky top-0 z-50">
+      <div className="w-full  flex items-center justify-between gap-4  px-24">
         <div className="flex items-center space-x-8">
           <h1 className="text-xl font-bold bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent shrink-0">
             <Link href="/">SSAJOON</Link>
