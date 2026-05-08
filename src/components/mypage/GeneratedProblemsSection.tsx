@@ -96,16 +96,13 @@ export async function GeneratedProblemsSection() {
               내가 생성한 문제
             </h2>
           </div>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            생성 완료된 문제만 최신순으로 보여줍니다.
-          </p>
         </div>
 
         <Link
           href="/generate"
           className="inline-flex items-center justify-center rounded-lg bg-zinc-100 px-3 py-2 text-sm font-bold text-zinc-700 transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
         >
-          문제 생성하기
+          문제 생성
         </Link>
       </div>
 
