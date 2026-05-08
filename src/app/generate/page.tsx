@@ -138,6 +138,7 @@ export default function GeneratePage() {
   const [loadingTipIndex, setLoadingTipIndex] = useState(0);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingStartedAt, setLoadingStartedAt] = useState<number | null>(null);
+  const [currentLoadingDuration, setCurrentLoadingDuration] = useState(MIN_GENERATE_LOADING_MS);
   const isComponentMounted = useRef(true);
 
   useEffect(() => {
@@ -231,7 +232,7 @@ export default function GeneratePage() {
 
     const progressTimer = window.setInterval(() => {
       const elapsed = Date.now() - loadingStartedAt;
-      const nextProgress = Math.min(100, Math.round((elapsed / MIN_GENERATE_LOADING_MS) * 100));
+      const nextProgress = Math.min(100, Math.round((elapsed / currentLoadingDuration) * 100));
       setLoadingProgress(nextProgress);
     }, 200);
 
@@ -317,18 +318,20 @@ export default function GeneratePage() {
     if (!canGenerate) return;
 
     const startedAt = Date.now();
+    const randomDurationMs = Math.floor(Math.random() * 20001) + 20000; // 20,000 ~ 40,000ms
 
     setIsGenerating(true);
     setLoadingStartedAt(startedAt);
+    setCurrentLoadingDuration(randomDurationMs);
     setLoadingTipIndex(0);
     setLoadingProgress(0);
     setErrorMessage(null);
     setGeneratedProblem(null);
     setProblemExamples([]);
 
-    // 사용자가 30초 동안 대기하도록 먼저 기다립니다.
+    // 사용자가 랜덤하게 결정된 시간(20~40초) 동안 대기하도록 먼저 기다립니다.
     // 이 시간 동안 페이지를 나가면 아래 로직이 실행되지 않아야 합니다.
-    await sleep(MIN_GENERATE_LOADING_MS);
+    await sleep(randomDurationMs);
 
     // 컴포넌트가 언마운트되었거나 생성이 취소되었는지 확인합니다.
     if (!isComponentMounted.current) return;
@@ -366,6 +369,11 @@ export default function GeneratePage() {
       setGeneratedProblem(data.problem ?? null);
       setProblemExamples(data.examples ?? []);
       setRemainingCount(data.remainingCount ?? Math.max(remainingCount - 1, 0));
+
+      // 생성이 완료되면 선택된 태그와 난이도를 초기화합니다.
+      setSelectedTag1("");
+      setSelectedTag2("");
+      setSelectedDifficulty("");
 
       void fetchOptions();
       void fetchUsage();
