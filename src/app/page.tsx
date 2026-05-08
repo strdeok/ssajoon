@@ -154,7 +154,7 @@ async function getRecentVisibleProblems(supabase: ServerSupabaseClient) {
     .select("id, title, difficulty, description, tag1, tag2, created_at")
     .eq("is_deleted", false)
     .eq("is_hidden", false)
-    .order("created_at", { ascending: false, nullsFirst: false })
+    .order("updated_at", { ascending: false, nullsFirst: false })
     .limit(10);
 
   if (!error) return (data ?? []) as ProblemRow[];
@@ -164,7 +164,7 @@ async function getRecentVisibleProblems(supabase: ServerSupabaseClient) {
       .from("problems")
       .select("id, title, difficulty, description, tag1, tag2, created_at")
       .eq("is_deleted", false)
-      .order("created_at", { ascending: false, nullsFirst: false })
+      .order("updated_at", { ascending: false, nullsFirst: false })
       .limit(10);
 
     if (fallbackError) {
