@@ -177,7 +177,7 @@ async function getRecentVisibleProblems(supabase: ServerSupabaseClient) {
   return [];
 }
 
-async function getUserSubmissions(
+async function getRecentUserSubmissions(
   supabase: ServerSupabaseClient,
   userId: string,
 ) {
@@ -186,7 +186,8 @@ async function getUserSubmissions(
     .select("id, problem_id, language, result, submitted_at, problems(title)")
     .eq("user_id", userId)
     .eq("is_deleted", false)
-    .order("submitted_at", { ascending: false, nullsFirst: false });
+    .order("submitted_at", { ascending: false, nullsFirst: false })
+    .limit(11);
 
   if (error) {
     return [];
@@ -220,14 +221,33 @@ function calculateUserStats(allSubmissions: SubmissionRow[]) {
   } satisfies HomeStats;
 }
 
+async function getUserSubmissionStatsSource(
+  supabase: ServerSupabaseClient,
+  userId: string,
+) {
+  const { data, error } = await supabase
+    .from("submissions")
+    .select("problem_id, result, submitted_at")
+    .eq("user_id", userId)
+    .eq("is_deleted", false);
+
+  if (error) {
+    return [];
+  }
+
+  return (data ?? []) as SubmissionRow[];
+}
+
 async function getData() {
   const supabase = await createClient();
 
-  const { data: authData, error: authError } = await supabase.auth.getUser();
+  const [authResult, totalProblemsCount, recentProblems] = await Promise.all([
+    supabase.auth.getUser(),
+    getVisibleProblemsCount(supabase),
+    getRecentVisibleProblems(supabase),
+  ]);
 
-  const user = authData.user;
-  const totalProblemsCount = await getVisibleProblemsCount(supabase);
-  const recentProblems = await getRecentVisibleProblems(supabase);
+  const user = authResult.data.user;
 
   let submissions: SubmissionItem[] = [];
   let stats: HomeStats = {
@@ -238,9 +258,14 @@ async function getData() {
   };
 
   if (user) {
-    const allSubmissions = await getUserSubmissions(supabase, user.id);
-    stats = calculateUserStats(allSubmissions);
-    submissions = allSubmissions.slice(0, 6).map((submission) => ({
+    const [recentSubmissions, statSubmissions] = await Promise.all([
+      getRecentUserSubmissions(supabase, user.id),
+      getUserSubmissionStatsSource(supabase, user.id),
+    ]);
+
+    stats = calculateUserStats(statSubmissions);
+
+    submissions = recentSubmissions.map((submission) => ({
       ...submission,
       problem_title: getProblemTitle(
         submission.problems,
@@ -290,10 +315,10 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-[#F7F9FC] dark:bg-zinc-950 transition-colors duration-300 px-16">
-      <section  className="relative overflow-hidden mx-6 mt-6 rounded-xl h-[400px] bg-[#253EEB] dark:bg-indigo-700 flex items-center shadow-2xl shadow-blue-500/10">
+      <section  className="relative overflow-hidden mx-6 mt-6 rounded-xl h-100 bg-[#253EEB] dark:bg-indigo-700 flex items-center shadow-2xl shadow-blue-500/10">
         <div className="absolute inset-0 opacity-10 dark:opacity-5 select-none pointer-events-none overflow-hidden">
         </div>
-        <div className="absolute inset-0 bg-gradient-to-r from-[#253EEB] via-[#253EEB]/80 to-transparent dark:from-indigo-700 dark:via-indigo-700/80" />
+        <div className="absolute inset-0 bg-linear-to-r from-[#253EEB] via-[#253EEB]/80 to-transparent dark:from-indigo-700 dark:via-indigo-700/80" />
         <div className="relative z-10 px-12 max-w-xl">
           <div className="inline-flex items-center gap-2 bg-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full mb-6 backdrop-blur-sm">
             <Flame className="w-3.5 h-3.5" />
