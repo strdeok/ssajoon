@@ -386,6 +386,7 @@ export default async function Home() {
                   problem,
                 ) => (
                   <Link
+                    prefetch={false}
                     href={`/problems/${problem.id}`}
                     key={problem.id}
                     className="group grid grid-cols-12 gap-4 items-center px-5 py-4 border-b border-[#E2E8F0] dark:border-zinc-800 last:border-0 hover:bg-[#F8FAFC] dark:hover:bg-zinc-800/50 transition-colors"
@@ -482,6 +483,7 @@ export default async function Home() {
                     submission,
                   ) => (
                     <Link
+                      prefetch={false}
                       href={`/submissions/${submission.id}`}
                       key={submission.id}
                       className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F8FAFC] dark:hover:bg-zinc-800/50 transition-colors"
