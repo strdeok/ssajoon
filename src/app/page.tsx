@@ -290,10 +290,10 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-[#F7F9FC] dark:bg-zinc-950 transition-colors duration-300 px-16">
-      <section  className="relative overflow-hidden mx-6 mt-6 rounded-xl h-[400px] bg-[#253EEB] dark:bg-indigo-700 flex items-center shadow-2xl shadow-blue-500/10">
+      <section  className="relative overflow-hidden mx-6 mt-6 rounded-xl h-100 bg-[#253EEB] dark:bg-indigo-700 flex items-center shadow-2xl shadow-blue-500/10">
         <div className="absolute inset-0 opacity-10 dark:opacity-5 select-none pointer-events-none overflow-hidden">
         </div>
-        <div className="absolute inset-0 bg-gradient-to-r from-[#253EEB] via-[#253EEB]/80 to-transparent dark:from-indigo-700 dark:via-indigo-700/80" />
+        <div className="absolute inset-0 bg-linear-to-r from-[#253EEB] via-[#253EEB]/80 to-transparent dark:from-indigo-700 dark:via-indigo-700/80" />
         <div className="relative z-10 px-12 max-w-xl">
           <div className="inline-flex items-center gap-2 bg-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full mb-6 backdrop-blur-sm">
             <Flame className="w-3.5 h-3.5" />
@@ -397,7 +397,7 @@ export default async function Home() {
                       <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
                         {problem.title}
                       </p>
-                      <div className="mt-0.5 line-clamp-1">
+                      {/* <div className="mt-0.5 line-clamp-1">
                         {problem.description ? (
                           <ProblemMarkdown
                             content={problem.description}
@@ -409,7 +409,7 @@ export default async function Home() {
                               "설명이 없습니다."}
                           </p>
                         )}
-                      </div>
+                      </div> */}
                     </div>
                     <div className="col-span-3">
                       <DifficultyBadge difficulty={problem.difficulty} />
