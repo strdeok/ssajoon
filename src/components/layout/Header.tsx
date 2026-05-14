@@ -71,7 +71,7 @@ export async function Header() {
         <div className="flex items-center space-x-4 shrink-0">
           <ThemeSwitcher />
           <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-2"></div>
-          <AuthNav />
+          <AuthNav user={user} userRole={userRole} />
         </div>
       </div>
     </header>

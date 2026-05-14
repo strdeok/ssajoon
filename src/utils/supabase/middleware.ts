@@ -61,15 +61,18 @@ export async function updateSession(request: NextRequest) {
     return redirectToLogin(request)
   }
 
-  let dbUser = null
+  let dbUser: { role: string | null; is_deleted: boolean | null } | null = null
   if (user) {
-    // Check user role and deleted status in DB
-    const { data } = await supabase
-      .from('users')
-      .select('role, is_deleted')
-      .eq('id', user.id)
-      .single()
-    dbUser = data
+    const needsUserRecord = matchesRoute(pathname, authRequiredRoutes)
+
+    if (needsUserRecord) {
+      const { data } = await supabase
+        .from('users')
+        .select('role, is_deleted')
+        .eq('id', user.id)
+        .single()
+      dbUser = data
+    }
 
     if (
       dbUser?.is_deleted &&

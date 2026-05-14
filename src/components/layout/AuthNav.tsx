@@ -1,24 +1,14 @@
-import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
 import { signout } from "@/app/login/actions";
 import { LogOut, UserCircle, Settings } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
 
-export async function AuthNav() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+type AuthNavProps = {
+  user: User | null;
+  userRole: string;
+};
 
-  let userRole = "USER";
-  if (user) {
-    const { data: userData } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-    if (userData) {
-      userRole = userData.role;
-    }
-  }
-
+export function AuthNav({ user, userRole }: AuthNavProps) {
   if (!user) {
     return (
       <Link 
