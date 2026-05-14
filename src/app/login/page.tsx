@@ -6,10 +6,15 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { Loader2 } from "lucide-react";
 
-export default function LoginPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
+function getSafeNext(next?: string) {
+  return next?.startsWith("/") && !next.startsWith("//") ? next : "/";
+}
+
+export default function LoginPage({ searchParams }: { searchParams: Promise<{ message?: string; next?: string; returnUrl?: string }> }) {
   const params = use(searchParams);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const next = getSafeNext(params.next ?? params.returnUrl);
 
   useEffect(() => {
     const checkAuthStatus = async () => {
@@ -17,7 +22,7 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ me
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
-        router.push("/");
+        router.push(next);
         return;
       }
 
@@ -25,7 +30,7 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ me
     };
 
     checkAuthStatus();
-  }, [router]);
+  }, [router, next]);
 
   if (isLoading) {
     return (
@@ -50,6 +55,7 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ me
         )}
 
         <form className="flex flex-col gap-4">
+          <input type="hidden" name="next" value={next} />
           <button
             formAction={login}
             className="w-full flex items-center justify-center space-x-3 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 shadow-sm"

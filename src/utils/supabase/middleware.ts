@@ -1,6 +1,26 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const authRequiredRoutes = [
+  '/admin',
+  '/generate',
+  '/mypage',
+  '/onboarding',
+  '/rejoin',
+  '/submissions',
+]
+
+function matchesRoute(pathname: string, routes: string[]) {
+  return routes.some((route) => pathname === route || pathname.startsWith(`${route}/`))
+}
+
+function redirectToLogin(request: NextRequest) {
+  const url = request.nextUrl.clone()
+  url.pathname = '/login'
+  url.searchParams.set('next', `${request.nextUrl.pathname}${request.nextUrl.search}`)
+  return NextResponse.redirect(url)
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -35,16 +55,10 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/api') &&
-    !request.nextUrl.pathname.startsWith('/auth') &&
-    request.nextUrl.pathname.startsWith('/submissions') // protect specific routes
-  ) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+  const pathname = request.nextUrl.pathname
+
+  if (!user && matchesRoute(pathname, authRequiredRoutes)) {
+    return redirectToLogin(request)
   }
 
   let dbUser = null
@@ -59,8 +73,8 @@ export async function updateSession(request: NextRequest) {
 
     if (
       dbUser?.is_deleted &&
-      !request.nextUrl.pathname.startsWith('/rejoin') &&
-      !request.nextUrl.pathname.startsWith('/api/auth/signout')
+      !pathname.startsWith('/rejoin') &&
+      !pathname.startsWith('/api/auth/signout')
     ) {
       const url = request.nextUrl.clone()
       url.pathname = '/rejoin'
@@ -70,11 +84,11 @@ export async function updateSession(request: NextRequest) {
 
     if (
       !user.user_metadata?.nickname && 
-      !request.nextUrl.pathname.startsWith('/rejoin') &&
-      !request.nextUrl.pathname.startsWith('/onboarding') &&
-      !request.nextUrl.pathname.startsWith('/api') &&
-      !request.nextUrl.pathname.startsWith('/auth') &&
-      !request.nextUrl.pathname.startsWith('/login')
+      !pathname.startsWith('/rejoin') &&
+      !pathname.startsWith('/onboarding') &&
+      !pathname.startsWith('/api') &&
+      !pathname.startsWith('/auth') &&
+      !pathname.startsWith('/login')
     ) {
       const url = request.nextUrl.clone()
       url.pathname = '/onboarding'
@@ -83,7 +97,7 @@ export async function updateSession(request: NextRequest) {
 
     if (
       user.user_metadata?.nickname && 
-      request.nextUrl.pathname.startsWith('/onboarding')
+      pathname.startsWith('/onboarding')
     ) {
       const url = request.nextUrl.clone()
       url.pathname = '/'
@@ -91,8 +105,12 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    if (!user || dbUser?.role !== 'ADMIN') {
+  if (pathname.startsWith('/admin')) {
+    if (!user) {
+      return redirectToLogin(request)
+    }
+
+    if (dbUser?.role !== 'ADMIN') {
       const url = request.nextUrl.clone()
       url.pathname = '/'
       return NextResponse.redirect(url)
