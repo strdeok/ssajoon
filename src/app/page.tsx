@@ -14,8 +14,8 @@ import {
   StatusIcon,
   StatusLabel,
 } from "@/components/problem/ProblemComponents";
-import { getKoreanTag } from "@/utils/tagUtils";
-import ProblemMarkdown from "@/components/common/ProblemMarkdown";
+// import { getKoreanTag } from "@/utils/tagUtils";
+// import ProblemMarkdown from "@/components/common/ProblemMarkdown";
 
 type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
