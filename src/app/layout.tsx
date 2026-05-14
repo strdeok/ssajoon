@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Header } from "@/components/layout/Header";
@@ -8,7 +8,12 @@ import "katex/dist/katex.min.css";
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 
-const inter = Inter({ subsets: ["latin"] });
+const notoSansKr = Noto_Sans_KR({
+  subsets: ["latin"],
+  display: "swap",
+  weight: "variable",
+  fallback: ["system-ui", "sans-serif"],
+});
 
 export const metadata: Metadata = {
   title: "SSAJOON - Algorithm Platform",
@@ -22,7 +27,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body className={`${inter.className} min-h-screen bg-background text-foreground flex flex-col antialiased selection:bg-blue-500/30 selection:text-blue-200`}>
+      <body className={`${notoSansKr.className} min-h-screen bg-background text-foreground flex flex-col antialiased selection:bg-blue-500/30 selection:text-blue-200`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <div className="flex flex-col min-h-screen">
             <Header />
