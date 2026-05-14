@@ -5,6 +5,7 @@ import remarkGfm from "remark-gfm"; // GitHub Flavored Markdown 문법을 지원
 import remarkMath from "remark-math"; // Markdown 안의 LaTeX 수식을 파싱하기 위해 불러온다.
 import rehypeKatex from "rehype-katex"; // 파싱된 LaTeX 수식을 KaTeX HTML로 변환하기 위해 불러온다.
 import { usePathname } from "next/navigation";
+import "katex/dist/katex.min.css";
 
 interface ProblemMarkdownProps { // ProblemMarkdown 컴포넌트가 받을 props 타입을 정의한다.
     content: string | null | undefined; // 렌더링할 Markdown 문자열을 받는다.

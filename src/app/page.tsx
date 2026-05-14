@@ -14,8 +14,8 @@ import {
   StatusIcon,
   StatusLabel,
 } from "@/components/problem/ProblemComponents";
-// import { getKoreanTag } from "@/utils/tagUtils";
-// import ProblemMarkdown from "@/components/common/ProblemMarkdown";
+import { getKoreanTag } from "@/utils/tagUtils";
+import ProblemMarkdown from "@/components/common/ProblemMarkdown";
 
 type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -31,11 +31,11 @@ type ProblemRow = {
 
 type JoinedProblem =
   | {
-      title: string | null;
-    }
+    title: string | null;
+  }
   | {
-      title: string | null;
-    }[]
+    title: string | null;
+  }[]
   | null;
 
 type SubmissionRow = {
@@ -290,8 +290,9 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-[#F7F9FC] dark:bg-zinc-950 transition-colors duration-300 px-16">
-      <section className="relative overflow-hidden mx-6 mt-6 rounded-xl h-[400px] bg-[#253EEB] dark:bg-indigo-700 flex items-center shadow-2xl shadow-blue-500/10">
-        <div className="absolute inset-0 opacity-10 dark:opacity-5 select-none pointer-events-none overflow-hidden"></div>
+      <section  className="relative overflow-hidden mx-6 mt-6 rounded-xl h-[400px] bg-[#253EEB] dark:bg-indigo-700 flex items-center shadow-2xl shadow-blue-500/10">
+        <div className="absolute inset-0 opacity-10 dark:opacity-5 select-none pointer-events-none overflow-hidden">
+        </div>
         <div className="absolute inset-0 bg-gradient-to-r from-[#253EEB] via-[#253EEB]/80 to-transparent dark:from-indigo-700 dark:via-indigo-700/80" />
         <div className="relative z-10 px-12 max-w-xl">
           <div className="inline-flex items-center gap-2 bg-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full mb-6 backdrop-blur-sm">
@@ -325,31 +326,35 @@ export default async function Home() {
         </div>
       </section>
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mx-6 mt-6">
-        {statCards.map(({ icon, label, value, unit, bg }) => (
-          <Link
-            prefetch={false}
-            href={label === "총 문제 수" ? "/problems" : "submissions"}
-            key={label}
-            className="bg-white dark:bg-zinc-900 border border-[#E2E8F0] dark:border-zinc-800 rounded-lg p-6 flex flex-col gap-2 shadow-sm transition-all hover:shadow-md"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
-                {label}
-              </span>
-              <div className={`p-2 rounded-lg ${bg} dark:bg-opacity-10`}>
-                {icon}
+        {statCards.map(
+          (
+            { icon, label, value, unit, bg },
+          ) => (
+            <Link
+              prefetch={false}
+              href={label === "총 문제 수" ? "/problems" : "submissions"}
+              key={label}
+              className="bg-white dark:bg-zinc-900 border border-[#E2E8F0] dark:border-zinc-800 rounded-lg p-6 flex flex-col gap-2 shadow-sm transition-all hover:shadow-md"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
+                  {label}
+                </span>
+                <div className={`p-2 rounded-lg ${bg} dark:bg-opacity-10`}>
+                  {icon}
+                </div>
               </div>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-3xl font-extrabold text-zinc-900 dark:text-zinc-100">
-                {typeof value === "number" ? value.toLocaleString() : value}
-              </span>
-              <span className="text-sm text-zinc-400 dark:text-zinc-500 font-medium">
-                {unit}
-              </span>
-            </div>
-          </Link>
-        ))}
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl font-extrabold text-zinc-900 dark:text-zinc-100">
+                  {typeof value === "number" ? value.toLocaleString() : value}
+                </span>
+                <span className="text-sm text-zinc-400 dark:text-zinc-500 font-medium">
+                  {unit}
+                </span>
+              </div>
+            </Link>
+          ),
+        )}
       </section>
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mx-6 mt-6 mb-8">
         <div className="lg:col-span-2 flex flex-col gap-4">
@@ -358,7 +363,6 @@ export default async function Home() {
               최근 추가된 문제
             </h2>
             <Link
-              prefetch={false}
               href="/problems"
               className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 transition-colors"
             >
@@ -377,44 +381,47 @@ export default async function Home() {
                 등록된 문제가 없습니다.
               </div>
             ) : (
-              recentProblems.map((problem) => (
-                <Link
-                  prefetch={false}
-                  href={`/problems/${problem.id}`}
-                  key={problem.id}
-                  className="group grid grid-cols-12 gap-4 items-center px-5 py-4 border-b border-[#E2E8F0] dark:border-zinc-800 last:border-0 hover:bg-[#F8FAFC] dark:hover:bg-zinc-800/50 transition-colors"
-                >
-                  <div className="col-span-1 text-sm text-zinc-400 font-medium">
-                    {problem.id}
-                  </div>
-                  <div className="col-span-6">
-                    <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
-                      {problem.title}
-                    </p>
-                    {/* <div className="mt-0.5 line-clamp-1">
-                      {problem.description ? (
-                        <ProblemMarkdown
-                          content={problem.description}
-                          variant="compact"
-                        />
-                      ) : (
-                        <p className="text-xs text-zinc-400 dark:text-zinc-500">
-                          {(problem.tag1 ? getKoreanTag(problem.tag1) : "") ||
-                            "설명이 없습니다."}
-                        </p>
-                      )}
-                    </div> */}
-                  </div>
-                  <div className="col-span-3">
-                    <DifficultyBadge difficulty={problem.difficulty} />
-                  </div>
-                  <div className="col-span-2 flex justify-end">
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 bg-blue-50 dark:bg-blue-900/20 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 px-3 py-1.5 rounded-lg transition-all">
-                      풀기 <ChevronRight className="w-3.5 h-3.5" />
-                    </span>
-                  </div>
-                </Link>
-              ))
+              recentProblems.map(
+                (
+                  problem,
+                ) => (
+                  <Link
+                    href={`/problems/${problem.id}`}
+                    key={problem.id}
+                    className="group grid grid-cols-12 gap-4 items-center px-5 py-4 border-b border-[#E2E8F0] dark:border-zinc-800 last:border-0 hover:bg-[#F8FAFC] dark:hover:bg-zinc-800/50 transition-colors"
+                  >
+                    <div className="col-span-1 text-sm text-zinc-400 font-medium">
+                      {problem.id}
+                    </div>
+                    <div className="col-span-6">
+                      <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
+                        {problem.title}
+                      </p>
+                      <div className="mt-0.5 line-clamp-1">
+                        {problem.description ? (
+                          <ProblemMarkdown
+                            content={problem.description}
+                            variant="compact"
+                          />
+                        ) : (
+                          <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                            {(problem.tag1 ? getKoreanTag(problem.tag1) : "") ||
+                              "설명이 없습니다."}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="col-span-3">
+                      <DifficultyBadge difficulty={problem.difficulty} />
+                    </div>
+                    <div className="col-span-2 flex justify-end">
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 bg-blue-50 dark:bg-blue-900/20 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 px-3 py-1.5 rounded-lg transition-all">
+                        풀기 <ChevronRight className="w-3.5 h-3.5" />
+                      </span>
+                    </div>
+                  </Link>
+                ),
+              )
             )}
           </div>
         </div>
@@ -425,7 +432,6 @@ export default async function Home() {
             </h2>
             {user && (
               <Link
-                prefetch={false}
                 href="/submissions"
                 className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 transition-colors"
               >
@@ -448,7 +454,6 @@ export default async function Home() {
                   </p>
                 </div>
                 <Link
-                  prefetch={false}
                   href="/login"
                   className="bg-blue-600 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors"
                 >
@@ -464,7 +469,6 @@ export default async function Home() {
                   아직 제출한 문제가 없어요
                 </p>
                 <Link
-                  prefetch={false}
                   href="/problems"
                   className="text-sm text-blue-600 hover:underline font-medium"
                 >
@@ -473,21 +477,23 @@ export default async function Home() {
               </div>
             ) : (
               <div className="divide-y divide-[#E2E8F0] dark:divide-zinc-800">
-                {submissions.map((submission) => (
-                  <Link
-                    prefetch={false}
-                    href={`/submissions/${submission.id}`}
-                    key={submission.id}
-                    className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F8FAFC] dark:hover:bg-zinc-800/50 transition-colors"
-                  >
-                    <StatusIcon result={submission.result} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
-                        {submission.problem_title}
-                      </p>
-                      <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
-                        {submission.submitted_at
-                          ? new Date(
+                {submissions.map(
+                  (
+                    submission,
+                  ) => (
+                    <Link
+                      href={`/submissions/${submission.id}`}
+                      key={submission.id}
+                      className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F8FAFC] dark:hover:bg-zinc-800/50 transition-colors"
+                    >
+                      <StatusIcon result={submission.result} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                          {submission.problem_title}
+                        </p>
+                        <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
+                          {submission.submitted_at
+                            ? new Date(
                               submission.submitted_at,
                             ).toLocaleDateString("ko-KR", {
                               month: "short",
@@ -495,22 +501,24 @@ export default async function Home() {
                               hour: "2-digit",
                               minute: "2-digit",
                             })
-                          : "제출 시간 없음"}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-0.5">
-                      <StatusLabel result={submission.result} />
-                      <span className="text-xs text-zinc-400 dark:text-zinc-500">
-                        {submission.language || "-"}
-                      </span>
-                    </div>
-                  </Link>
-                ))}
+                            : "제출 시간 없음"}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end gap-0.5">
+                        <StatusLabel result={submission.result} />
+                        <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                          {submission.language || "-"}
+                        </span>
+                      </div>
+                    </Link>
+                  ),
+                )}
               </div>
             )}
           </div>
         </div>
       </section>
+
     </div>
   );
 }
