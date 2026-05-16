@@ -198,7 +198,7 @@ export default async function Home() {
         </div>
       </section>
       <HomeStatsCards totalProblemsCount={totalProblemsCount} />
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mx-6 mt-6 mb-8 min-h-[690px]">
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mx-6 mt-6 mb-8 min-h-172.5">
         <div className="lg:col-span-2 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
@@ -212,7 +212,7 @@ export default async function Home() {
               전체 보기 <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
-          <div className="bg-white dark:bg-zinc-900 border border-[#E2E8F0] dark:border-zinc-800 rounded-lg overflow-hidden min-h-[640px]">
+          <div className="bg-white dark:bg-zinc-900 border border-[#E2E8F0] dark:border-zinc-800 rounded-lg overflow-hidden min-h-160">
             <div className="grid grid-cols-12 gap-4 px-5 py-3 bg-[#F8FAFC] dark:bg-zinc-800/50 border-b border-[#E2E8F0] dark:border-zinc-800 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
               <div className="col-span-1">#</div>
               <div className="col-span-6">문제 제목</div>
@@ -220,7 +220,7 @@ export default async function Home() {
               <div className="col-span-3 text-right">풀기</div>
             </div>
             {recentProblems.length === 0 ? (
-              <div className="min-h-[596px] flex items-center justify-center text-center text-zinc-400 text-sm">
+              <div className="min-h-149 flex items-center justify-center text-center text-zinc-400 text-sm">
                 등록된 문제가 없습니다.
               </div>
             ) : (
@@ -229,7 +229,7 @@ export default async function Home() {
                   prefetch={false}
                   href={`/problems/${problem.id}`}
                   key={problem.id}
-                  className="group grid grid-cols-12 gap-4 items-center min-h-[59px] px-5 py-4 border-b border-[#E2E8F0] dark:border-zinc-800 last:border-0 hover:bg-[#F8FAFC] dark:hover:bg-zinc-800/50 transition-colors"
+                  className="group grid grid-cols-12 gap-4 items-center min-h-14.75 px-5 py-4 border-b border-[#E2E8F0] dark:border-zinc-800 last:border-0 hover:bg-[#F8FAFC] dark:hover:bg-zinc-800/50 transition-colors"
                 >
                   <div className="col-span-1 text-sm text-zinc-400 font-medium">
                     {problem.id}

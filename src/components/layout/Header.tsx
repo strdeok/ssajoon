@@ -52,7 +52,7 @@ export function Header() {
             />
           </form>
         </div>
-        <div className="flex h-9 min-w-[360px] shrink-0 items-center justify-end space-x-4">
+        <div className="flex h-9 min-w-90 shrink-0 items-center justify-end space-x-4">
           <ThemeSwitcher />
           <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-2"></div>
           <AuthNav />

@@ -63,7 +63,7 @@ export function AuthNav() {
 
   if (isLoading) {
     return (
-      <div className="flex h-9 w-[260px] justify-end">
+      <div className="flex h-9 w-65 justify-end">
         <div className="h-9 w-20 rounded-lg bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
       </div>
     );
@@ -71,7 +71,7 @@ export function AuthNav() {
 
   if (!user) {
     return (
-      <div className="flex h-9 w-[260px] justify-end">
+      <div className="flex h-9 w-65 justify-end">
         <Link
           href="/login"
           prefetch={false}
@@ -84,7 +84,7 @@ export function AuthNav() {
   }
 
   return (
-    <div className="flex h-9 w-[260px] items-center justify-end space-x-4 overflow-hidden">
+    <div className="flex h-9 w-full items-center justify-end space-x-4 overflow-hidden">
       {userRole === "ADMIN" && (
         <Link
           href="/admin"
@@ -103,7 +103,7 @@ export function AuthNav() {
       >
         <UserCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
         <span
-          className="max-w-[120px] truncate underline-offset-4 group-hover:underline"
+          className="max-w-30  truncate underline-offset-4 group-hover:underline"
           title={user.user_metadata?.nickname || user.email}
         >
           {user.user_metadata?.nickname || user.email}
