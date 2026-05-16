@@ -1,10 +1,18 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState } from "react";
-import { createClient } from "@/utils/supabase/client";
 import { ChevronDown, ChevronUp, Loader2, Clock, HardDrive, Calendar } from "lucide-react";
 import { getSubmissionLabel } from "@/lib/submission/getSubmissionLabel";
-import { CodeEditor } from "../editor/CodeEditor";
+import { EditorSkeleton } from "@/components/problem/EditorSkeleton";
+
+const CodeEditor = dynamic(
+  () => import("@/components/editor/CodeEditor").then((mod) => mod.CodeEditor),
+  {
+    ssr: false,
+    loading: () => <EditorSkeleton />,
+  },
+);
 
 interface SubmissionSummary {
   id: string;
@@ -35,16 +43,14 @@ export function SubmissionCodeItem({ submission, isOpen, onToggle }: SubmissionC
       setIsLoading(true);
       setError(null);
       try {
-        const supabase = createClient();
-        const { data, error: fetchError } = await supabase
-          .from("submissions")
-          .select("source_code")
-          .eq("id", submission.id)
-          .single();
+        const response = await fetch(`/api/submissions/${submission.id}/code`, {
+          cache: "no-store",
+        });
 
-        if (fetchError) throw fetchError;
-        if (data) setSourceCode(data.source_code);
-      } catch (err: any) {
+        if (!response.ok) throw new Error("Failed to fetch code");
+        const data = (await response.json()) as { source_code?: string | null };
+        setSourceCode(data.source_code ?? "");
+      } catch {
         setError("코드를 불러오는데 실패했습니다.");
       } finally {
         setIsLoading(false);
@@ -65,7 +71,7 @@ export function SubmissionCodeItem({ submission, isOpen, onToggle }: SubmissionC
       : "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400 border-red-200 dark:border-red-500/20";
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-700">
+    <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-colors duration-200 hover:border-zinc-300 dark:hover:border-zinc-700">
       <button
         onClick={handleClick}
         className="w-full p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-left cursor-pointer focus:outline-none"

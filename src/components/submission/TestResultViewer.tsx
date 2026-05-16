@@ -23,7 +23,7 @@ export function TestResultViewer({ results }: { results: TestResult[] | null }) 
       {results.map((res, idx) => (
         <div 
           key={idx} 
-          className={`overflow-hidden rounded-xl border transition-all duration-300 ${res.passed ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-500/5'}`}
+          className={`overflow-hidden rounded-xl border transition-colors duration-200 ${res.passed ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-500/5'}`}
         >
           <button 
             className="w-full px-4 py-3 flex items-center justify-between focus:outline-none"

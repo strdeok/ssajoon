@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
-import { notFound } from "next/navigation";
 
 export async function GET(
   request: Request,
@@ -31,11 +30,12 @@ export async function GET(
 
   problem.problem_examples = examples || [];
 
-  // 문제의 테스트케이스 조회 (틀린 테스트케이스 보기 및 보정용)
+  // 일반 사용자에게는 공개 테스트케이스만 반환한다.
   const { data: testcases } = await supabase
     .from("problem_testcases")
     .select("id, problem_id, testcase_order, input_text, expected_output, is_hidden")
     .eq("problem_id", id)
+    .eq("is_hidden", false)
     .eq("is_deleted", false)
     .order("testcase_order", { ascending: true });
     

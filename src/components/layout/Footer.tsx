@@ -7,18 +7,18 @@ export function Footer() {
             <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               SSAJOON
             </h2>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
               더 나은 개발자가 되기 위한 알고리즘 트레이닝 플랫폼. 싸준과 함께
               성장하세요.
             </p>
           </div>
         </div>
         <div className="border-t border-zinc-100 dark:border-white/5 mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-zinc-400 dark:text-zinc-500">
+          <p className="text-xs text-zinc-600 dark:text-zinc-400">
             © {new Date().getFullYear()} 싸준 (SSAJOON). All rights reserved.
           </p>
           <div className="flex items-center space-x-6">
-            <span className="text-xs text-zinc-300 dark:text-zinc-700">
+            <span className="text-xs text-zinc-600 dark:text-zinc-400">
               Premium Algorithm Platform
             </span>
           </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"; // React 훅들을 가져온다.
 import Editor from "@monaco-editor/react"; // Monaco Editor React 래퍼를 가져온다.
+import type { Monaco } from "@monaco-editor/react"; // Monaco 인스턴스 타입을 가져온다.
 import { useTheme } from "next-themes"; // 현재 라이트/다크 테마 정보를 가져온다.
 import { normalizeLanguage } from "@/lib/codeTemplates"; // 프로젝트 내부 언어 값을 Monaco 언어 값으로 정규화하는 함수를 가져온다.
 
@@ -36,8 +37,34 @@ export function CodeEditor({ // CodeEditor 컴포넌트를 정의한다.
 
   const editorTheme = useMemo(() => { // 적용할 Monaco Editor 테마를 결정한다.
     const currentTheme = theme || (resolvedTheme === "light" ? "light" : "dark"); // 주입된 테마가 있으면 사용하고, 없으면 시스템 테마를 따른다.
-    return currentTheme === "light" ? "light" : "vs-dark"; // 라이트면 light, 다크면 vs-dark를 반환한다.
+    return currentTheme === "light" ? "ssajoon-light" : "ssajoon-dark"; // SSAJOON 전용 대비 보정 테마를 반환한다.
   }, [theme, resolvedTheme]); // 주입된 테마나 시스템 테마가 바뀔 때 재계산한다.
+
+  const handleBeforeMount = (monaco: Monaco) => { // Monaco가 마운트되기 전에 접근성 대비를 보정한 테마를 등록한다.
+    monaco.editor.defineTheme("ssajoon-light", {
+      base: "vs",
+      inherit: true,
+      rules: [
+        { token: "comment", foreground: "4B5563" },
+        { token: "string", foreground: "047857" },
+      ],
+      colors: {
+        "editor.background": "#ffffff",
+      },
+    });
+
+    monaco.editor.defineTheme("ssajoon-dark", {
+      base: "vs-dark",
+      inherit: true,
+      rules: [
+        { token: "comment", foreground: "A1A1AA" },
+        { token: "string", foreground: "86EFAC" },
+      ],
+      colors: {
+        "editor.background": "#1e1e1e",
+      },
+    });
+  };
 
   useEffect(() => { // 컨테이너 크기가 바뀔 때 에디터 높이를 동적으로 조정한다.
     const element = containerRef.current; // 현재 컨테이너 DOM을 가져온다.
@@ -64,7 +91,7 @@ export function CodeEditor({ // CodeEditor 컴포넌트를 정의한다.
   return ( // 컴포넌트 JSX를 반환한다.
     <div // 에디터 전체를 감싸는 wrapper를 렌더링한다.
       ref={containerRef} // 컨테이너 크기 측정을 위해 ref를 연결한다.
-      className="relative w-full flex-1 h-full min-h-80 rounded-xl overflow-hidden border border-zinc-200 bg-white shadow-2xl dark:border-white/10 dark:bg-[#1e1e1e]" // 에디터 컨테이너 스타일을 지정한다.
+      className="relative w-full flex-1 h-full min-h-80 rounded-xl overflow-hidden border border-zinc-200 bg-white dark:border-white/10 dark:bg-[#1e1e1e]" // 에디터 컨테이너 스타일을 지정한다.
     >
       <Editor // Monaco Editor 컴포넌트를 렌더링한다.
         height={editorHeight} // ResizeObserver로 계산한 높이를 적용한다.
@@ -72,6 +99,7 @@ export function CodeEditor({ // CodeEditor 컴포넌트를 정의한다.
         theme={editorTheme} // 현재 앱 테마에 맞는 Monaco 테마를 적용한다.
         value={value} // 부모가 관리하는 코드 값을 에디터에 표시한다.
         onChange={onChange} // 코드 변경 시 부모의 onChange 함수를 실행한다.
+        beforeMount={handleBeforeMount} // Monaco 테마를 등록한다.
         options={{ // Monaco Editor 옵션을 설정한다.
           minimap: { enabled: false }, // 우측 미니맵을 비활성화한다.
           fontSize: 16, // 코드 폰트 크기를 16px로 설정한다.
