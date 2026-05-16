@@ -22,7 +22,6 @@ export async function GET() {
     const { data: problems, error } = await supabase
       .from("problems")
       .select("id, tag1, tag2, difficulty")
-      .eq("is_hidden", true)
       .eq("is_deleted", false)
       .not("tag1", "is", null)
       .not("difficulty", "is", null);

@@ -168,7 +168,6 @@ function ProblemsContent() {
           .select("id")
           .in("id", chunk)
           .eq("is_deleted", false)
-          .eq("is_hidden", false);
 
         if (error) {
           throw error;

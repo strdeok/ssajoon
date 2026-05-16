@@ -7,7 +7,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 async function main() {
   const { data, error } = await supabase
     .from("problems")
-    .select("category, difficulty, is_hidden")
+    .select("category, difficulty")
     .limit(20);
   
   if (error) {
