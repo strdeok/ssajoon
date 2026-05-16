@@ -1,9 +1,45 @@
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { notFound } from "next/navigation";
 import SubmissionSummary from "@/components/submissions/detail/SubmissionSummary";
 import PeerSubmissionsTable from "@/components/submissions/detail/PeerSubmissionsTable";
+import PerformanceAnalysis from "@/components/submissions/detail/PerformanceAnalysis";
+import CompareOthersLanguage from "@/components/submissions/detail/CompareOthersLanguage";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+
+const ACCEPTED_RESULTS = new Set(["AC", "ACCEPTED"]);
+
+function isAcceptedResult(result: string | null | undefined) {
+  return ACCEPTED_RESULTS.has((result ?? "").trim().toUpperCase());
+}
+
+function anonymizeLanguageRows(
+  rows: { user_id: string | null; language: string | null }[],
+) {
+  const userIds = new Map<string, string>();
+
+  return rows.map((row, index) => {
+    if (!row.user_id) {
+      return {
+        user_id: `anonymous-${index}`,
+        language: row.language,
+      };
+    }
+
+    let anonymizedId = userIds.get(row.user_id);
+
+    if (!anonymizedId) {
+      anonymizedId = `user-${userIds.size + 1}`;
+      userIds.set(row.user_id, anonymizedId);
+    }
+
+    return {
+      user_id: anonymizedId,
+      language: row.language,
+    };
+  });
+}
 
 export default async function SubmissionDetailPage({
   params,
@@ -68,6 +104,44 @@ export default async function SubmissionDetailPage({
     ? submission.problems[0]
     : submission.problems;
 
+  const isAcceptedSubmission = isAcceptedResult(submission.result);
+  const supabaseAdmin = createAdminClient();
+
+  const [languageRowsResult, performanceRowsResult] = isAcceptedSubmission
+    ? await Promise.all([
+        supabaseAdmin
+          .from("submissions")
+          .select("user_id, language")
+          .eq("problem_id", submission.problem_id)
+          .in("result", ["AC", "ACCEPTED"])
+          .or("is_deleted.is.false,is_deleted.is.null")
+          .not("language", "is", null)
+          .limit(5000),
+        supabaseAdmin
+          .from("submissions")
+          .select("execution_time_ms, memory_kb")
+          .eq("problem_id", submission.problem_id)
+          .eq("language", submission.language)
+          .in("result", ["AC", "ACCEPTED"])
+          .neq("id", submission.id)
+          .or("is_deleted.is.false,is_deleted.is.null")
+          .not("execution_time_ms", "is", null)
+          .not("memory_kb", "is", null)
+          .limit(5000),
+      ])
+    : [
+        { data: [] as { user_id: string | null; language: string | null }[] },
+        {
+          data: [] as {
+            execution_time_ms: number | null;
+            memory_kb: number | null;
+          }[],
+        },
+      ];
+
+  const languageRows = anonymizeLanguageRows(languageRowsResult.data || []);
+  const performanceRows = performanceRowsResult.data || [];
+
   const formattedSubmission = {
     id: submission.id,
     result: submission.result || "PENDING",
@@ -93,9 +167,32 @@ export default async function SubmissionDetailPage({
             제출 기록으로 돌아가기
           </Link>
         </div>
-        <div className="space-y-10">
-          <SubmissionSummary submission={formattedSubmission} />
-          <PeerSubmissionsTable submissionId={submissionId} />
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          <div className="space-y-10 lg:col-span-2">
+            <SubmissionSummary submission={formattedSubmission} />
+            <PeerSubmissionsTable submissionId={submissionId} />
+          </div>
+
+          <aside className="lg:col-span-1">
+            <div className="sticky top-24">
+              <h2 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                성능 데이터 분석
+              </h2>
+              <div className="space-y-8">
+                <PerformanceAnalysis
+                  runtime={
+                    isAcceptedSubmission ? submission.execution_time_ms : null
+                  }
+                  memory={isAcceptedSubmission ? submission.memory_kb : null}
+                  comparisonRows={performanceRows}
+                />
+                <CompareOthersLanguage
+                  rows={languageRows}
+                  myLanguage={isAcceptedSubmission ? submission.language : null}
+                />
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
     </div>
