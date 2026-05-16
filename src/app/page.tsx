@@ -1,22 +1,14 @@
-import { createClient } from "@/utils/supabase/server";
-import { headers } from "next/headers";
+import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
+import { Flame, ChevronRight, ArrowRight } from "lucide-react";
 import {
-  BookOpen,
-  Trophy,
-  TrendingUp,
-  Flame,
-  ChevronRight,
-  ArrowRight,
-  BarChart2,
-} from "lucide-react";
-import {
-  DifficultyBadge,
-  StatusIcon,
-  StatusLabel,
-} from "@/components/problem/ProblemComponents";
+  HomeStatsCards,
+  HomeSubmissionPanel,
+} from "@/components/home/HomeSubmissionClient";
 
-type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
+export const revalidate = 60;
+
+type ServerSupabaseClient = ReturnType<typeof createPublicSupabaseClient>;
 
 type ProblemRow = {
   id: number;
@@ -27,56 +19,73 @@ type ProblemRow = {
   created_at: string | null;
 };
 
-type JoinedProblem =
-  | {
-      title: string | null;
-    }
-  | {
-      title: string | null;
-    }[]
-  | null;
-
-type SubmissionRow = {
-  id: number;
-  problem_id: number;
-  language: string | null;
-  result: string | null;
-  submitted_at: string | null;
-  problems: JoinedProblem;
-};
-
-type SubmissionItem = SubmissionRow & {
-  problem_title: string;
-};
-
-type HomeStats = {
-  solved: number;
-  accuracy: number;
-  weeklySubmissionCount: number;
-};
-
-type HomeSubmissionData = {
-  authenticated: boolean;
-  stats: HomeStats;
-  recentSubmissions: SubmissionItem[];
-};
-
-const DEFAULT_HOME_SUBMISSION_DATA: HomeSubmissionData = {
-  authenticated: false,
-  stats: {
-    solved: 0,
-    accuracy: 0,
-    weeklySubmissionCount: 0,
-  },
-  recentSubmissions: [],
-};
-
 function isUndefinedColumnError(error: unknown) {
   return (
     typeof error === "object" &&
     error !== null &&
     "code" in error &&
     (error as { code?: string }).code === "42703"
+  );
+}
+
+function createPublicSupabaseClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    },
+  );
+}
+
+function HomeDifficultyBadge({ difficulty }: { difficulty?: string | null }) {
+  if (!difficulty) return null;
+
+  const map: Record<string, string> = {
+    Basic:
+      "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:text-sky-400 dark:border-sky-500/20",
+    BASIC:
+      "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:text-sky-400 dark:border-sky-500/20",
+    Easy:
+      "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20",
+    EASY:
+      "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20",
+    Medium:
+      "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20",
+    MEDIUM:
+      "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20",
+    Hard:
+      "bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20",
+    HARD:
+      "bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20",
+    MEDIUM_HARD:
+      "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20",
+    "Medium Hard":
+      "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20",
+    "Medium-Hard":
+      "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20",
+  };
+
+  const labelMap: Record<string, string> = {
+    BASIC: "Basic",
+    EASY: "Easy",
+    MEDIUM: "Medium",
+    HARD: "Hard",
+    MEDIUM_HARD: "Medium-Hard",
+  };
+
+  return (
+    <span
+      className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+        map[difficulty] ??
+        "bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700"
+      }`}
+    >
+      {labelMap[difficulty] ?? difficulty}
+    </span>
   );
 }
 
@@ -134,78 +143,21 @@ async function getRecentVisibleProblems(supabase: ServerSupabaseClient) {
   return [];
 }
 
-async function getHomeSubmissionData() {
-  const headersList = await headers();
-  const host =
-    headersList.get("x-forwarded-host") ?? headersList.get("host");
-
-  if (!host) {
-    return DEFAULT_HOME_SUBMISSION_DATA;
-  }
-
-  const protocol = headersList.get("x-forwarded-proto") ?? "http";
-  const cookie = headersList.get("cookie");
-  const response = await fetch(`${protocol}://${host}/api/home/submissions`, {
-    cache: "no-store",
-    headers: cookie ? { cookie } : undefined,
-  });
-
-  if (!response.ok && response.status !== 401) {
-    return DEFAULT_HOME_SUBMISSION_DATA;
-  }
-
-  return (await response.json()) as HomeSubmissionData;
-}
-
 async function getData() {
-  const supabase = await createClient();
+  const supabase = createPublicSupabaseClient();
 
-  const [totalProblemsCount, recentProblems, submissionData] =
-    await Promise.all([
-      getVisibleProblemsCount(supabase),
-      getRecentVisibleProblems(supabase),
-      getHomeSubmissionData(),
-    ]);
+  const [totalProblemsCount, recentProblems] = await Promise.all([
+    getVisibleProblemsCount(supabase),
+    getRecentVisibleProblems(supabase),
+  ]);
 
-  return { totalProblemsCount, recentProblems, submissionData };
+  return { totalProblemsCount, recentProblems };
 }
 
 export default async function Home() {
   // 홈 페이지 서버 컴포넌트를 정의한다.
-  const { totalProblemsCount, recentProblems, submissionData } =
+  const { totalProblemsCount, recentProblems } =
     await getData(); // 홈 화면에 필요한 데이터를 서버에서 조회한다.
-  const { authenticated, stats, recentSubmissions } = submissionData;
-
-  const statCards = [
-    {
-      icon: <Trophy className="w-5 h-5 text-blue-500" />,
-      label: "푼 문제",
-      value: authenticated ? stats.solved : "-",
-      unit: "문제",
-      bg: "bg-blue-50",
-    },
-    {
-      icon: <BarChart2 className="w-5 h-5 text-emerald-500" />,
-      label: "정답률",
-      value: authenticated ? stats.accuracy : "-",
-      unit: "%",
-      bg: "bg-emerald-50",
-    },
-    {
-      icon: <TrendingUp className="w-5 h-5 text-violet-500" />,
-      label: "이번 주 제출",
-      value: authenticated ? stats.weeklySubmissionCount : "-",
-      unit: "회",
-      bg: "bg-violet-50",
-    },
-    {
-      icon: <BookOpen className="w-5 h-5 text-amber-500" />,
-      label: "총 문제 수",
-      value: totalProblemsCount,
-      unit: "문제",
-      bg: "bg-amber-50",
-    },
-  ];
 
   return (
     <div className="min-h-screen bg-[#F7F9FC] dark:bg-zinc-950 transition-colors duration-300 px-16">
@@ -245,47 +197,22 @@ export default async function Home() {
           </div>
         </div>
       </section>
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mx-6 mt-6">
-        {statCards.map(({ icon, label, value, unit, bg }) => (
-          <Link
-            prefetch={false}
-            href={label === "총 문제 수" ? "/problems" : "submissions"}
-            key={label}
-            className="bg-white dark:bg-zinc-900 border border-[#E2E8F0] dark:border-zinc-800 rounded-lg p-6 flex flex-col gap-2 shadow-sm transition-all hover:shadow-md"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
-                {label}
-              </span>
-              <div className={`p-2 rounded-lg ${bg} dark:bg-opacity-10`}>
-                {icon}
-              </div>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-3xl font-extrabold text-zinc-900 dark:text-zinc-100">
-                {typeof value === "number" ? value.toLocaleString() : value}
-              </span>
-              <span className="text-sm text-zinc-400 dark:text-zinc-500 font-medium">
-                {unit}
-              </span>
-            </div>
-          </Link>
-        ))}
-      </section>
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mx-6 mt-6 mb-8">
+      <HomeStatsCards totalProblemsCount={totalProblemsCount} />
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mx-6 mt-6 mb-8 min-h-[690px]">
         <div className="lg:col-span-2 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
               최근 추가된 문제
             </h2>
             <Link
+              prefetch={false}
               href="/problems"
               className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 transition-colors"
             >
               전체 보기 <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
-          <div className="bg-white dark:bg-zinc-900 border border-[#E2E8F0] dark:border-zinc-800 rounded-lg overflow-hidden">
+          <div className="bg-white dark:bg-zinc-900 border border-[#E2E8F0] dark:border-zinc-800 rounded-lg overflow-hidden min-h-[640px]">
             <div className="grid grid-cols-12 gap-4 px-5 py-3 bg-[#F8FAFC] dark:bg-zinc-800/50 border-b border-[#E2E8F0] dark:border-zinc-800 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
               <div className="col-span-1">#</div>
               <div className="col-span-6">문제 제목</div>
@@ -293,7 +220,7 @@ export default async function Home() {
               <div className="col-span-3 text-right">풀기</div>
             </div>
             {recentProblems.length === 0 ? (
-              <div className="py-16 text-center text-zinc-400 text-sm">
+              <div className="min-h-[596px] flex items-center justify-center text-center text-zinc-400 text-sm">
                 등록된 문제가 없습니다.
               </div>
             ) : (
@@ -302,7 +229,7 @@ export default async function Home() {
                   prefetch={false}
                   href={`/problems/${problem.id}`}
                   key={problem.id}
-                  className="group grid grid-cols-12 gap-4 items-center px-5 py-4 border-b border-[#E2E8F0] dark:border-zinc-800 last:border-0 hover:bg-[#F8FAFC] dark:hover:bg-zinc-800/50 transition-colors"
+                  className="group grid grid-cols-12 gap-4 items-center min-h-[59px] px-5 py-4 border-b border-[#E2E8F0] dark:border-zinc-800 last:border-0 hover:bg-[#F8FAFC] dark:hover:bg-zinc-800/50 transition-colors"
                 >
                   <div className="col-span-1 text-sm text-zinc-400 font-medium">
                     {problem.id}
@@ -311,22 +238,9 @@ export default async function Home() {
                     <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
                       {problem.title}
                     </p>
-                    {/* <div className="mt-0.5 line-clamp-1">
-                        {problem.description ? (
-                          <ProblemMarkdown
-                            content={problem.description}
-                            variant="compact"
-                          />
-                        ) : (
-                          <p className="text-xs text-zinc-400 dark:text-zinc-500">
-                            {(problem.tag1 ? getKoreanTag(problem.tag1) : "") ||
-                              "설명이 없습니다."}
-                          </p>
-                        )}
-                      </div> */}
                   </div>
                   <div className="col-span-3">
-                    <DifficultyBadge difficulty={problem.difficulty} />
+                    <HomeDifficultyBadge difficulty={problem.difficulty} />
                   </div>
                   <div className="col-span-2 flex justify-end">
                     <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 bg-blue-50 dark:bg-blue-900/20 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 px-3 py-1.5 rounded-lg transition-all">
@@ -338,95 +252,7 @@ export default async function Home() {
             )}
           </div>
         </div>
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-              최근 제출 현황
-            </h2>
-            {authenticated && (
-              <Link
-                href="/submissions"
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 transition-colors"
-              >
-                전체 <ChevronRight className="w-4 h-4" />
-              </Link>
-            )}
-          </div>
-          <div className="bg-white dark:bg-zinc-900 border border-[#E2E8F0] dark:border-zinc-800 rounded-lg overflow-hidden flex-1">
-            {!authenticated ? (
-              <div className="flex flex-col items-center justify-center py-16 px-6 text-center gap-4">
-                <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
-                  <Trophy className="w-7 h-7 text-blue-400" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                    로그인하고 내 제출 현황을 확인하세요
-                  </p>
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500">
-                    나의 알고리즘 성장 과정을 기록하세요
-                  </p>
-                </div>
-                <Link
-                  href="/login"
-                  className="bg-blue-600 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  로그인
-                </Link>
-              </div>
-            ) : recentSubmissions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 px-6 text-center gap-3">
-                <div className="w-14 h-14 bg-zinc-50 dark:bg-zinc-800 rounded-full flex items-center justify-center">
-                  <BarChart2 className="w-7 h-7 text-zinc-300" />
-                </div>
-                <p className="text-sm text-zinc-400">
-                  아직 제출한 문제가 없어요
-                </p>
-                <Link
-                  href="/problems"
-                  className="text-sm text-blue-600 hover:underline font-medium"
-                >
-                  첫 문제 풀러 가기 →
-                </Link>
-              </div>
-            ) : (
-              <div className="divide-y divide-[#E2E8F0] dark:divide-zinc-800">
-                {recentSubmissions.map((submission) => (
-                  <Link
-                    prefetch={false}
-                    href={`/submissions/${submission.id}`}
-                    key={submission.id}
-                    className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F8FAFC] dark:hover:bg-zinc-800/50 transition-colors"
-                  >
-                    <StatusIcon result={submission.result} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
-                        {submission.problem_title}
-                      </p>
-                      <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
-                        {submission.submitted_at
-                          ? new Date(
-                              submission.submitted_at,
-                            ).toLocaleDateString("ko-KR", {
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
-                          : "제출 시간 없음"}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-0.5">
-                      <StatusLabel result={submission.result} />
-                      <span className="text-xs text-zinc-400 dark:text-zinc-500">
-                        {submission.language || "-"}
-                      </span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        <HomeSubmissionPanel />
       </section>
     </div>
   );

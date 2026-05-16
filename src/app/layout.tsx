@@ -3,8 +3,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { Analytics } from "@vercel/analytics/next"
-import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: "SSAJOON - Algorithm Platform",
@@ -16,6 +16,9 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const enableVercelInsights =
+    process.env.NEXT_PUBLIC_ENABLE_VERCEL_INSIGHTS === "true";
+
   return (
     <html lang="ko" suppressHydrationWarning>
       <body className="min-h-screen bg-background text-foreground flex flex-col antialiased selection:bg-blue-500/30 selection:text-blue-200">
@@ -25,8 +28,12 @@ export default function RootLayout({
             <main className="flex-1 flex flex-col">
               {children}
             </main>
-            <Analytics />
-            <SpeedInsights />
+            {enableVercelInsights && (
+              <>
+                <Analytics />
+                <SpeedInsights />
+              </>
+            )}
             <Footer />
           </div>
         </ThemeProvider>

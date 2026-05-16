@@ -13,15 +13,18 @@ type JoinedProblem =
   | null;
 
 type SubmissionRow = {
-  id: number;
   problem_id: number;
-  language: string | null;
   result: string | null;
   submitted_at: string | null;
+};
+
+type RecentSubmissionRow = SubmissionRow & {
+  id: number;
+  language: string | null;
   problems: JoinedProblem;
 };
 
-type SubmissionItem = SubmissionRow & {
+type SubmissionItem = RecentSubmissionRow & {
   problem_title: string;
 };
 
@@ -100,27 +103,39 @@ export async function GET() {
     );
   }
 
-  const { data, error } = await supabase
+  const statsQuery = supabase
+    .from("submissions")
+    .select("problem_id, result, submitted_at")
+    .eq("user_id", user.id)
+    .eq("is_deleted", false);
+
+  const recentQuery = supabase
     .from("submissions")
     .select("id, problem_id, language, result, submitted_at, problems(title)")
     .eq("user_id", user.id)
     .eq("is_deleted", false)
-    .order("submitted_at", { ascending: false, nullsFirst: false });
+    .order("submitted_at", { ascending: false, nullsFirst: false })
+    .limit(6);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  const [
+    { data: statsData, error: statsError },
+    { data: recentData, error: recentError },
+  ] = await Promise.all([statsQuery, recentQuery]);
+
+  if (statsError || recentError) {
+    return NextResponse.json(
+      { error: statsError?.message ?? recentError?.message },
+      { status: 500 },
+    );
   }
 
-  const allSubmissions = (data ?? []) as SubmissionRow[];
-  const recentSubmissions: SubmissionItem[] = allSubmissions
-    .slice(0, 10)
-    .map((submission) => ({
-      ...submission,
-      problem_title: getProblemTitle(
-        submission.problems,
-        submission.problem_id,
-      ),
-    }));
+  const allSubmissions = (statsData ?? []) as SubmissionRow[];
+  const recentSubmissions: SubmissionItem[] = (
+    (recentData ?? []) as RecentSubmissionRow[]
+  ).map((submission) => ({
+    ...submission,
+    problem_title: getProblemTitle(submission.problems, submission.problem_id),
+  }));
 
   return NextResponse.json({
     authenticated: true,
