@@ -66,7 +66,7 @@ export function FailedTestcaseModal({
           is_hidden: data.is_hidden
         });
       }
-    } catch (err: any) {
+    } catch {
       setError("테스트케이스 정보를 불러오는 데 실패했습니다.");
     } finally {
       setIsLoading(false);
@@ -77,7 +77,7 @@ export function FailedTestcaseModal({
     return (
       <button
         onClick={handleOpen}
-        className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-xl text-sm font-bold transition-all border border-red-200 dark:border-red-500/20 shadow-sm"
+        className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-700 dark:text-red-400 rounded-xl text-sm font-bold transition-colors border border-red-200 dark:border-red-500/20 shadow-sm"
       >
         <Search className="w-4 h-4" />
         틀린 테스트케이스 보기

@@ -13,7 +13,6 @@ import {
   Code2,
   Calendar
 } from "lucide-react";
-import { formatTimeAgo, formatDateTime } from "@/utils/date";
 import { FailedTestcaseModal } from "@/components/submission/FailedTestcaseModal";
 import Link from "next/link";
 
@@ -226,6 +225,18 @@ function isAcceptedResult(result: string | null | undefined) {
   return normalizedResult === "AC" || normalizedResult === "ACCEPTED";
 }
 
+function formatSubmissionDateTime(dateString: string) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(new Date(dateString));
+}
+
 export default function SubmissionSummary({
   submission,
 }: SubmissionSummaryProps) {
@@ -254,12 +265,15 @@ export default function SubmissionSummary({
                 >
                   {label}
                 </span>
-                <span className="text-zinc-400 dark:text-zinc-600 font-mono text-sm">
+                <span className="text-zinc-600 dark:text-zinc-400 font-mono text-sm">
                   #{submission.id}
                 </span>
               </div>
               <h1 className="text-xl font-bold text-zinc-900 dark:text-white hover:cursor-pointer hover:underline">
-                <Link href={`/problems/${submission.problem_id}`}>
+                <Link
+                  href={`/problems/${submission.problem_id}`}
+                  prefetch={false}
+                >
                   {submission.problem_title}
                 </Link>
               </h1>
@@ -304,15 +318,15 @@ export default function SubmissionSummary({
                 제출
               </div>
               <div className="text-md font-bold text-zinc-900 dark:text-white whitespace-nowrap">
-                {formatTimeAgo(submission.submitted_at)}
+                {formatSubmissionDateTime(submission.submitted_at)}
               </div>
             </div>
           </div>
         </div>
 
-        <div className="px-8 py-3 bg-zinc-50/50 dark:bg-zinc-800/20 border-t border-zinc-100 dark:border-white/5 flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
+        <div className="px-8 py-3 bg-zinc-50/50 dark:bg-zinc-800/20 border-t border-zinc-100 dark:border-white/5 flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400">
           <div className="flex items-center gap-4">
-            <span>제출 시각: {formatDateTime(submission.submitted_at)}</span>
+            <span>제출 시각: {formatSubmissionDateTime(submission.submitted_at)}</span>
           </div>
           <div className="flex items-center gap-2">
             <span>문제 번호: {submission.problem_id}</span>
