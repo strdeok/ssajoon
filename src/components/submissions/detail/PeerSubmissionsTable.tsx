@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -10,6 +16,7 @@ import {
   Eye,
   X,
 } from "lucide-react";
+import CodeViewer from "./CodeViewer";
 
 type SortType = "recent" | "memory" | "time";
 
@@ -54,7 +61,7 @@ function formatDateTime(dateString: string | null) {
 }
 
 function convertLanguage(language: string | null) {
-  if (!language) return;
+  if (!language) return "-";
 
   switch (language) {
     case "java":
@@ -63,6 +70,8 @@ function convertLanguage(language: string | null) {
       return "C++ 17";
     case "python":
       return "Python 3.11";
+    default:
+      return language;
   }
 }
 
@@ -72,12 +81,24 @@ function formatResult(result: string | null) {
   return normalized || "-";
 }
 
+function createCodeMarkdown(code: string, language?: string | null) {
+  const matches = code.match(/`+/g) ?? [];
+  const maxBacktickLength = Math.max(
+    3,
+    ...matches.map((match) => match.length + 1),
+  );
+  const fence = "`".repeat(maxBacktickLength);
+  const normalizedLanguage = language?.trim().toLowerCase() ?? "";
+
+  return `${fence}${normalizedLanguage}\n${code}\n${fence}`;
+}
+
 function PeerTableSkeleton() {
   return (
     <div className="divide-y divide-zinc-100 dark:divide-white/5">
       {Array.from({ length: 5 }).map((_, index) => (
-        <div key={index} className="grid grid-cols-7 gap-4 px-6 py-4">
-          {Array.from({ length: 7 }).map((__, cellIndex) => (
+        <div key={index} className="grid grid-cols-6 gap-4 px-6 py-4">
+          {Array.from({ length: 6 }).map((__, cellIndex) => (
             <div
               key={`${index}-${cellIndex}`}
               className="h-4 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800"
@@ -89,13 +110,7 @@ function PeerTableSkeleton() {
   );
 }
 
-function Metric({
-  icon,
-  value,
-}: {
-  icon: React.ReactNode;
-  value: string | number | null;
-}) {
+function Metric({ icon, value }: { icon: ReactNode; value: string | null }) {
   return (
     <span className="inline-flex items-center gap-1.5 font-mono text-sm text-zinc-700 dark:text-zinc-300">
       {icon}
@@ -119,7 +134,7 @@ function PeerCodeModal({
 }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-0 backdrop-blur-sm sm:items-center sm:p-6"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-0 sm:items-center sm:p-6"
       role="dialog"
       aria-modal="true"
       aria-labelledby="peer-code-title"
@@ -138,14 +153,17 @@ function PeerCodeModal({
               {submission.nickname}님의 정답 제출입니다.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/5"
-            aria-label="닫기"
-          >
-            <X className="h-4 w-4" />
-          </button>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-white/5"
+              aria-label="닫기"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         <div className="grid gap-3 border-b border-zinc-100 px-5 py-4 text-sm dark:border-white/10 sm:grid-cols-2 sm:px-6 lg:grid-cols-6">
@@ -201,19 +219,17 @@ function PeerCodeModal({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-auto p-5 sm:p-6">
+        <div className="min-h-0 flex-1 overflow-hidden p-5 sm:p-6">
           {isLoading ? (
             <div className="flex min-h-80 items-center justify-center rounded-xl border border-zinc-200 text-sm font-semibold text-zinc-500 dark:border-white/10 dark:text-zinc-400">
               코드를 불러오는 중입니다.
             </div>
           ) : error ? (
             <div className="flex min-h-80 items-center justify-center rounded-xl border border-dashed border-red-200 text-sm font-medium text-red-700 dark:border-red-500/20 dark:text-red-400">
-              {error}
+              코드를 불러올 수 없습니다.
             </div>
           ) : sourceCode ? (
-            <pre className="max-h-[60vh] min-h-80 overflow-auto rounded-xl border border-zinc-200 bg-zinc-950 p-5 text-sm leading-6 text-zinc-100 dark:border-white/10">
-              <code>{sourceCode}</code>
-            </pre>
+            <CodeViewer code={sourceCode} language={submission.language!} />
           ) : (
             <div className="flex min-h-80 items-center justify-center rounded-xl border border-dashed border-zinc-200 text-sm font-medium text-zinc-500 dark:border-white/10 dark:text-zinc-400">
               코드를 불러올 수 없습니다.
@@ -240,6 +256,8 @@ export default function PeerSubmissionsTable({
   );
   const [isCodeLoading, setIsCodeLoading] = useState(false);
   const [codeError, setCodeError] = useState<string | null>(null);
+  const codeCacheRef = useRef<Map<number, string>>(new Map());
+  const codeRequestIdRef = useRef(0);
 
   useEffect(() => {
     let ignore = false;
@@ -255,7 +273,7 @@ export default function PeerSubmissionsTable({
         );
 
         if (!response.ok) {
-          throw new Error("다른 사람의 제출 내역을 불러오지 못했습니다.");
+          throw new Error("동료 제출 목록을 불러올 수 없습니다.");
         }
 
         const json = (await response.json()) as PeerSubmissionResponse;
@@ -264,7 +282,7 @@ export default function PeerSubmissionsTable({
         }
       } catch {
         if (!ignore) {
-          setError("다른 사람의 제출 내역을 불러오지 못했습니다.");
+          setError("동료 제출 목록을 불러올 수 없습니다.");
           setData(null);
         }
       } finally {
@@ -297,8 +315,18 @@ export default function PeerSubmissionsTable({
 
   const handleOpenCode = async (submission: PeerSubmissionItem) => {
     setSelectedSubmission(submission);
-    setSelectedSourceCode(null);
     setCodeError(null);
+
+    const cachedSourceCode = codeCacheRef.current.get(submission.id);
+    if (cachedSourceCode !== undefined) {
+      setSelectedSourceCode(cachedSourceCode);
+      setIsCodeLoading(false);
+      return;
+    }
+
+    const requestId = codeRequestIdRef.current + 1;
+    codeRequestIdRef.current = requestId;
+    setSelectedSourceCode(null);
     setIsCodeLoading(true);
 
     try {
@@ -312,15 +340,25 @@ export default function PeerSubmissionsTable({
       }
 
       const json = (await response.json()) as { sourceCode?: string | null };
-      setSelectedSourceCode(json.sourceCode ?? "");
+      const sourceCode = json.sourceCode ?? "";
+      codeCacheRef.current.set(submission.id, sourceCode);
+
+      if (codeRequestIdRef.current === requestId) {
+        setSelectedSourceCode(sourceCode);
+      }
     } catch {
-      setCodeError("코드를 불러올 수 없습니다.");
+      if (codeRequestIdRef.current === requestId) {
+        setCodeError("코드를 불러올 수 없습니다.");
+      }
     } finally {
-      setIsCodeLoading(false);
+      if (codeRequestIdRef.current === requestId) {
+        setIsCodeLoading(false);
+      }
     }
   };
 
   const handleCloseCode = () => {
+    codeRequestIdRef.current += 1;
     setSelectedSubmission(null);
     setSelectedSourceCode(null);
     setCodeError(null);
@@ -364,29 +402,34 @@ export default function PeerSubmissionsTable({
           <table className="w-full text-left">
             <thead className="bg-zinc-50/80 dark:bg-zinc-800/30">
               <tr className="border-b border-zinc-100 dark:border-white/5">
-                {["닉네임", "언어", "결과", "실행 시간", "메모리", "코드"].map(
-                  (header) => (
-                    <th
-                      key={header}
-                      className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400"
-                    >
-                      {header}
-                    </th>
-                  ),
-                )}
+                {[
+                  "닉네임",
+                  "언어",
+                  "결과",
+                  "실행 시간",
+                  "메모리",
+                  "코드",
+                ].map((header) => (
+                  <th
+                    key={header}
+                    className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400"
+                  >
+                    {header}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={7}>
+                  <td colSpan={6}>
                     <PeerTableSkeleton />
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={6}
                     className="px-6 py-12 text-center text-sm font-medium text-red-700 dark:text-red-400"
                   >
                     {error}
@@ -395,7 +438,7 @@ export default function PeerSubmissionsTable({
               ) : !data || data.items.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={6}
                     className="px-6 py-14 text-center text-sm font-medium text-zinc-600 dark:text-zinc-400"
                   >
                     아직 같은 언어로 정답을 받은 다른 제출이 없습니다.
@@ -411,7 +454,7 @@ export default function PeerSubmissionsTable({
                       {item.nickname}
                     </td>
                     <td className="px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
-                      {convertLanguage(item.language) ?? "-"}
+                      {convertLanguage(item.language)}
                     </td>
                     <td className="px-6 py-4">
                       <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
