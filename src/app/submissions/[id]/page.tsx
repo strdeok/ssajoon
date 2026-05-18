@@ -61,6 +61,7 @@ export default async function SubmissionDetailPage({
     .select(
       `
       id,
+      user_id,
       problem_id,
       result,
       language,
@@ -105,39 +106,73 @@ export default async function SubmissionDetailPage({
     : submission.problems;
 
   const isAcceptedSubmission = isAcceptedResult(submission.result);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const isCurrentUserSubmission = Boolean(
+    user && submission.user_id === user.id,
+  );
+
+  let canViewPeerSolutions = isCurrentUserSubmission && isAcceptedSubmission;
+
+  if (
+    !canViewPeerSolutions &&
+    isCurrentUserSubmission &&
+    user &&
+    submission.language
+  ) {
+    const { data: acceptedSubmission } = await supabase
+      .from("submissions")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("problem_id", submission.problem_id)
+      .eq("language", submission.language)
+      .in("result", ["AC", "ACCEPTED"])
+      .or("is_deleted.is.false,is_deleted.is.null")
+      .limit(1)
+      .maybeSingle();
+
+    canViewPeerSolutions = Boolean(acceptedSubmission);
+  }
+
   const supabaseAdmin = createAdminClient();
 
-  const [languageRowsResult, performanceRowsResult] = isAcceptedSubmission
-    ? await Promise.all([
-        supabaseAdmin
-          .from("submissions")
-          .select("user_id, language")
-          .eq("problem_id", submission.problem_id)
-          .in("result", ["AC", "ACCEPTED"])
-          .or("is_deleted.is.false,is_deleted.is.null")
-          .not("language", "is", null)
-          .limit(5000),
-        supabaseAdmin
-          .from("submissions")
-          .select("execution_time_ms, memory_kb")
-          .eq("problem_id", submission.problem_id)
-          .eq("language", submission.language)
-          .in("result", ["AC", "ACCEPTED"])
-          .neq("id", submission.id)
-          .or("is_deleted.is.false,is_deleted.is.null")
-          .not("execution_time_ms", "is", null)
-          .not("memory_kb", "is", null)
-          .limit(5000),
-      ])
-    : [
-        { data: [] as { user_id: string | null; language: string | null }[] },
-        {
-          data: [] as {
-            execution_time_ms: number | null;
-            memory_kb: number | null;
-          }[],
-        },
-      ];
+  const languageRowsPromise = canViewPeerSolutions
+    ? supabaseAdmin
+        .from("submissions")
+        .select("user_id, language")
+        .eq("problem_id", submission.problem_id)
+        .in("result", ["AC", "ACCEPTED"])
+        .or("is_deleted.is.false,is_deleted.is.null")
+        .not("language", "is", null)
+        .limit(5000)
+    : Promise.resolve({
+        data: [] as { user_id: string | null; language: string | null }[],
+      });
+
+  const performanceRowsPromise = isAcceptedSubmission
+    ? supabaseAdmin
+        .from("submissions")
+        .select("execution_time_ms, memory_kb")
+        .eq("problem_id", submission.problem_id)
+        .eq("language", submission.language)
+        .in("result", ["AC", "ACCEPTED"])
+        .neq("id", submission.id)
+        .or("is_deleted.is.false,is_deleted.is.null")
+        .not("execution_time_ms", "is", null)
+        .not("memory_kb", "is", null)
+        .limit(5000)
+    : Promise.resolve({
+        data: [] as {
+          execution_time_ms: number | null;
+          memory_kb: number | null;
+        }[],
+      });
+
+  const [languageRowsResult, performanceRowsResult] = await Promise.all([
+    languageRowsPromise,
+    performanceRowsPromise,
+  ]);
 
   const languageRows = anonymizeLanguageRows(languageRowsResult.data || []);
   const performanceRows = performanceRowsResult.data || [];
@@ -170,7 +205,10 @@ export default async function SubmissionDetailPage({
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="space-y-10 lg:col-span-2">
             <SubmissionSummary submission={formattedSubmission} />
-            <PeerSubmissionsTable submissionId={submissionId} />
+            <PeerSubmissionsTable
+              submissionId={submissionId}
+              canViewPeerSolutions={canViewPeerSolutions}
+            />
           </div>
 
           <aside className="lg:col-span-1">

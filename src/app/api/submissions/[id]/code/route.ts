@@ -31,7 +31,11 @@ export async function GET(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  if (!data) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   return NextResponse.json({
-    source_code: (data as SubmissionCodeRow | null)?.source_code ?? "",
+    source_code: (data as SubmissionCodeRow).source_code ?? "",
   });
 }

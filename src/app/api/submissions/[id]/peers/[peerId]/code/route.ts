@@ -57,6 +57,25 @@ export async function GET(
     return NextResponse.json({ sourceCode: "" });
   }
 
+  const { data: acceptedSubmission, error: acceptedError } = await supabase
+    .from("submissions")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("problem_id", current.problem_id)
+    .eq("language", current.language)
+    .in("result", ["AC", "ACCEPTED"])
+    .or("is_deleted.is.false,is_deleted.is.null")
+    .limit(1)
+    .maybeSingle();
+
+  if (acceptedError) {
+    return NextResponse.json({ error: acceptedError.message }, { status: 500 });
+  }
+
+  if (!acceptedSubmission) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const { data: peerSubmission, error: peerError } = await supabase
     .from("submissions")
     .select("source_code")

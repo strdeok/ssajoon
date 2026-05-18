@@ -39,6 +39,7 @@ type PeerSubmissionResponse = {
 
 type PeerSubmissionsTableProps = {
   submissionId: number;
+  canViewPeerSolutions?: boolean;
 };
 
 const sortLabels: Record<SortType, string> = {
@@ -79,18 +80,6 @@ function formatResult(result: string | null) {
   const normalized = (result ?? "").trim().toUpperCase();
   if (normalized === "AC" || normalized === "ACCEPTED") return "정답";
   return normalized || "-";
-}
-
-function createCodeMarkdown(code: string, language?: string | null) {
-  const matches = code.match(/`+/g) ?? [];
-  const maxBacktickLength = Math.max(
-    3,
-    ...matches.map((match) => match.length + 1),
-  );
-  const fence = "`".repeat(maxBacktickLength);
-  const normalizedLanguage = language?.trim().toLowerCase() ?? "";
-
-  return `${fence}${normalizedLanguage}\n${code}\n${fence}`;
 }
 
 function PeerTableSkeleton() {
@@ -243,6 +232,7 @@ function PeerCodeModal({
 
 export default function PeerSubmissionsTable({
   submissionId,
+  canViewPeerSolutions = true,
 }: PeerSubmissionsTableProps) {
   const [sort, setSort] = useState<SortType>("recent");
   const [page, setPage] = useState(1);
@@ -260,6 +250,13 @@ export default function PeerSubmissionsTable({
   const codeRequestIdRef = useRef(0);
 
   useEffect(() => {
+    if (!canViewPeerSolutions) {
+      setData(null);
+      setIsLoading(false);
+      setError(null);
+      return;
+    }
+
     let ignore = false;
 
     async function loadPeerSubmissions() {
@@ -297,7 +294,7 @@ export default function PeerSubmissionsTable({
     return () => {
       ignore = true;
     };
-  }, [page, sort, submissionId]);
+  }, [canViewPeerSolutions, page, sort, submissionId]);
 
   const pageSize = data?.pageSize ?? 10;
   const totalCount = data?.totalCount ?? 0;
@@ -398,6 +395,11 @@ export default function PeerSubmissionsTable({
           </div>
         </div>
 
+        {!canViewPeerSolutions ? (
+          <div className="px-6 py-14 text-center text-sm font-medium text-zinc-600 dark:text-zinc-400">
+            이 문제를 같은 언어로 정답 처리한 뒤 다른 사람의 풀이를 확인할 수 있습니다.
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-zinc-50/80 dark:bg-zinc-800/30">
@@ -499,7 +501,9 @@ export default function PeerSubmissionsTable({
             </tbody>
           </table>
         </div>
+        )}
 
+        {canViewPeerSolutions && (
         <div className="flex flex-col gap-3 border-t border-zinc-100 px-6 py-4 text-sm text-zinc-700 dark:border-white/5 dark:text-zinc-300 sm:flex-row sm:items-center sm:justify-between">
           <span>
             총 {totalCount}개 · {page} / {totalPages}
@@ -527,6 +531,7 @@ export default function PeerSubmissionsTable({
             </button>
           </div>
         </div>
+        )}
       </section>
 
       {selectedSubmission && (
