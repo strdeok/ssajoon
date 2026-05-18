@@ -82,7 +82,7 @@ export function AuthNav() {
       </div>
     );
   }
-
+  
   return (
     <div className="flex h-9 w-full items-center justify-end space-x-4 overflow-hidden">
       {userRole === "ADMIN" && (

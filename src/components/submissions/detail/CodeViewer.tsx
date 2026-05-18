@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import Editor from "@monaco-editor/react";
 import { Code2, Copy, Check } from "lucide-react";
 import { useState } from "react";
@@ -57,7 +56,7 @@ export default function CodeViewer({ code, language }: CodeViewerProps) {
       </div>
 
       <div className="relative rounded-2xl border border-zinc-200 dark:border-white/5 overflow-hidden shadow-2xl bg-[#1e1e1e]">
-        <div className="h-[500px]">
+        <div className="h-125">
           <Editor
             height="100%"
             language={getMonacoLanguage(language)}

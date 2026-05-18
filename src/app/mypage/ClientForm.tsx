@@ -350,9 +350,9 @@ export default function ClientForm({ initialNickname, initialSchoolNumber, initi
               className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 outline-none transition-all"
             >
               <option value="">선택 안 함</option>
-              <option value="JAVA">JAVA</option>
-              <option value="PYTHON">PYTHON</option>
-              <option value="C++">C++</option>
+              <option value="JAVA">JAVA 17</option>
+              <option value="PYTHON">PYTHON 3.11</option>
+              <option value="C++">C++17</option>
             </select>
           </div>
 

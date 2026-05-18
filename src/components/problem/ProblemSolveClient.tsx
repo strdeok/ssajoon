@@ -411,9 +411,9 @@ export function ProblemSolveClient({ problem }: ProblemSolveClientProps) {
                 onChange={(event) => void loadSavedCode(event.target.value)}
                 className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-white disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <option value="python">Python</option>
-                <option value="java">Java</option>
-                <option value="cpp">C++</option>
+                <option value="python">Python 3.11</option>
+                <option value="java">Java 17</option>
+                <option value="cpp">C++17</option>
               </select>
             </div>
 

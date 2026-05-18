@@ -25,13 +25,13 @@ function normalizeLanguage(language: string | null | undefined) {
 
 function formatLanguage(language: string) {
   const languageMap: Record<string, string> = {
-    python: "Python",
-    python3: "Python",
+    python: "Python 3.11",
+    python3: "Python 3.11",
     javascript: "JavaScript",
     typescript: "TypeScript",
-    java: "Java",
-    cpp: "C++",
-    "c++": "C++",
+    java: "Java 17",
+    cpp: "C++ 17",
+    "c++": "C++ 17",
     c: "C",
     go: "Go",
     rust: "Rust",
