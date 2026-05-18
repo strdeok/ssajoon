@@ -30,7 +30,7 @@ export function Header() {
               제출 기록
             </Link>
             <Link
-              href="/generate"
+              href="/search"
               prefetch={false}
               className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
             >

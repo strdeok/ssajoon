@@ -326,7 +326,7 @@ export default function GeneratePage() {
                     key={problem.id}
                     type="button"
                     onClick={() => router.push(`/problems/${problem.id}`)}
-                    className="group w-full rounded-2xl border border-zinc-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md dark:border-zinc-800 dark:bg-[#09090b] dark:hover:border-blue-500/50"
+                    className="group w-full rounded-2xl border border-zinc-200 max-h-32 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md dark:border-zinc-800 dark:bg-[#09090b] dark:hover:border-blue-500/50"
                   >
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="min-w-0 flex-1 space-y-3">
