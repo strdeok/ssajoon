@@ -188,7 +188,7 @@ export default async function Home() {
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
-              href="/generate"
+              href="/search"
               prefetch={false}
               className="inline-flex items-center gap-2 bg-white/10 text-white font-semibold px-6 py-3 rounded-lg hover:bg-white/20 transition-all duration-200 backdrop-blur-sm border border-white/20"
             >

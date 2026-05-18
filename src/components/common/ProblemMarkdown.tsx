@@ -102,7 +102,7 @@ export default function ProblemMarkdown({ // 문제 설명 Markdown을 렌더링
                     li: ({ children }) => ( // 리스트 아이템 렌더링 방식을 정의한다.
                         isCompact // compact 모드인지 확인한다.
                             ? <span>{children} </span> // compact 모드에서는 줄바꿈 없이 이어서 보여준다.
-                            : <li className={`max-w-[72ch] leading-7 [&>p]:my-0 [&>p]:max-w-[72ch] [&>p]:leading-7 ${pathname === "/generate" ? "[&>p]:mt-0!" : ""}`}>{children}</li> // 기본 모드에서는 li 폭을 제한하고 내부 p 여백을 제거한다.
+                            : <li className={`max-w-[72ch] leading-7 [&>p]:my-0 [&>p]:max-w-[72ch] [&>p]:leading-7 ${pathname === "/search" ? "[&>p]:mt-0!" : ""}`}>{children}</li> // 기본 모드에서는 li 폭을 제한하고 내부 p 여백을 제거한다.
                     ), // li 렌더러를 닫는다.
                     code: ({ children, className }) => { // 코드 렌더링 방식을 정의한다.
                         const isBlockCode = Boolean(className); // className이 있으면 코드 블록일 가능성이 높다고 판단한다.
