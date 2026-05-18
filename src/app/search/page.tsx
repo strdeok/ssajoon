@@ -5,6 +5,9 @@ import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertCircle,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   ChevronRight,
   Loader2,
   Search,
@@ -38,10 +41,14 @@ interface RecommendedProblem {
 }
 
 type SearchStatus = "idle" | "loading" | "success" | "empty" | "error";
+type SortField = "id" | "title" | "tag" | "difficulty" | "time" | "memory";
+type SortOrder = "asc" | "desc";
+type SortValue = string | number | null | undefined;
 
 const ALL_OPTION = "전체";
 
-const normalizeSelection = (value: string) => (value === ALL_OPTION ? "" : value);
+const normalizeSelection = (value: string) =>
+  value === ALL_OPTION ? "" : value;
 const DIFFICULTY_RANK: Record<string, number> = {
   ...DIFFICULTY_ORDER,
   EASY: DIFFICULTY_ORDER.Easy,
@@ -53,7 +60,45 @@ const DIFFICULTY_RANK: Record<string, number> = {
   "VERY-HARD": DIFFICULTY_ORDER["Very-Hard"],
 };
 
-const getDifficultyRank = (difficulty: string) => DIFFICULTY_RANK[difficulty] || 99;
+const getDifficultyRank = (difficulty: string) =>
+  DIFFICULTY_RANK[difficulty] || 99;
+
+function SortableTableHead({
+  label,
+  field,
+  sortField,
+  sortOrder,
+  onSort,
+  className,
+}: {
+  label: string;
+  field: SortField;
+  sortField: SortField;
+  sortOrder: SortOrder;
+  onSort: (field: SortField) => void;
+  className?: string;
+}) {
+  return (
+    <TableHead className={className}>
+      <button
+        type="button"
+        onClick={() => onSort(field)}
+        className="group flex w-full items-center gap-1 transition-colors hover:text-zinc-700 dark:hover:text-zinc-200"
+      >
+        <span>{label}</span>
+        {sortField === field ? (
+          sortOrder === "asc" ? (
+            <ArrowUp className="h-3 w-3 text-blue-500" />
+          ) : (
+            <ArrowDown className="h-3 w-3 text-blue-500" />
+          )
+        ) : (
+          <ArrowUpDown className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
+        )}
+      </button>
+    </TableHead>
+  );
+}
 
 export default function GeneratePage() {
   const router = useRouter();
@@ -67,6 +112,8 @@ export default function GeneratePage() {
   const [status, setStatus] = useState<SearchStatus>("idle");
   const [problems, setProblems] = useState<RecommendedProblem[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [sortField, setSortField] = useState<SortField>("id");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
   const fetchOptions = useCallback(async () => {
     setIsLoadingOptions(true);
@@ -77,7 +124,7 @@ export default function GeneratePage() {
       });
       const data = await response.json();
 
-      setOptionItems(data.success ? data.items ?? [] : []);
+      setOptionItems(data.success ? (data.items ?? []) : []);
     } catch {
       setOptionItems([]);
     } finally {
@@ -100,7 +147,9 @@ export default function GeneratePage() {
       items = items.filter((item) => item.difficulty === selectedDifficulty);
     }
 
-    return Array.from(new Set(items.map((item) => item.tag1).filter(Boolean))).sort();
+    return Array.from(
+      new Set(items.map((item) => item.tag1).filter(Boolean)),
+    ).sort();
   }, [optionItems, selectedDifficulty, selectedTag2]);
 
   const availableTag2s = useMemo(() => {
@@ -128,15 +177,27 @@ export default function GeneratePage() {
       items = items.filter((item) => item.tag2 === selectedTag2);
     }
 
-    return Array.from(new Set(items.map((item) => item.difficulty).filter(Boolean))).sort(
-      (a, b) => getDifficultyRank(a) - getDifficultyRank(b),
-    );
+    return Array.from(
+      new Set(items.map((item) => item.difficulty).filter(Boolean)),
+    ).sort((a, b) => getDifficultyRank(a) - getDifficultyRank(b));
   }, [optionItems, selectedTag1, selectedTag2]);
 
   const resetResults = () => {
     setProblems([]);
     setErrorMessage(null);
     setStatus("idle");
+    setSortField("id");
+    setSortOrder("asc");
+  };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder((current) => (current === "asc" ? "desc" : "asc"));
+      return;
+    }
+
+    setSortField(field);
+    setSortOrder("asc");
   };
 
   const handleTag1Change = (tag: string) => {
@@ -171,10 +232,14 @@ export default function GeneratePage() {
 
       const nextProblems = (data.problems ?? []) as RecommendedProblem[];
       setProblems(nextProblems);
+      setSortField("id");
+      setSortOrder("asc");
       setStatus(nextProblems.length > 0 ? "success" : "empty");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "문제를 찾는 중 오류가 발생했습니다.",
+        error instanceof Error
+          ? error.message
+          : "문제를 찾는 중 오류가 발생했습니다.",
       );
       setStatus("error");
     }
@@ -197,6 +262,40 @@ export default function GeneratePage() {
     }
   };
 
+  const sortedProblems = useMemo(() => {
+    return [...problems].sort((a, b) => {
+      let aVal: SortValue;
+      let bVal: SortValue;
+
+      if (sortField === "title") {
+        aVal = a.title;
+        bVal = b.title;
+      } else if (sortField === "tag") {
+        aVal = `${getKoreanTag(a.tag1)} ${a.tag2 ? getKoreanTag(a.tag2) : ""}`;
+        bVal = `${getKoreanTag(b.tag1)} ${b.tag2 ? getKoreanTag(b.tag2) : ""}`;
+      } else if (sortField === "difficulty") {
+        aVal = getDifficultyRank(a.difficulty);
+        bVal = getDifficultyRank(b.difficulty);
+      } else if (sortField === "time") {
+        aVal = a.time_limit_ms;
+        bVal = b.time_limit_ms;
+      } else if (sortField === "memory") {
+        aVal = a.memory_limit_mb;
+        bVal = b.memory_limit_mb;
+      } else {
+        aVal = a.id;
+        bVal = b.id;
+      }
+
+      if (aVal === bVal) return a.id - b.id;
+      if (aVal === null || aVal === undefined) return sortOrder === "asc" ? -1 : 1;
+      if (bVal === null || bVal === undefined) return sortOrder === "asc" ? 1 : -1;
+
+      const result = aVal < bVal ? -1 : 1;
+      return sortOrder === "asc" ? result : -result;
+    });
+  }, [problems, sortField, sortOrder]);
+
   return (
     <div className="flex-1 w-full max-w-6xl mx-auto p-6 sm:p-8 pb-20 space-y-8">
       <div className="flex flex-col gap-3 pt-6">
@@ -205,7 +304,8 @@ export default function GeneratePage() {
             문제 찾기
           </h1>
           <p className="max-w-2xl text-zinc-600 dark:text-zinc-400">
-            알고리즘 유형과 난이도를 선택하면 문제 중 조건에 맞는 문제를 랜덤으로 검색합니다.
+            알고리즘 유형과 난이도를 선택하면 문제 중 조건에 맞는 문제를
+            랜덤으로 검색합니다.
           </p>
         </div>
       </div>
@@ -219,7 +319,9 @@ export default function GeneratePage() {
               onChange={handleTag1Change}
               disabled={isLoadingOptions || status === "loading"}
               options={[ALL_OPTION, ...availableTag1s]}
-              renderLabel={(value) => (value === ALL_OPTION ? value : getKoreanTag(value))}
+              renderLabel={(value) =>
+                value === ALL_OPTION ? value : getKoreanTag(value)
+              }
             />
 
             <FilterSelect
@@ -231,7 +333,9 @@ export default function GeneratePage() {
               }}
               disabled={isLoadingOptions || status === "loading"}
               options={[ALL_OPTION, ...availableTag2s]}
-              renderLabel={(value) => (value === ALL_OPTION ? value : getKoreanTag(value))}
+              renderLabel={(value) =>
+                value === ALL_OPTION ? value : getKoreanTag(value)
+              }
             />
 
             <FilterSelect
@@ -257,7 +361,9 @@ export default function GeneratePage() {
               ) : (
                 <SearchIcon className="h-5 w-5" />
               )}
-              <span>{status === "loading" ? "문제 찾는 중..." : "문제 찾기"}</span>
+              <span>
+                {status === "loading" ? "문제 찾는 중..." : "문제 찾기"}
+              </span>
             </button>
 
             {status === "error" && (
@@ -316,35 +422,70 @@ export default function GeneratePage() {
                 <Table className="min-w-210">
                   <TableHeader className="bg-zinc-50 dark:bg-white/3">
                     <TableRow className="border-zinc-200 hover:bg-transparent dark:border-zinc-800">
-                      <TableHead className="w-16 px-5">#</TableHead>
-                      <TableHead className="min-w-55">문제</TableHead>
-                      <TableHead className="w-32">난이도</TableHead>
-                      <TableHead className="min-w-45">유형</TableHead>
-                      <TableHead className="w-24 text-right">시간</TableHead>
-                      <TableHead className="w-24 text-right">메모리</TableHead>
+                      <SortableTableHead
+                        label="#"
+                        field="id"
+                        sortField={sortField}
+                        sortOrder={sortOrder}
+                        onSort={handleSort}
+                        className="w-16 px-5"
+                      />
+                      <SortableTableHead
+                        label="문제"
+                        field="title"
+                        sortField={sortField}
+                        sortOrder={sortOrder}
+                        onSort={handleSort}
+                        className="min-w-55"
+                      />
+                      <SortableTableHead
+                        label="유형"
+                        field="tag"
+                        sortField={sortField}
+                        sortOrder={sortOrder}
+                        onSort={handleSort}
+                        className="min-w-45"
+                      />
+                      <SortableTableHead
+                        label="난이도"
+                        field="difficulty"
+                        sortField={sortField}
+                        sortOrder={sortOrder}
+                        onSort={handleSort}
+                        className="w-32"
+                      />
+                      <SortableTableHead
+                        label="시간"
+                        field="time"
+                        sortField={sortField}
+                        sortOrder={sortOrder}
+                        onSort={handleSort}
+                        className="w-24"
+                      />
+                      <SortableTableHead
+                        label="메모리"
+                        field="memory"
+                        sortField={sortField}
+                        sortOrder={sortOrder}
+                        onSort={handleSort}
+                        className="w-24"
+                      />
                       <TableHead className="w-12" />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {problems.map((problem) => (
+                    {sortedProblems.map((problem) => (
                       <TableRow
                         key={problem.id}
                         onClick={() => router.push(`/problems/${problem.id}`)}
                         className="group cursor-pointer border-zinc-200 hover:bg-blue-50/50 dark:border-zinc-800 dark:hover:bg-blue-500/5"
                       >
-                        <TableCell className="px-5 text-sm font-semibold text-zinc-400 dark:text-zinc-500">
+                        <TableCell className="px-5 text-sm font-medium text-zinc-400 dark:text-zinc-500">
                           {problem.id}
                         </TableCell>
                         <TableCell>
-                          <span className="line-clamp-1 text-sm font-black text-zinc-950 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+                          <span className="line-clamp-1 text-sm font-semibold text-zinc-950 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
                             {problem.title}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <span
-                            className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${difficultyColor(problem.difficulty)}`}
-                          >
-                            {problem.difficulty}
                           </span>
                         </TableCell>
                         <TableCell>
@@ -358,6 +499,13 @@ export default function GeneratePage() {
                               </span>
                             )}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <span
+                            className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${difficultyColor(problem.difficulty)}`}
+                          >
+                            {problem.difficulty}
+                          </span>
                         </TableCell>
                         <TableCell className="text-right text-sm font-medium text-zinc-500 dark:text-zinc-400">
                           {problem.time_limit_ms / 1000}초
@@ -430,9 +578,11 @@ function StatePanel({
   description: string;
 }) {
   return (
-    <div className="flex min-h-115 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50/60 p-8 text-center text-zinc-500 dark:border-zinc-800 dark:bg-white/[0.02] dark:text-zinc-400">
+    <div className="flex min-h-115 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50/60 p-8 text-center text-zinc-500 dark:border-zinc-800 dark:bg-white/2 dark:text-zinc-400">
       <div className="mb-4 text-zinc-300 dark:text-zinc-700">{icon}</div>
-      <h2 className="text-lg font-black text-zinc-900 dark:text-white">{title}</h2>
+      <h2 className="text-lg font-black text-zinc-900 dark:text-white">
+        {title}
+      </h2>
       <p className="mt-2 max-w-sm text-sm">{description}</p>
     </div>
   );

@@ -22,6 +22,8 @@ export const TAG_MAP: Record<string, string> = {
   "topological sort": "위상 정렬",
   "two pointers": "투 포인터",
   "union-find": "유니온 파인드",
+  "priority queue" : "우선순위 큐",
+  "bfs" : "너비 우선 탐색"
 };
 
 export const DIFFICULTY_OPTIONS = ["Easy", "Medium", "Medium-Hard", "Hard", "Very-Hard"];
