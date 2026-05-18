@@ -76,7 +76,7 @@ async function getSavedCodeForLanguage(
     .eq("problem_id", problemId)
     .eq("user_id", userId)
     .eq("is_deleted", false)
-    .eq("result", "AC")
+    .in("result", ["AC", "ACCEPTED"])
     .in("language", languageAliases)
     .order("submitted_at", { ascending: false })
     .limit(1)
@@ -85,9 +85,9 @@ async function getSavedCodeForLanguage(
   const acceptedCode = (acceptedSubmission as SourceCodeRow | null)
     ?.source_code;
 
-  if (acceptedCode) {
+  if (acceptedSubmission) {
     return {
-      sourceCode: acceptedCode,
+      sourceCode: acceptedCode ?? getDefaultCodeTemplate(language),
       hasAcceptedSubmission: true,
     };
   }

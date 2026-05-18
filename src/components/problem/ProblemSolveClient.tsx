@@ -52,6 +52,17 @@ type ProblemSolveClientProps = {
   problem: Problem;
 };
 
+const ACCEPTED_RESULTS = new Set(["AC", "ACCEPTED", "SUCCESS"]);
+const JUDGING_STATUSES = new Set(["PENDING", "QUEUED", "RUNNING"]);
+
+function isAcceptedResult(value: string | null | undefined) {
+  return ACCEPTED_RESULTS.has((value ?? "").trim().toUpperCase());
+}
+
+function isJudgingStatus(value: string | null | undefined) {
+  return JUDGING_STATUSES.has((value ?? "").trim().toUpperCase());
+}
+
 function getIdleHandle(callback: () => void) {
   if (typeof window.requestIdleCallback === "function") {
     return window.requestIdleCallback(callback, { timeout: 1200 });
@@ -87,13 +98,25 @@ export function ProblemSolveClient({ problem }: ProblemSolveClientProps) {
   const receivedDoneRef = useRef(false);
   const languageRequestRef = useRef(0);
   const userEditedRef = useRef(false);
-  const isCodeSectionLocked = isSolveStateLoading || !isAuthenticated;
-  const shouldShowLoginModal = !isSolveStateLoading && !isAuthenticated;
-  const isCodeActionDisabled =
-    isCodeSectionLocked || isSubmitting || isTesting || isCodeLoading;
   const { submissionId, status, result, setSubmissionId, setStatus, reset } =
     useSubmissionStore();
   const setResult = useSubmissionStore((state) => state.setResult);
+  const isCodeSectionLocked = isSolveStateLoading || !isAuthenticated;
+  const shouldShowLoginModal = !isSolveStateLoading && !isAuthenticated;
+  const isCurrentSubmissionAccepted =
+    isAcceptedResult(status) ||
+    isAcceptedResult(result?.status) ||
+    isAcceptedResult(result?.result);
+  const isJudgeInProgress = isSubmitting || isJudgingStatus(status);
+  const isCodeActionDisabled =
+    isCodeSectionLocked ||
+    isJudgeInProgress ||
+    isTesting ||
+    isCodeLoading ||
+    !editorReady ||
+    !language ||
+    !code.trim() ||
+    isCurrentSubmissionAccepted;
 
   const closeEventSource = useCallback(() => {
     eventSourceRef.current?.close();
@@ -262,7 +285,7 @@ export function ProblemSolveClient({ problem }: ProblemSolveClientProps) {
 
   useEffect(() => {
     if (!submissionId || !status) return;
-    if (status !== "AC") {
+    if (!isAcceptedResult(status)) {
       return;
     }
     const timer = window.setTimeout(() => {
@@ -279,6 +302,7 @@ export function ProblemSolveClient({ problem }: ProblemSolveClientProps) {
       const normalizedLanguage = normalizeLanguage(nextLanguage);
       setLanguage(normalizedLanguage);
       setCode(getDefaultCodeTemplate(normalizedLanguage));
+      setSubmitError(null);
 
       if (!isAuthenticated) return;
 
@@ -293,11 +317,12 @@ export function ProblemSolveClient({ problem }: ProblemSolveClientProps) {
         );
         const data = (await response.json()) as SavedCodeResponse;
 
-        if (
-          requestId === languageRequestRef.current &&
-          !userEditedRef.current
-        ) {
-          setCode(data.sourceCode || getDefaultCodeTemplate(normalizedLanguage));
+        if (requestId === languageRequestRef.current) {
+          if (!userEditedRef.current) {
+            setCode(
+              data.sourceCode || getDefaultCodeTemplate(normalizedLanguage),
+            );
+          }
         }
       } finally {
         if (requestId === languageRequestRef.current) {
@@ -324,6 +349,18 @@ export function ProblemSolveClient({ problem }: ProblemSolveClientProps) {
     setSubmitError(null);
     if (isCodeSectionLocked) {
       setSubmitError("로그인 후 코드를 제출할 수 있습니다.");
+      return;
+    }
+    if (isCurrentSubmissionAccepted) {
+      setSubmitError("이미 정답 처리된 제출입니다.");
+      return;
+    }
+    if (isJudgeInProgress || isTesting || isCodeLoading || !editorReady) {
+      setSubmitError("현재는 코드를 제출할 수 없습니다.");
+      return;
+    }
+    if (!language) {
+      setSubmitError("제출할 언어를 선택해주세요.");
       return;
     }
     if (!code.trim()) {
@@ -484,7 +521,7 @@ export function ProblemSolveClient({ problem }: ProblemSolveClientProps) {
 
       {shouldShowLoginModal && (
         <div className="absolute inset-0 z-50 flex items-center justify-center rounded-xl bg-black/20">
-          <div className="w-[340px] rounded-2xl border border-zinc-200 bg-white p-6 text-center shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="w-85 rounded-2xl border border-zinc-200 bg-white p-6 text-center shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
             <p className="text-base font-bold text-zinc-900 dark:text-zinc-100">
               로그인이 필요합니다
             </p>
