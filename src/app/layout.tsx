@@ -7,8 +7,8 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
-  title: "SSAJOON - Algorithm Platform",
-  description: "Premium Algorithm Problem Solving Platform",
+  title: "SSAJOON",
+  description: "Algorithm platform for SSAFY",
 };
 
 export default function RootLayout({
