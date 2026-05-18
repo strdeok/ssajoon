@@ -115,7 +115,7 @@ export async function GET() {
     .eq("user_id", user.id)
     .eq("is_deleted", false)
     .order("submitted_at", { ascending: false, nullsFirst: false })
-    .limit(6);
+    .limit(10);
 
   const [
     { data: statsData, error: statsError },

@@ -206,7 +206,7 @@ function HomeSubmissionSkeleton() {
       {Array.from({ length: 6 }).map((_, index) => (
         <div
           key={index}
-          className="flex min-h-[64px] items-center gap-3 px-5 py-3.5"
+          className="flex min-h-16 items-center gap-3 px-5 py-3.5"
         >
           <div className="h-4 w-4 rounded-full bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
           <div className="flex-1 min-w-0 space-y-2">
@@ -222,7 +222,7 @@ function HomeSubmissionSkeleton() {
 
 function LoginRequiredPanel() {
   return (
-    <div className="flex min-h-[384px] flex-col items-center justify-center px-6 text-center gap-4">
+    <div className="flex min-h-96 flex-col items-center justify-center px-6 text-center gap-4">
       <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
         <Trophy className="w-7 h-7 text-blue-400" />
       </div>
@@ -247,7 +247,7 @@ function LoginRequiredPanel() {
 
 function EmptySubmissionPanel() {
   return (
-    <div className="flex min-h-[384px] flex-col items-center justify-center px-6 text-center gap-3">
+    <div className="flex min-h-96 flex-col items-center justify-center px-6 text-center gap-3">
       <div className="w-14 h-14 bg-zinc-50 dark:bg-zinc-800 rounded-full flex items-center justify-center">
         <BarChart2 className="w-7 h-7 text-zinc-300" />
       </div>
@@ -297,7 +297,7 @@ export function HomeSubmissionPanel() {
                 prefetch={false}
                 href={`/submissions/${submission.id}`}
                 key={submission.id}
-                className="flex min-h-[64px] items-center gap-3 px-5 py-3.5 hover:bg-[#F8FAFC] dark:hover:bg-zinc-800/50 transition-colors"
+                className="flex min-h-16 items-center gap-3 px-5 py-3.5 hover:bg-[#F8FAFC] dark:hover:bg-zinc-800/50 transition-colors"
               >
                 <StatusIcon result={submission.result} />
                 <div className="flex-1 min-w-0">
