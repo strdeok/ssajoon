@@ -1,11 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
 import ClientForm from "./ClientForm";
-import {
-  GeneratedProblemsSection,
-  GeneratedProblemsSectionSkeleton,
-} from "@/components/mypage/GeneratedProblemsSection";
 
 export default async function Mypage() {
   const supabase = await createClient();
@@ -46,10 +41,6 @@ export default async function Mypage() {
           }
           userEmail={user.email || ""}
         />
-
-        <Suspense fallback={<GeneratedProblemsSectionSkeleton />}>
-          <GeneratedProblemsSection />
-        </Suspense>
       </div>
     </div>
   );

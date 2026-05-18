@@ -3,7 +3,6 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 const authRequiredRoutes = [
   '/admin',
-  '/generate',
   '/mypage',
   '/onboarding',
   '/rejoin',
