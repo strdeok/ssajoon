@@ -199,7 +199,7 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
                         입력 {index + 1}
                       </h3>
                       <div className="relative group">
-                        <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-4 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap font-mono text-sm min-h-[80px] max-h-[300px] overflow-y-auto custom-scrollbar">
+                        <div className="custom-scrollbar min-h-20 max-h-75 overflow-y-auto whitespace-pre-wrap rounded-xl border border-zinc-200 bg-zinc-50 p-4 font-mono text-sm leading-relaxed text-zinc-700 dark:border-white/5 dark:bg-black/20 dark:text-zinc-300">
                           {tc.input_text || "입력값이 없습니다."}
                         </div>
                         <button
@@ -216,7 +216,7 @@ export function ProblemDetail({ problem }: { problem: Problem }) {
                         출력 {index + 1}
                       </h3>
                       <div className="relative group">
-                        <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-black/20 p-4 rounded-xl border border-zinc-200 dark:border-white/5 whitespace-pre-wrap font-mono text-sm min-h-[80px] max-h-[300px] overflow-y-auto custom-scrollbar">
+                        <div className="custom-scrollbar min-h-20 max-h-75 overflow-y-auto whitespace-pre-wrap rounded-xl border border-zinc-200 bg-zinc-50 p-4 font-mono text-sm leading-relaxed text-zinc-700 dark:border-white/5 dark:bg-black/20 dark:text-zinc-300">
                           {tc.expected_output || "기대 출력값이 없습니다."}
                         </div>
                         <button

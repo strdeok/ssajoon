@@ -1,10 +1,14 @@
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
-import { Flame, ChevronRight, ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronRight, Flame } from "lucide-react";
 import {
   HomeStatsCards,
   HomeSubmissionPanel,
 } from "@/components/home/HomeSubmissionClient";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 export const revalidate = 60;
 
@@ -78,14 +82,16 @@ function HomeDifficultyBadge({ difficulty }: { difficulty?: string | null }) {
   };
 
   return (
-    <span
-      className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+    <Badge
+      variant="outline"
+      className={cn(
+        "px-2.5 py-1 text-xs font-semibold",
         map[difficulty] ??
-        "bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700"
-      }`}
+          "bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700",
+      )}
     >
       {labelMap[difficulty] ?? difficulty}
-    </span>
+    </Badge>
   );
 }
 
@@ -155,105 +161,120 @@ async function getData() {
 }
 
 export default async function Home() {
-  // 홈 페이지 서버 컴포넌트를 정의한다.
-  const { totalProblemsCount, recentProblems } =
-    await getData(); // 홈 화면에 필요한 데이터를 서버에서 조회한다.
+  const { totalProblemsCount, recentProblems } = await getData();
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC] dark:bg-zinc-950 transition-colors duration-300 px-16">
-      <section className="relative overflow-hidden mx-6 mt-6 rounded-xl h-100 bg-[#253EEB] dark:bg-indigo-700 flex items-center shadow-2xl shadow-blue-500/10">
-        <div className="absolute inset-0 opacity-10 dark:opacity-5 select-none pointer-events-none overflow-hidden"></div>
-        <div className="absolute inset-0 bg-linear-to-r from-[#253EEB] via-[#253EEB]/80 to-transparent dark:from-indigo-700 dark:via-indigo-700/80" />
-        <div className="relative z-10 px-12 max-w-xl">
-          <div className="inline-flex items-center gap-2 bg-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full mb-6 backdrop-blur-sm">
-            <Flame className="w-3.5 h-3.5" />
-            알고리즘 마스터의 시작
-          </div>
-          <h1 className="text-4xl font-extrabold text-white leading-tight tracking-tight mb-4">
-            코딩 실력을
-            <br />한 단계 끌어올리세요
-          </h1>
-          <p className="text-blue-100 text-base leading-relaxed mb-8 opacity-90">
-            체계적으로 큐레이션된 알고리즘 문제들로
-            <br />
-            실전 감각을 키우고 코딩 역량을 성장시키세요.
-          </p>
-          <div className="flex items-center gap-3">
-            <Link
-              prefetch={false}
-              href="/problems"
-              className="inline-flex items-center gap-2 bg-white text-blue-600 font-bold px-6 py-3 rounded-lg hover:bg-blue-50 transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
-            >
-              문제 풀기 시작
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              href="/search"
-              prefetch={false}
-              className="inline-flex items-center gap-2 bg-white/10 text-white font-semibold px-6 py-3 rounded-lg hover:bg-white/20 transition-all duration-200 backdrop-blur-sm border border-white/20"
-            >
-              조건별 문제 찾기
-            </Link>
-          </div>
-        </div>
-      </section>
-      <HomeStatsCards totalProblemsCount={totalProblemsCount} />
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mx-6 mt-6 mb-8 min-h-172.5">
-        <div className="lg:col-span-2 flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-              최근 추가된 문제
-            </h2>
-            <Link
-              prefetch={false}
-              href="/problems"
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 transition-colors"
-            >
-              전체 보기 <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-          <div className="bg-white dark:bg-zinc-900 border border-[#E2E8F0] dark:border-zinc-800 rounded-lg overflow-hidden min-h-160">
-            <div className="grid grid-cols-12 gap-4 px-5 py-3 bg-[#F8FAFC] dark:bg-zinc-800/50 border-b border-[#E2E8F0] dark:border-zinc-800 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-              <div className="col-span-1">#</div>
-              <div className="col-span-6">문제 제목</div>
-              <div className="col-span-2">난이도</div>
-              <div className="col-span-3 text-right">풀기</div>
+    <div className="min-h-screen bg-[#F7F9FC] px-4 py-4 dark:bg-zinc-950 sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+        <section className="relative overflow-hidden rounded-2xl bg-[#253EEB] shadow-2xl shadow-blue-500/10 dark:bg-indigo-700">
+          <div className="absolute inset-0 bg-linear-to-r from-[#253EEB] via-[#253EEB]/80 to-transparent dark:from-indigo-700 dark:via-indigo-700/80" />
+          <div className="relative z-10 flex min-h-80 flex-col justify-center px-6 py-10 sm:px-8 lg:min-h-96 lg:px-12">
+            <Badge className="mb-6 w-fit border-white/20 bg-white/20 px-3 py-1.5 text-white backdrop-blur-sm">
+              <Flame className="mr-1 h-3.5 w-3.5" />
+              알고리즘 마스터의 시작
+            </Badge>
+            <h1 className="max-w-2xl text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">
+              코딩 실력을
+              <br />
+              단계적으로 끌어올리세요
+            </h1>
+            <p className="mt-4 max-w-xl text-sm leading-7 text-blue-100 sm:text-base">
+              체계적으로 정리된 알고리즘 문제로 실전 감각을 키우고 코딩 역량을
+              꾸준히 성장시키세요.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="/problems"
+                prefetch={false}
+                className={buttonVariants({
+                  className:
+                    "h-11 rounded-lg bg-white px-6 font-bold text-blue-600 hover:bg-blue-50",
+                })}
+              >
+                문제 풀이 시작
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/search"
+                prefetch={false}
+                className={buttonVariants({
+                  variant: "outline",
+                  className:
+                    "h-11 rounded-lg border-white/20 bg-white/10 px-6 font-semibold text-white hover:bg-white/20 hover:text-white",
+                })}
+              >
+                조건별 문제 찾기
+              </Link>
             </div>
-            {recentProblems.length === 0 ? (
-              <div className="min-h-149 flex items-center justify-center text-center text-zinc-400 text-sm">
-                등록된 문제가 없습니다.
-              </div>
-            ) : (
-              recentProblems.map((problem) => (
-                <Link
-                  prefetch={false}
-                  href={`/problems/${problem.id}`}
-                  key={problem.id}
-                  className="group grid grid-cols-12 gap-4 items-center min-h-14.75 px-5 py-4 border-b border-[#E2E8F0] dark:border-zinc-800 last:border-0 hover:bg-[#F8FAFC] dark:hover:bg-zinc-800/50 transition-colors"
-                >
-                  <div className="col-span-1 text-sm text-zinc-400 font-medium">
-                    {problem.id}
-                  </div>
-                  <div className="col-span-6">
-                    <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
-                      {problem.title}
-                    </p>
-                  </div>
-                  <div className="col-span-3">
-                    <HomeDifficultyBadge difficulty={problem.difficulty} />
-                  </div>
-                  <div className="col-span-2 flex justify-end">
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 bg-blue-50 dark:bg-blue-900/20 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 px-3 py-1.5 rounded-lg transition-all">
-                      풀기 <ChevronRight className="w-3.5 h-3.5" />
-                    </span>
-                  </div>
-                </Link>
-              ))
-            )}
           </div>
-        </div>
-        <HomeSubmissionPanel />
-      </section>
+        </section>
+
+        <HomeStatsCards totalProblemsCount={totalProblemsCount} />
+
+        <section className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <Card className="overflow-hidden border-[#E2E8F0] dark:border-zinc-800">
+              <CardHeader className="flex flex-col items-start justify-between gap-3 space-y-0 border-b border-[#E2E8F0] bg-[#F8FAFC] px-5 py-4 dark:border-zinc-800 dark:bg-zinc-800/50 sm:flex-row sm:items-center">
+                <CardTitle className="text-lg font-bold">최근 추가된 문제</CardTitle>
+                <Link
+                  href="/problems"
+                  prefetch={false}
+                  className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 transition-colors hover:text-blue-700"
+                >
+                  전체 보기
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="hidden grid-cols-12 gap-4 border-b border-[#E2E8F0] px-5 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400 sm:grid">
+                  <div className="col-span-1">#</div>
+                  <div className="col-span-6">문제 제목</div>
+                  <div className="col-span-3">난이도</div>
+                  <div className="col-span-2 text-right">보기</div>
+                </div>
+                {recentProblems.length === 0 ? (
+                  <div className="flex min-h-72 items-center justify-center px-6 text-center text-sm text-zinc-400">
+                    등록된 문제가 없습니다.
+                  </div>
+                ) : (
+                  <div className="divide-y divide-[#E2E8F0] dark:divide-zinc-800">
+                    {recentProblems.map((problem) => (
+                      <Link
+                        href={`/problems/${problem.id}`}
+                        key={problem.id}
+                        prefetch={false}
+                        className="group block px-5 py-4 transition-colors hover:bg-[#F8FAFC] dark:hover:bg-zinc-800/50"
+                      >
+                        <div className="grid gap-3 sm:grid-cols-12 sm:items-center sm:gap-4">
+                          <div className="text-sm font-medium text-zinc-400 sm:col-span-1">
+                            {problem.id}
+                          </div>
+                          <div className="sm:col-span-6">
+                            <p className="line-clamp-1 text-sm font-semibold text-zinc-800 transition-colors group-hover:text-blue-600 dark:text-zinc-200 dark:group-hover:text-blue-400">
+                              {problem.title}
+                            </p>
+                          </div>
+                          <div className="sm:col-span-3">
+                            <HomeDifficultyBadge difficulty={problem.difficulty} />
+                          </div>
+                          <div className="sm:col-span-2 sm:flex sm:justify-end">
+                            <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 sm:mt-0">
+                              보기
+                              <ChevronRight className="h-3.5 w-3.5" />
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <HomeSubmissionPanel />
+        </section>
+      </div>
     </div>
   );
 }

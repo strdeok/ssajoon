@@ -677,7 +677,7 @@ export function ProblemContent({
                         입력 {index + 1}
                       </h3>
                       <div className="group relative">
-                        <div className="custom-scrollbar min-h-20 max-h-[300px] overflow-y-auto whitespace-pre-wrap rounded-xl border border-zinc-200 bg-zinc-50 p-4 font-mono text-sm leading-relaxed text-zinc-700 dark:border-white/5 dark:bg-black/20 dark:text-zinc-300">
+                        <div className="custom-scrollbar min-h-20 max-h-75 overflow-y-auto whitespace-pre-wrap rounded-xl border border-zinc-200 bg-zinc-50 p-4 font-mono text-sm leading-relaxed text-zinc-700 dark:border-white/5 dark:bg-black/20 dark:text-zinc-300">
                           {testcase.input_text || "입력값이 없습니다."}
                         </div>
                         <CopyButton text={testcase.input_text} />
@@ -688,7 +688,7 @@ export function ProblemContent({
                         출력 {index + 1}
                       </h3>
                       <div className="group relative">
-                        <div className="custom-scrollbar min-h-20 max-h-[300px] overflow-y-auto whitespace-pre-wrap rounded-xl border border-zinc-200 bg-zinc-50 p-4 font-mono text-sm leading-relaxed text-zinc-700 dark:border-white/5 dark:bg-black/20 dark:text-zinc-300">
+                        <div className="custom-scrollbar min-h-20 max-h-75 overflow-y-auto whitespace-pre-wrap rounded-xl border border-zinc-200 bg-zinc-50 p-4 font-mono text-sm leading-relaxed text-zinc-700 dark:border-white/5 dark:bg-black/20 dark:text-zinc-300">
                           {testcase.expected_output || "기대 출력값이 없습니다."}
                         </div>
                         <CopyButton text={testcase.expected_output} />

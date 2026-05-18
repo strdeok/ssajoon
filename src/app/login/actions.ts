@@ -12,8 +12,8 @@ export async function login(formData: FormData) {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `https://ssajoon.vercel.app/auth/callback?next=${encodeURIComponent(safeNext)}`,
-      // redirectTo: "http://localhost:3000/auth/callback",
+      // redirectTo: `https://ssajoon.vercel.app/auth/callback?next=${encodeURIComponent(safeNext)}`,
+      redirectTo: "http://localhost:3000/auth/callback",
     },
   });
 

@@ -589,11 +589,11 @@ function ProblemsContent() {
                     </Link>
                   </div>
                   <div className="col-span-2 flex flex-wrap gap-1">
-                    <span className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 rounded-full font-medium">
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 rounded-full font-medium">
                       {getKoreanTag(problem.tag1)}
                     </span>
                     {problem.tag2 && (
-                      <span className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 rounded-full font-medium">
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 rounded-full font-medium">
                         {getKoreanTag(problem.tag2)}
                       </span>
                     )}
@@ -666,7 +666,7 @@ export default function ProblemsPage() {
   return (
     <div className="min-h-screen bg-[#F7F9FC] dark:bg-[#09090b]">
       <Suspense fallback={
-        <div className="w-full mx-auto px-6 pt-8 pb-20 flex items-center justify-center min-h-[400px]">
+        <div className="mx-auto flex min-h-96 w-full items-center justify-center px-6 pt-8 pb-20">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
         </div>
       }>

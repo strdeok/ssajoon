@@ -424,7 +424,7 @@ function StatePanel({
   description: string;
 }) {
   return (
-    <div className="flex min-h-[460px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50/60 p-8 text-center text-zinc-500 dark:border-zinc-800 dark:bg-white/[0.02] dark:text-zinc-400">
+    <div className="flex min-h-115 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50/60 p-8 text-center text-zinc-500 dark:border-zinc-800 dark:bg-white/[0.02] dark:text-zinc-400">
       <div className="mb-4 text-zinc-300 dark:text-zinc-700">{icon}</div>
       <h2 className="text-lg font-black text-zinc-900 dark:text-white">{title}</h2>
       <p className="mt-2 max-w-sm text-sm">{description}</p>

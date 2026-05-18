@@ -192,11 +192,11 @@ export default async function AdminProblemsPage({
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-wrap gap-1">
-                      <span className="px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded text-[10px] font-bold">
+                      <span className="rounded border border-zinc-200 bg-zinc-100 px-2 py-0.5 text-xs font-bold dark:border-zinc-700 dark:bg-zinc-800">
                         {getKoreanTag(problem.tag1)}
                       </span>
                       {problem.tag2 && (
-                        <span className="px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded text-[10px] font-bold">
+                        <span className="rounded border border-zinc-200 bg-zinc-100 px-2 py-0.5 text-xs font-bold dark:border-zinc-700 dark:bg-zinc-800">
                           {getKoreanTag(problem.tag2)}
                         </span>
                       )}

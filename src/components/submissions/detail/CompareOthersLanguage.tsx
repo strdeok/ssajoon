@@ -133,7 +133,7 @@ export default function CompareOthersLanguage({
                       {stat.language}
                     </span>
                     {stat.isMine && (
-                      <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600 dark:bg-blue-500/10">
+                      <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-600 dark:bg-blue-500/10">
                         내 언어
                       </span>
                     )}
