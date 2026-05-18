@@ -53,6 +53,19 @@ function formatDateTime(dateString: string | null) {
   }).format(new Date(dateString));
 }
 
+function convertLanguage(language: string | null) {
+  if (!language) return;
+
+  switch (language) {
+    case "java":
+      return "Java 17";
+    case "cpp":
+      return "C++ 17";
+    case "python":
+      return "Python 3.11";
+  }
+}
+
 function formatResult(result: string | null) {
   const normalized = (result ?? "").trim().toUpperCase();
   if (normalized === "AC" || normalized === "ACCEPTED") return "정답";
@@ -149,7 +162,7 @@ function PeerCodeModal({
               언어
             </span>
             <span className="text-zinc-800 dark:text-zinc-200">
-              {submission.language ?? "-"}
+              {convertLanguage(submission.language)}
             </span>
           </div>
           <div>
@@ -312,19 +325,6 @@ export default function PeerSubmissionsTable({
     setSelectedSourceCode(null);
     setCodeError(null);
     setIsCodeLoading(false);
-  };
-
-  const convertLanguage = (language: string | null) => {
-    if (!language) return;
-
-    switch (language) {
-      case "java":
-        return "Java 17";
-      case "cpp":
-        return "C++ 17";
-      case "python":
-        return "Python 3.11"
-    }
   };
 
   return (

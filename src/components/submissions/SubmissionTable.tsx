@@ -83,6 +83,20 @@ function formatToReadableDate(isoString: string): string {
   return new Intl.DateTimeFormat("ko-KR", options).format(date);
 }
 
+
+  const convertLanguage = (language: string | null) => {
+    if (!language) return;
+
+    switch (language) {
+      case "java":
+        return "Java 17";
+      case "cpp":
+        return "C++ 17";
+      case "python":
+        return "Python 3.11"
+    }
+  };
+
 export default function SubmissionTable({ submissions, onSort, currentSort }: Props) {
   const router = useRouter();
 
@@ -210,7 +224,7 @@ export default function SubmissionTable({ submissions, onSort, currentSort }: Pr
                   </td>
 
                   <td className="px-6 py-4 capitalize">
-                    {sub.language === "cpp" ? "c++" : sub.language}
+                    {convertLanguage(sub.language)}
                   </td>
 
                   <td className="px-6 py-4">
