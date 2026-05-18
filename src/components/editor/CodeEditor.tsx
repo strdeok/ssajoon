@@ -16,6 +16,18 @@ interface CodeEditorProps { // CodeEditor 컴포넌트가 받을 props 타입을
   loadingText?: string; // 로딩 중 화면에 표시할 문구를 의미한다.
 } // CodeEditorProps 타입 정의를 종료한다.
 
+const getEditorTypography = (width: number) => { // 화면 너비에 맞는 에디터 글자 크기와 줄 높이를 계산한다.
+  if (width < 640) { // 모바일 화면일 때의 값을 반환한다.
+    return { fontSize: 12, lineHeight: 20 };
+  }
+
+  if (width < 1024) { // 태블릿 화면일 때의 값을 반환한다.
+    return { fontSize: 12, lineHeight: 22 };
+  }
+
+  return { fontSize: 14, lineHeight: 24 }; // 데스크톱 화면에서는 기존 값을 유지한다.
+};
+
 export function CodeEditor({ // CodeEditor 컴포넌트를 정의한다.
   value, // 부모에서 전달한 코드 값을 받는다.
   onChange, // 부모에서 전달한 코드 변경 함수를 받는다.
@@ -30,6 +42,7 @@ export function CodeEditor({ // CodeEditor 컴포넌트를 정의한다.
   const containerRef = useRef<HTMLDivElement>(null); // 에디터 컨테이너 DOM을 참조하기 위한 ref를 만든다.
 
   const [editorHeight, setEditorHeight] = useState(500); // Monaco Editor 높이를 상태로 관리한다.
+  const [editorTypography, setEditorTypography] = useState({ fontSize: 14, lineHeight: 24 }); // 화면 크기에 따른 코드 폰트 크기와 줄 높이를 상태로 관리한다.
 
   const normalizedLanguage = useMemo(() => { // Monaco Editor에 전달할 언어 값을 메모이제이션한다.
     return normalizeLanguage(language); // 전달받은 language를 프로젝트 기준으로 정규화한다.
@@ -88,6 +101,20 @@ export function CodeEditor({ // CodeEditor 컴포넌트를 정의한다.
     }; // cleanup 함수를 종료한다.
   }, []); // 최초 마운트 시 한 번만 실행한다.
 
+  useEffect(() => { // 화면 너비가 바뀔 때 에디터 글자 크기와 줄 높이를 조정한다.
+    const updateTypography = () => { // 현재 viewport 너비 기준으로 typography 상태를 갱신한다.
+      setEditorTypography(getEditorTypography(window.innerWidth));
+    };
+
+    updateTypography(); // 최초 마운트 시 현재 화면 크기에 맞춰 한 번 계산한다.
+
+    window.addEventListener("resize", updateTypography); // 브라우저 크기 변경을 감지한다.
+
+    return () => { // 컴포넌트 정리 시 resize listener를 제거한다.
+      window.removeEventListener("resize", updateTypography);
+    };
+  }, []); // 최초 마운트 시 한 번만 listener를 등록한다.
+
   return ( // 컴포넌트 JSX를 반환한다.
     <div // 에디터 전체를 감싸는 wrapper를 렌더링한다.
       ref={containerRef} // 컨테이너 크기 측정을 위해 ref를 연결한다.
@@ -102,8 +129,8 @@ export function CodeEditor({ // CodeEditor 컴포넌트를 정의한다.
         beforeMount={handleBeforeMount} // Monaco 테마를 등록한다.
         options={{ // Monaco Editor 옵션을 설정한다.
           minimap: { enabled: false }, // 우측 미니맵을 비활성화한다.
-          fontSize: 16, // 코드 폰트 크기를 16px로 설정한다.
-          lineHeight: 24, // 코드 줄 높이를 24px로 설정한다.
+          fontSize: editorTypography.fontSize, // 화면 크기에 맞는 코드 폰트 크기를 설정한다.
+          lineHeight: editorTypography.lineHeight, // 화면 크기에 맞는 코드 줄 높이를 설정한다.
           padding: { top: 20 }, // 에디터 상단 여백을 설정한다.
           readOnly, // 읽기 전용 여부를 설정한다.
           fontFamily: "'JetBrains Mono', 'Fira Code', monospace", // 코드용 폰트를 설정한다.

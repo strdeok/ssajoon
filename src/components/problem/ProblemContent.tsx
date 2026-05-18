@@ -26,9 +26,10 @@ import {
 } from "react";
 import type { Problem } from "@/types/problem";
 import { getKoreanTag } from "@/utils/tagUtils";
-import { ServerProblemMarkdown } from "@/components/problem/ServerProblemMarkdown";
+
 import { CopyButton } from "@/components/problem/CopyButton";
 import { EditorSkeleton } from "@/components/problem/EditorSkeleton";
+import ServerProblemMarkdown from "./ServerProblemMarkdown";
 
 const CodeEditor = dynamic(
   () => import("@/components/editor/CodeEditor").then((mod) => mod.CodeEditor),
@@ -89,7 +90,7 @@ function formatDateTime(dateString: string | null) {
     timeZone: "Asia/Seoul",
     year: "numeric",
     month: "2-digit",
-    day: "2-digit"
+    day: "2-digit",
   }).format(new Date(dateString));
 }
 
@@ -370,9 +371,14 @@ function CodeViewerModal({
           />
           <Metric
             label="메모리"
-            value={submission.memoryKb !== null ? `${submission.memoryKb}KB` : "-"}
+            value={
+              submission.memoryKb !== null ? `${submission.memoryKb}KB` : "-"
+            }
           />
-          <Metric label="제출 시간" value={formatDateTime(submission.submittedAt)} />
+          <Metric
+            label="제출 시간"
+            value={formatDateTime(submission.submittedAt)}
+          />
         </div>
 
         <div className="min-h-0 flex-1 p-5 sm:p-6">
@@ -433,9 +439,12 @@ export function ProblemContent({
       setSubmissionsError(null);
 
       try {
-        const response = await fetch(`/api/problems/${problem.id}/my-submissions`, {
-          cache: "no-store",
-        });
+        const response = await fetch(
+          `/api/problems/${problem.id}/my-submissions`,
+          {
+            cache: "no-store",
+          },
+        );
 
         if (!response.ok) {
           throw new Error("Failed to fetch my submissions");
@@ -579,9 +588,14 @@ export function ProblemContent({
     }, 1500);
   };
 
+  const convertTimeMs = (msTime: number) => {
+    const converted = msTime / 1000;
+    return converted;
+  };
+
   return (
     <div className="flex h-auto flex-col rounded-xl bg-white dark:bg-zinc-900/50 lg:h-full lg:overflow-hidden">
-      <div className="sticky top-0 z-10 flex-shrink-0 border-b border-zinc-200 bg-white/95 dark:border-white/10 dark:bg-zinc-900/95">
+      <div className="sticky top-0 z-10 shrink-0 border-b border-zinc-200 bg-white/95 dark:border-white/10 dark:bg-zinc-900/95">
         <div className="flex flex-wrap items-center gap-4 p-8 pb-4">
           <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
             <span className="mr-2">#{problem.id}</span>
@@ -632,18 +646,20 @@ export function ProblemContent({
                 <h2 className="mr-2 text-sm font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                   제한사항
                 </h2>
-                {problem.time_limit_ms != null && (
-                  <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-sm dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300">
-                    <Clock className="h-4 w-4 text-blue-500" />
-                    시간 제한: {problem.time_limit_ms}ms
-                  </div>
-                )}
-                {problem.memory_limit_mb != null && (
-                  <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-sm dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300">
-                    <Cpu className="h-4 w-4 text-purple-500" />
-                    메모리 제한: {problem.memory_limit_mb}MB
-                  </div>
-                )}
+                <div className="flex flex-row gap-4">
+                  {problem.time_limit_ms != null && (
+                    <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-sm dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300">
+                      <Clock className="h-4 w-4 text-blue-500" />
+                      시간 제한: {convertTimeMs(problem.time_limit_ms)}초
+                    </div>
+                  )}
+                  {problem.memory_limit_mb != null && (
+                    <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-sm dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300">
+                      <Cpu className="h-4 w-4 text-purple-500" />
+                      메모리 제한: {problem.memory_limit_mb}MB
+                    </div>
+                  )}
+                </div>
               </section>
             )}
 
@@ -677,7 +693,7 @@ export function ProblemContent({
                         입력 {index + 1}
                       </h3>
                       <div className="group relative">
-                        <div className="custom-scrollbar min-h-20 max-h-[300px] overflow-y-auto whitespace-pre-wrap rounded-xl border border-zinc-200 bg-zinc-50 p-4 font-mono text-sm leading-relaxed text-zinc-700 dark:border-white/5 dark:bg-black/20 dark:text-zinc-300">
+                        <div className="custom-scrollbar min-h-20 max-h-75 overflow-y-auto whitespace-pre-wrap rounded-xl border border-zinc-200 bg-zinc-50 p-4 font-mono text-sm leading-relaxed text-zinc-700 dark:border-white/5 dark:bg-black/20 dark:text-zinc-300">
                           {testcase.input_text || "입력값이 없습니다."}
                         </div>
                         <CopyButton text={testcase.input_text} />
@@ -688,8 +704,9 @@ export function ProblemContent({
                         출력 {index + 1}
                       </h3>
                       <div className="group relative">
-                        <div className="custom-scrollbar min-h-20 max-h-[300px] overflow-y-auto whitespace-pre-wrap rounded-xl border border-zinc-200 bg-zinc-50 p-4 font-mono text-sm leading-relaxed text-zinc-700 dark:border-white/5 dark:bg-black/20 dark:text-zinc-300">
-                          {testcase.expected_output || "기대 출력값이 없습니다."}
+                        <div className="custom-scrollbar min-h-20 max-h-75 overflow-y-auto whitespace-pre-wrap rounded-xl border border-zinc-200 bg-zinc-50 p-4 font-mono text-sm leading-relaxed text-zinc-700 dark:border-white/5 dark:bg-black/20 dark:text-zinc-300">
+                          {testcase.expected_output ||
+                            "기대 출력값이 없습니다."}
                         </div>
                         <CopyButton text={testcase.expected_output} />
                       </div>
@@ -711,31 +728,20 @@ export function ProblemContent({
                     이 문제에 제출한 내 기록만 언어별로 모아 보여줍니다.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => void loadMySubmissions(true)}
-                  disabled={isSubmissionsLoading}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:text-zinc-200 dark:hover:bg-white/5"
-                >
-                  <RefreshCw
-                    className={`h-4 w-4 ${isSubmissionsLoading ? "animate-spin" : ""}`}
-                  />
-                  새로고침
-                </button>
               </div>
 
               <div className="p-5">
                 {isSubmissionsLoading ? (
-                  <div className="flex min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 text-sm font-semibold text-zinc-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-400">
+                  <div className="flex min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 text-sm font-semibold text-zinc-500 dark:border-white/10 dark:bg-white/3 dark:text-zinc-400">
                     <Loader2 className="h-6 w-6 animate-spin" />
                     제출 내역을 불러오는 중입니다.
                   </div>
                 ) : submissionsError ? (
-                  <div className="flex min-h-64 items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-sm font-semibold text-zinc-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-400">
+                  <div className="flex min-h-64 items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-sm font-semibold text-zinc-500 dark:border-white/10 dark:bg-white/3 dark:text-zinc-400">
                     제출 내역을 불러오지 못했습니다.
                   </div>
                 ) : groupedSubmissions.length === 0 ? (
-                  <div className="flex min-h-64 items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-sm font-semibold text-zinc-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-400">
+                  <div className="flex min-h-64 items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-sm font-semibold text-zinc-500 dark:border-white/10 dark:bg-white/3 dark:text-zinc-400">
                     아직 제출한 내역이 없습니다.
                   </div>
                 ) : (
@@ -751,7 +757,7 @@ export function ProblemContent({
                           <button
                             type="button"
                             onClick={() => toggleLanguageGroup(group.key)}
-                            className="flex w-full flex-col gap-3 px-4 py-4 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-white/[0.03] sm:flex-row sm:items-center sm:justify-between"
+                            className="flex w-full flex-col gap-3 px-4 py-4 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-white/3 sm:flex-row sm:items-center sm:justify-between"
                           >
                             <div className="flex items-center gap-3">
                               {isOpen ? (
@@ -764,7 +770,8 @@ export function ProblemContent({
                                   {group.label}
                                 </h3>
                                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                                  최근 제출 {formatDateTime(group.latestSubmittedAt)}
+                                  최근 제출{" "}
+                                  {formatDateTime(group.latestSubmittedAt)}
                                 </p>
                               </div>
                             </div>
@@ -782,9 +789,9 @@ export function ProblemContent({
                             <div className="border-t border-zinc-200 dark:border-white/10">
                               <div className="overflow-x-auto">
                                 <table className="w-full text-left">
-                                  <thead className="bg-zinc-50 dark:bg-white/[0.03]">
+                                  <thead className="bg-zinc-50 dark:bg-white/3">
                                     <tr className="border-b border-zinc-200 dark:border-white/10">
-                                      {[                                        
+                                      {[
                                         "결과",
                                         "실행 시간",
                                         "메모리",
@@ -810,9 +817,8 @@ export function ProblemContent({
                                       return (
                                         <tr
                                           key={submission.id}
-                                          className="hover:bg-zinc-50/80 dark:hover:bg-white/[0.03]"
+                                          className="hover:bg-zinc-50/80 dark:hover:bg-white/3"
                                         >
-                                          
                                           <td className="px-6 py-3">
                                             <span
                                               className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${resultBadge.className}`}
@@ -831,14 +837,18 @@ export function ProblemContent({
                                               : "-"}
                                           </td>
                                           <td className="px-8 py-3 text-sm text-zinc-700 dark:text-zinc-300">
-                                            {formatDateTime(submission.submittedAt)}
+                                            {formatDateTime(
+                                              submission.submittedAt,
+                                            )}
                                           </td>
                                           <td className="px-8 py-3">
                                             <div className="flex flex-wrap gap-2">
                                               <button
                                                 type="button"
                                                 onClick={() =>
-                                                  void handleOpenCode(submission)
+                                                  void handleOpenCode(
+                                                    submission,
+                                                  )
                                                 }
                                                 className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-200 dark:hover:bg-white/5"
                                               >

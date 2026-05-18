@@ -3,12 +3,15 @@
 import { useEffect, useState, useCallback, Suspense, useMemo } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
 import { Problem } from "@/types/problem";
 import { createClient } from "@/utils/supabase/client";
 import {
   Search,
   ChevronRight,
   ChevronLeft,
+  ChevronsRight,
+  ChevronsLeft,
   BookOpen,
   Trophy,
   BarChart2,
@@ -19,13 +22,33 @@ import {
 import {
   DifficultyBadge,
   isAcceptedResult,
-  StatusIcon
+  StatusIcon,
 } from "@/components/problem/ProblemComponents";
-import { getKoreanTag, DIFFICULTY_OPTIONS, DIFFICULTY_ORDER } from "@/utils/tagUtils";
+import {
+  getKoreanTag,
+  DIFFICULTY_OPTIONS,
+  DIFFICULTY_ORDER,
+} from "@/utils/tagUtils";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type ProblemStatus = "solved" | "wrong" | "none";
 
 type ProblemId = Problem["id"];
+type SortField =
+  | "id"
+  | "title"
+  | "tag"
+  | "difficulty"
+  | "acceptanceRate"
+  | "status";
+type SortValue = string | number | null | undefined;
 
 type SubmissionStatusRow = {
   problem_id: ProblemId;
@@ -48,14 +71,18 @@ function ProblemsContent() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get("q") || "";
 
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [problems, setProblems] = useState<Problem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [filteredCount, setFilteredCount] = useState(0);
   const [isFetching, setIsFetching] = useState(true);
   const [categories, setCategories] = useState<string[]>([]);
-  const [problemStatusMap, setProblemStatusMap] = useState<Map<ProblemId, ProblemStatus>>(new Map());
-  const [problemStatsMap, setProblemStatsMap] = useState<Map<string, ProblemStats>>(new Map());
+  const [problemStatusMap, setProblemStatusMap] = useState<
+    Map<ProblemId, ProblemStatus>
+  >(new Map());
+  const [problemStatsMap, setProblemStatsMap] = useState<
+    Map<string, ProblemStats>
+  >(new Map());
   const [totalSolvedCount, setTotalSolvedCount] = useState(0);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -65,10 +92,10 @@ function ProblemsContent() {
   const [searchInput, setSearchInput] = useState(initialQuery);
   const [debouncedSearch, setDebouncedSearch] = useState(initialQuery);
 
-  const [sortField, setSortField] = useState<string>("id");
+  const [sortField, setSortField] = useState<SortField>("id");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
-  const handleSort = (field: string) => {
+  const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
@@ -92,7 +119,7 @@ function ProblemsContent() {
     if (q !== null && q !== searchInput) {
       setSearchInput(q);
     }
-  }, [searchParams]);
+  }, [searchInput, searchParams]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -167,7 +194,7 @@ function ProblemsContent() {
           .from("problems")
           .select("id")
           .in("id", chunk)
-          .eq("is_deleted", false)
+          .eq("is_deleted", false);
 
         if (error) {
           throw error;
@@ -195,7 +222,8 @@ function ProblemsContent() {
           return;
         }
 
-        const publicSolvedProblemIds = await fetchPublicProblemIds(solvedProblemIds);
+        const publicSolvedProblemIds =
+          await fetchPublicProblemIds(solvedProblemIds);
 
         setTotalSolvedCount(publicSolvedProblemIds.length);
       } catch (error) {
@@ -213,7 +241,8 @@ function ProblemsContent() {
       pageSize: String(PAGE_SIZE),
     });
 
-    if (selectedDifficulty !== "전체") params.set("difficulty", selectedDifficulty);
+    if (selectedDifficulty !== "전체")
+      params.set("difficulty", selectedDifficulty);
     if (selectedCategory !== "전체") params.set("category", selectedCategory);
     if (selectedStatus !== "전체") params.set("status", selectedStatus);
     if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
@@ -232,7 +261,13 @@ function ProblemsContent() {
     } finally {
       setIsFetching(false);
     }
-  }, [currentPage, selectedDifficulty, selectedCategory, selectedStatus, debouncedSearch]);
+  }, [
+    currentPage,
+    selectedDifficulty,
+    selectedCategory,
+    selectedStatus,
+    debouncedSearch,
+  ]);
 
   useEffect(() => {
     fetchProblems();
@@ -315,18 +350,21 @@ function ProblemsContent() {
     fetchProblemStats();
   }, [problems]);
 
-  const displayed = selectedStatus === "풀었음"
-    ? problems.filter((p) => problemStatusMap.get(p.id) === "solved")
-    : selectedStatus === "틀렸음"
-      ? problems.filter((p) => problemStatusMap.get(p.id) === "wrong")
-      : selectedStatus === "안 풀었음"
-        ? problems.filter((p) => (problemStatusMap.get(p.id) ?? "none") === "none")
-        : problems;
+  const displayed =
+    selectedStatus === "풀었음"
+      ? problems.filter((p) => problemStatusMap.get(p.id) === "solved")
+      : selectedStatus === "틀렸음"
+        ? problems.filter((p) => problemStatusMap.get(p.id) === "wrong")
+        : selectedStatus === "안 풀었음"
+          ? problems.filter(
+              (p) => (problemStatusMap.get(p.id) ?? "none") === "none",
+            )
+          : problems;
 
   const sortedDisplayed = useMemo(() => {
     return [...displayed].sort((a, b) => {
-      let aVal: any;
-      let bVal: any;
+      let aVal: SortValue;
+      let bVal: SortValue;
 
       if (sortField === "acceptanceRate") {
         const aStats = problemStatsMap.get(String(a.id));
@@ -340,22 +378,31 @@ function ProblemsContent() {
         aVal = getKoreanTag(a.tag1);
         bVal = getKoreanTag(b.tag1);
       } else if (sortField === "status") {
-        const statusOrder: Record<string, number> = { solved: 1, wrong: 2, none: 3 };
+        const statusOrder: Record<string, number> = {
+          solved: 1,
+          wrong: 2,
+          none: 3,
+        };
         aVal = statusOrder[problemStatusMap.get(a.id) ?? "none"];
         bVal = statusOrder[problemStatusMap.get(b.id) ?? "none"];
+      } else if (sortField === "title") {
+        aVal = a.title;
+        bVal = b.title;
       } else {
-        aVal = a[sortField as keyof Problem];
-        bVal = b[sortField as keyof Problem];
+        aVal = a.id;
+        bVal = b.id;
       }
 
       if (aVal === bVal) return 0;
-      if (aVal === null || aVal === undefined) return sortOrder === "asc" ? -1 : 1;
-      if (bVal === null || bVal === undefined) return sortOrder === "asc" ? 1 : -1;
+      if (aVal === null || aVal === undefined)
+        return sortOrder === "asc" ? -1 : 1;
+      if (bVal === null || bVal === undefined)
+        return sortOrder === "asc" ? 1 : -1;
 
       const res = aVal < bVal ? -1 : 1;
       return sortOrder === "asc" ? res : -res;
     });
-  }, [displayed, sortField, sortOrder, problemStatsMap]);
+  }, [displayed, sortField, sortOrder, problemStatsMap, problemStatusMap]);
 
   const totalPages = Math.max(1, Math.ceil(filteredCount / PAGE_SIZE));
 
@@ -376,7 +423,7 @@ function ProblemsContent() {
   };
 
   return (
-    <div className="w-full mx-auto px-24 pt-8 pb-20 space-y-6">
+    <div className="w-full mx-auto lg:px-24 px-12 pt-8 pb-20 space-y-6">
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
@@ -392,10 +439,16 @@ function ProblemsContent() {
               <BookOpen className="w-4 h-4 text-blue-500 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">총 문제</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                총 문제
+              </p>
               <p className="text-xl font-extrabold text-zinc-900 dark:text-zinc-100 leading-tight">
-                {isFetching && totalCount === 0 ? "—" : totalCount.toLocaleString()}
-                <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500 ml-1">문제</span>
+                {isFetching && totalCount === 0
+                  ? "—"
+                  : totalCount.toLocaleString()}
+                <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500 ml-1">
+                  문제
+                </span>
               </p>
             </div>
           </div>
@@ -404,14 +457,20 @@ function ProblemsContent() {
               <Trophy className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
             </div>
             <div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">해결한 문제</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                해결한 문제
+              </p>
               <p className="text-xl font-extrabold text-zinc-900 dark:text-zinc-100 leading-tight">
                 {!user ? (
-                  <span className="text-zinc-400 dark:text-zinc-500 text-sm font-medium">로그인 필요</span>
+                  <span className="text-zinc-400 dark:text-zinc-500 text-sm font-medium">
+                    로그인 필요
+                  </span>
                 ) : (
                   <>
                     {totalSolvedCount.toLocaleString()}
-                    <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500 ml-1">문제</span>
+                    <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500 ml-1">
+                      문제
+                    </span>
                   </>
                 )}
               </p>
@@ -423,31 +482,51 @@ function ProblemsContent() {
       <div className="bg-white dark:bg-[#18181b] border border-[#E2E8F0] dark:border-zinc-800 rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.05)] px-4 py-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">난이도</label>
+            <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+              난이도
+            </label>
             <select
               value={selectedDifficulty}
-              onChange={(e) => handleFilterChange(() => setDifficulty(e.target.value))}
+              onChange={(e) =>
+                handleFilterChange(() => setDifficulty(e.target.value))
+              }
               className="w-full bg-[#F8FAFC] dark:bg-[#09090b] border border-[#E2E8F0] dark:border-zinc-800 text-sm text-zinc-800 dark:text-zinc-200 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 dark:focus:border-blue-500/50 transition cursor-pointer"
             >
-              {DIFFICULTIES.map((d) => <option key={d} value={d}>{d}</option>)}
+              {DIFFICULTIES.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
             </select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">카테고리</label>
+            <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+              카테고리
+            </label>
             <select
               value={selectedCategory}
-              onChange={(e) => handleFilterChange(() => setCategory(e.target.value))}
+              onChange={(e) =>
+                handleFilterChange(() => setCategory(e.target.value))
+              }
               className="w-full bg-[#F8FAFC] dark:bg-[#09090b] border border-[#E2E8F0] dark:border-zinc-800 text-sm text-zinc-800 dark:text-zinc-200 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 dark:focus:border-blue-500/50 transition cursor-pointer"
             >
               <option value="전체">전체</option>
-              {categories.map((c) => <option key={c} value={c}>{getKoreanTag(c)}</option>)}
+              {categories.map((c) => (
+                <option key={c} value={c}>
+                  {getKoreanTag(c)}
+                </option>
+              ))}
             </select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">상태</label>
+            <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+              상태
+            </label>
             <select
               value={selectedStatus}
-              onChange={(e) => handleFilterChange(() => setStatus(e.target.value))}
+              onChange={(e) =>
+                handleFilterChange(() => setStatus(e.target.value))
+              }
               disabled={!user}
               className="w-full bg-[#F8FAFC] dark:bg-[#09090b] border border-[#E2E8F0] dark:border-zinc-800 text-sm text-zinc-800 dark:text-zinc-200 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 dark:focus:border-blue-500/50 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -458,7 +537,9 @@ function ProblemsContent() {
             </select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">검색</label>
+            <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+              검색
+            </label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
               <input
@@ -474,186 +555,342 @@ function ProblemsContent() {
       </div>
 
       <div className="bg-white dark:bg-[#18181b] border border-[#E2E8F0] dark:border-zinc-800 rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.05)] overflow-hidden">
-        <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-[#F8FAFC] dark:bg-zinc-800/30 border-b border-[#E2E8F0] dark:border-zinc-800">
-          <div
-            className="col-span-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors flex items-center gap-1 group"
-            onClick={() => handleSort("id")}
-          >
-            #
-            <span className="opacity-0 group-hover:opacity-100 transition-opacity">
-              {sortField === "id" ? (
-                sortOrder === "asc" ? <ArrowUp className="w-3 h-3 text-blue-500" /> : <ArrowDown className="w-3 h-3 text-blue-500" />
-              ) : <ArrowUpDown className="w-3 h-3" />}
-            </span>
-          </div>
-          <div
-            className={`${user ? "col-span-5" : "col-span-6"} text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors flex items-center gap-1 group`}
-            onClick={() => handleSort("title")}
-          >
-            제목
-            <span className="opacity-0 group-hover:opacity-100 transition-opacity">
-              {sortField === "title" ? (
-                sortOrder === "asc" ? <ArrowUp className="w-3 h-3 text-blue-500" /> : <ArrowDown className="w-3 h-3 text-blue-500" />
-              ) : <ArrowUpDown className="w-3 h-3" />}
-            </span>
-          </div>
-          <div
-            className="col-span-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors flex items-center gap-1 group"
-            onClick={() => handleSort("tag")}
-          >
-            태그
-            <span className="opacity-0 group-hover:opacity-100 transition-opacity">
-              {sortField === "tag" ? (
-                sortOrder === "asc" ? <ArrowUp className="w-3 h-3 text-blue-500" /> : <ArrowDown className="w-3 h-3 text-blue-500" />
-              ) : <ArrowUpDown className="w-3 h-3" />}
-            </span>
-          </div>
-          <div
-            className="col-span-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors flex items-center gap-1 group"
-            onClick={() => handleSort("difficulty")}
-          >
-            난이도
-            <span className="opacity-0 group-hover:opacity-100 transition-opacity">
-              {sortField === "difficulty" ? (
-                sortOrder === "asc" ? <ArrowUp className="w-3 h-3 text-blue-500" /> : <ArrowDown className="w-3 h-3 text-blue-500" />
-              ) : <ArrowUpDown className="w-3 h-3" />}
-            </span>
-          </div>
-          <div
-            className="col-span-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide text-right cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors flex items-center justify-end gap-1 group"
-            onClick={() => handleSort("acceptanceRate")}
-          >
-            정답률
-            <span className="opacity-0 group-hover:opacity-100 transition-opacity">
-              {sortField === "acceptanceRate" ? (
-                sortOrder === "asc" ? <ArrowUp className="w-3 h-3 text-blue-500" /> : <ArrowDown className="w-3 h-3 text-blue-500" />
-              ) : <ArrowUpDown className="w-3 h-3" />}
-            </span>
-          </div>
-          {user && (
-            <div
-              className="col-span-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide text-center cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors flex items-center justify-center gap-1 group"
-              onClick={() => handleSort("status")}
-            >
-              상태
-              <span className="opacity-0 group-hover:opacity-100 transition-opacity">
-                {sortField === "status" ? (
-                  sortOrder === "asc" ? <ArrowUp className="w-3 h-3 text-blue-500" /> : <ArrowDown className="w-3 h-3 text-blue-500" />
-                ) : <ArrowUpDown className="w-3 h-3" />}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {isFetching ? (
-          <div className="divide-y divide-[#E2E8F0] dark:divide-zinc-800">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="grid grid-cols-12 gap-4 px-6 py-4 animate-pulse">
-                <div className="col-span-1 h-4 bg-zinc-100 dark:bg-zinc-800 rounded" />
-                <div className={`${user ? "col-span-5" : "col-span-6"} h-4 bg-zinc-100 dark:bg-zinc-800 rounded`} />
-                <div className="col-span-2 h-4 bg-zinc-100 dark:bg-zinc-800 rounded" />
-                <div className="col-span-2 h-4 bg-zinc-100 dark:bg-zinc-800 rounded w-16" />
-                <div className="col-span-1 h-4 bg-zinc-100 dark:bg-zinc-800 rounded" />
-                {user && <div className="col-span-1 h-4 bg-zinc-100 dark:bg-zinc-800 rounded" />}
-              </div>
-            ))}
-          </div>
-        ) : displayed.length === 0 ? (
+        {displayed.length === 0 && !isFetching ? (
           <div className="py-20 text-center">
             <div className="w-16 h-16 bg-zinc-50 dark:bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-4">
               <BarChart2 className="w-8 h-8 text-zinc-300 dark:text-zinc-700" />
             </div>
-            <p className="text-zinc-500 dark:text-zinc-400 font-medium">조건에 맞는 문제가 없습니다</p>
-            <p className="text-zinc-400 dark:text-zinc-500 text-sm mt-1">필터를 조정해보세요</p>
-            <button onClick={resetFilters} className="mt-4 text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium">
+            <p className="text-zinc-500 dark:text-zinc-400 font-medium">
+              조건에 맞는 문제가 없습니다
+            </p>
+            <p className="text-zinc-400 dark:text-zinc-500 text-sm mt-1">
+              필터를 조정해보세요
+            </p>
+            <button
+              onClick={resetFilters}
+              className="mt-4 text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
+            >
               필터 초기화
             </button>
           </div>
         ) : (
-          <div className="divide-y divide-[#E2E8F0] dark:divide-zinc-800">
-            {sortedDisplayed.map((problem, i) => {
-              const status = problemStatusMap.get(problem.id) ?? "none";
-              const stats = problemStatsMap.get(String(problem.id));
-              const acceptanceRate = !stats || stats.attempted_users === 0 ? "-" : `${stats.acceptance_rate}%`;
-
-              return (
-                <div key={problem.id} className="group grid grid-cols-12 gap-4 items-center px-6 py-4 hover:bg-[#F8FAFC] dark:hover:bg-zinc-800/20 transition-colors border-b border-[#E2E8F0] dark:border-zinc-800 last:border-0">
-                  <div className="col-span-1 text-sm text-zinc-400 dark:text-zinc-500 font-medium">
-                    {problem.id ?? (currentPage - 1) * PAGE_SIZE + i + 1}
-                  </div>
-                  <div className={user ? "col-span-5" : "col-span-6"}>
-                    <Link href={`/problems/${problem.id}`} className="block">
-                      <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
-                        {problem.title}
-                      </p>
-                    </Link>
-                  </div>
-                  <div className="col-span-2 flex flex-wrap gap-1">
-                    <span className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 rounded-full font-medium">
-                      {getKoreanTag(problem.tag1)}
+          <Table className="min-w-210">
+            <TableHeader className="bg-[#F8FAFC] dark:bg-zinc-800/30">
+              <TableRow className="border-[#E2E8F0] dark:border-zinc-800 hover:bg-transparent">
+                <TableHead className="w-20 px-6">
+                  <button
+                    type="button"
+                    className="group flex items-center gap-1 transition-colors hover:text-zinc-700 dark:hover:text-zinc-200"
+                    onClick={() => handleSort("id")}
+                  >
+                    #
+                    <span className="opacity-0 transition-opacity group-hover:opacity-100">
+                      {sortField === "id" ? (
+                        sortOrder === "asc" ? (
+                          <ArrowUp className="h-3 w-3 text-blue-500" />
+                        ) : (
+                          <ArrowDown className="h-3 w-3 text-blue-500" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3" />
+                      )}
                     </span>
-                    {problem.tag2 && (
-                      <span className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 rounded-full font-medium">
-                        {getKoreanTag(problem.tag2)}
+                  </button>
+                </TableHead>
+                <TableHead className="min-w-60">
+                  <button
+                    type="button"
+                    className="group flex items-center gap-1 transition-colors hover:text-zinc-700 dark:hover:text-zinc-200"
+                    onClick={() => handleSort("title")}
+                  >
+                    제목
+                    <span className="opacity-0 transition-opacity group-hover:opacity-100">
+                      {sortField === "title" ? (
+                        sortOrder === "asc" ? (
+                          <ArrowUp className="h-3 w-3 text-blue-500" />
+                        ) : (
+                          <ArrowDown className="h-3 w-3 text-blue-500" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3" />
+                      )}
+                    </span>
+                  </button>
+                </TableHead>
+                <TableHead className="min-w-45">
+                  <button
+                    type="button"
+                    className="group flex items-center gap-1 transition-colors hover:text-zinc-700 dark:hover:text-zinc-200"
+                    onClick={() => handleSort("tag")}
+                  >
+                    태그
+                    <span className="opacity-0 transition-opacity group-hover:opacity-100">
+                      {sortField === "tag" ? (
+                        sortOrder === "asc" ? (
+                          <ArrowUp className="h-3 w-3 text-blue-500" />
+                        ) : (
+                          <ArrowDown className="h-3 w-3 text-blue-500" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3" />
+                      )}
+                    </span>
+                  </button>
+                </TableHead>
+                <TableHead className="w-36">
+                  <button
+                    type="button"
+                    className="group flex items-center gap-1 transition-colors hover:text-zinc-700 dark:hover:text-zinc-200"
+                    onClick={() => handleSort("difficulty")}
+                  >
+                    난이도
+                    <span className="opacity-0 transition-opacity group-hover:opacity-100">
+                      {sortField === "difficulty" ? (
+                        sortOrder === "asc" ? (
+                          <ArrowUp className="h-3 w-3 text-blue-500" />
+                        ) : (
+                          <ArrowDown className="h-3 w-3 text-blue-500" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3" />
+                      )}
+                    </span>
+                  </button>
+                </TableHead>
+                <TableHead className="w-28 text-right">
+                  <button
+                    type="button"
+                    className="group ml-auto flex items-center justify-end gap-1 transition-colors hover:text-zinc-700 dark:hover:text-zinc-200"
+                    onClick={() => handleSort("acceptanceRate")}
+                  >
+                    정답률
+                    <span className="opacity-0 transition-opacity group-hover:opacity-100">
+                      {sortField === "acceptanceRate" ? (
+                        sortOrder === "asc" ? (
+                          <ArrowUp className="h-3 w-3 text-blue-500" />
+                        ) : (
+                          <ArrowDown className="h-3 w-3 text-blue-500" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3" />
+                      )}
+                    </span>
+                  </button>
+                </TableHead>
+                {user && (
+                  <TableHead className="w-24 text-center">
+                    <button
+                      type="button"
+                      className="group mx-auto flex items-center justify-center gap-1 transition-colors hover:text-zinc-700 dark:hover:text-zinc-200"
+                      onClick={() => handleSort("status")}
+                    >
+                      상태
+                      <span className="opacity-0 transition-opacity group-hover:opacity-100">
+                        {sortField === "status" ? (
+                          sortOrder === "asc" ? (
+                            <ArrowUp className="h-3 w-3 text-blue-500" />
+                          ) : (
+                            <ArrowDown className="h-3 w-3 text-blue-500" />
+                          )
+                        ) : (
+                          <ArrowUpDown className="h-3 w-3" />
+                        )}
                       </span>
-                    )}
-                  </div>
-                  <div className="col-span-2">
-                    <DifficultyBadge difficulty={problem.difficulty} />
-                  </div>
-                  <div className="col-span-1 text-right">
-                    <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">{acceptanceRate}</span>
-                  </div>
-                  {user && (
-                    <div className="col-span-1 flex justify-center">
-                      <StatusIcon result={status === "solved" ? "AC" : status === "wrong" ? "WA" : null} />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                    </button>
+                  </TableHead>
+                )}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isFetching
+                ? Array.from({ length: 8 }).map((_, i) => (
+                    <TableRow
+                      key={i}
+                      className="animate-pulse border-[#E2E8F0] dark:border-zinc-800 hover:bg-transparent"
+                    >
+                      <TableCell className="px-6">
+                        <div className="h-4 rounded bg-zinc-100 dark:bg-zinc-800" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-4 rounded bg-zinc-100 dark:bg-zinc-800" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-4 rounded bg-zinc-100 dark:bg-zinc-800" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-4 w-16 rounded bg-zinc-100 dark:bg-zinc-800" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="ml-auto h-4 w-12 rounded bg-zinc-100 dark:bg-zinc-800" />
+                      </TableCell>
+                      {user && (
+                        <TableCell>
+                          <div className="mx-auto h-4 w-6 rounded bg-zinc-100 dark:bg-zinc-800" />
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))
+                : sortedDisplayed.map((problem, i) => {
+                    const status = problemStatusMap.get(problem.id) ?? "none";
+                    const stats = problemStatsMap.get(String(problem.id));
+                    const acceptanceRate =
+                      !stats || stats.attempted_users === 0
+                        ? "-"
+                        : `${stats.acceptance_rate}%`;
+
+                    return (
+                      <TableRow
+                        key={problem.id}
+                        className="group border-[#E2E8F0] dark:border-zinc-800 hover:bg-[#F8FAFC] dark:hover:bg-zinc-800/20"
+                      >
+                        <TableCell className="px-6 text-sm font-medium text-zinc-400 dark:text-zinc-500">
+                          {problem.id ?? (currentPage - 1) * PAGE_SIZE + i + 1}
+                        </TableCell>
+                        <TableCell>
+                          <Link
+                            href={`/problems/${problem.id}`}
+                            className="block"
+                          >
+                            <p className="line-clamp-1 text-sm font-semibold text-zinc-800 transition-colors group-hover:text-blue-600 dark:text-zinc-200 dark:group-hover:text-blue-400">
+                              {problem.title}
+                            </p>
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                              {getKoreanTag(problem.tag1)}
+                            </span>
+                            {problem.tag2 && (
+                              <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                                {getKoreanTag(problem.tag2)}
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <DifficultyBadge difficulty={problem.difficulty} />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+                            {acceptanceRate}
+                          </span>
+                        </TableCell>
+                        {user && (
+                          <TableCell>
+                            <div className="flex justify-center">
+                              <StatusIcon
+                                result={
+                                  status === "solved"
+                                    ? "AC"
+                                    : status === "wrong"
+                                      ? "WA"
+                                      : null
+                                }
+                              />
+                            </div>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    );
+                  })}
+            </TableBody>
+          </Table>
         )}
 
-        {!isFetching && totalCount > 0 && (
-          <div className="flex items-center justify-between px-6 py-4 bg-[#F8FAFC] dark:bg-zinc-800/30 border-t border-[#E2E8F0] dark:border-zinc-800">
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              총 <span className="font-semibold text-zinc-700 dark:text-zinc-300">{filteredCount.toLocaleString()}</span>개 문제
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed transition"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <div className="flex items-center gap-1">
-                {(() => {
-                  const pages = [];
-                  const win = 5;
-                  let s = Math.max(1, currentPage - Math.floor(win / 2));
-                  const e = Math.min(totalPages, s + win - 1);
-                  s = Math.max(1, e - win + 1);
-                  for (let p = s; p <= e; p++) pages.push(p);
-                  return pages.map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => setCurrentPage(p)}
-                      className={`w-8 h-8 text-sm rounded-md font-medium transition ${currentPage === p ? "bg-blue-600 text-white shadow-sm" : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"}`}
-                    >
-                      {p}
-                    </button>
-                  ));
-                })()}
+        {!isFetching && filteredCount > 0 && (
+          <div className="border-t border-[#E2E8F0] bg-[#F8FAFC] lg:px-4 px-0 py-4 dark:border-zinc-800 dark:bg-zinc-800/30 sm:px-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="whitespace-nowrap text-center text-xs text-zinc-500 dark:text-zinc-400 sm:text-left">
+                총{" "}
+                <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+                  {filteredCount.toLocaleString()}
+                </span>
+                개 문제
+              </p>
+
+              <div className="w-full min-w-0 overflow-x-auto sm:w-auto">
+                <div className="mx-auto flex w-max items-center justify-center gap-1 sm:mx-0">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    className="h-8 w-8 shrink-0 items-center justify-center rounded-md text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 sm:inline-flex"
+                    aria-label="첫 페이지로 이동"
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                    aria-label="이전 페이지로 이동"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+
+                  <div className="flex shrink-0 items-center gap-1">
+                    {(() => {
+                      const pages: number[] = [];
+                      const windowSize = 5;
+
+                      let start = Math.max(
+                        1,
+                        currentPage - Math.floor(windowSize / 2),
+                      );
+                      let end = Math.min(totalPages, start + windowSize - 1);
+
+                      start = Math.max(1, end - windowSize + 1);
+
+                      for (let page = start; page <= end; page++) {
+                        pages.push(page);
+                      }
+
+                      return pages.map((page) => (
+                        <button
+                          key={page}
+                          type="button"
+                          onClick={() => setCurrentPage(page)}
+                          aria-current={
+                            currentPage === page ? "page" : undefined
+                          }
+                          className={`h-8 min-w-8 shrink-0 rounded-md px-2 text-sm font-medium transition ${
+                            currentPage === page
+                              ? "bg-blue-600 text-white shadow-sm"
+                              : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ));
+                    })()}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                    aria-label="다음 페이지로 이동"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="h-8 w-8 shrink-0 items-center justify-center rounded-md text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 sm:inline-flex"
+                    aria-label="마지막 페이지로 이동"
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
-              <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed transition"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
             </div>
           </div>
         )}
@@ -665,11 +902,13 @@ function ProblemsContent() {
 export default function ProblemsPage() {
   return (
     <div className="min-h-screen bg-[#F7F9FC] dark:bg-[#09090b]">
-      <Suspense fallback={
-        <div className="w-full mx-auto px-6 pt-8 pb-20 flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-        </div>
-      }>
+      <Suspense
+        fallback={
+          <div className="mx-auto flex min-h-96 w-full items-center justify-center px-6 pt-8 pb-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          </div>
+        }
+      >
         <ProblemsContent />
       </Suspense>
     </div>

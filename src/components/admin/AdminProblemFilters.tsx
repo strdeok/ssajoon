@@ -44,7 +44,7 @@ export function AdminProblemFilters({ categories }: AdminProblemFiltersProps) {
   return (
     <div className="flex flex-wrap gap-4 items-center bg-zinc-50 dark:bg-zinc-800/30 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
       <div className="flex flex-col gap-1.5">
-        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider ml-1">카테고리</label>
+        <label className="ml-1 text-xs font-bold uppercase tracking-wider text-zinc-500">카테고리</label>
         <select
           value={currentCategory}
           onChange={(e) => updateFilter("category", e.target.value)}
@@ -58,7 +58,7 @@ export function AdminProblemFilters({ categories }: AdminProblemFiltersProps) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider ml-1">난이도</label>
+        <label className="ml-1 text-xs font-bold uppercase tracking-wider text-zinc-500">난이도</label>
         <select
           value={currentDifficulty}
           onChange={(e) => updateFilter("difficulty", e.target.value)}
@@ -71,7 +71,7 @@ export function AdminProblemFilters({ categories }: AdminProblemFiltersProps) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider ml-1">상태</label>
+        <label className="ml-1 text-xs font-bold uppercase tracking-wider text-zinc-500">상태</label>
         <select
           value={currentStatus}
           onChange={(e) => updateFilter("status", e.target.value)}
@@ -84,7 +84,7 @@ export function AdminProblemFilters({ categories }: AdminProblemFiltersProps) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider ml-1">정렬</label>
+        <label className="ml-1 text-xs font-bold uppercase tracking-wider text-zinc-500">정렬</label>
         <select
           value={currentSort}
           onChange={(e) => updateFilter("sort", e.target.value)}

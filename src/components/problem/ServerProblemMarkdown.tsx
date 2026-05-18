@@ -1,10 +1,21 @@
+"use client";
+
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import ProblemMarkdown from "@/components/common/ProblemMarkdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import { usePathname } from "next/navigation";
+import "katex/dist/katex.min.css";
 
-type ServerProblemMarkdownProps = {
+interface ProblemMarkdownProps {
   content: string | null | undefined;
-};
+  className?: string;
+  variant?: "default" | "compact";
+}
+
+function cn(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
 
 function normalizeMarkdownContent(content: string | null | undefined) {
   if (!content) return "";
@@ -15,73 +26,169 @@ function normalizeMarkdownContent(content: string | null | undefined) {
     .replace(/\\n/g, "\n")
     .replace(/\\\s+\)/g, "\\)")
     .replace(/\\\s+\]/g, "\\]")
+    .replace(/\\\(([\s\S]*?)\\\)/g, (_, math: string) => `$${math.trim()}$`)
+    .replace(
+      /\\\[([\s\S]*?)\\\]/g,
+      (_, math: string) => `$$\n${math.trim()}\n$$`,
+    )
     .replace(/^\s*[-*+]\s*$/gm, "")
     .replace(/^\s*[-*+]\s*\n+\s+/gm, "- ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
-function hasMathSyntax(content: string) {
-  return /(^|[^\\])\$\$[\s\S]+?\$\$|(^|[^\\])\$[^$\n]+?\$|\\\([\s\S]+?\\\)|\\\[[\s\S]+?\\\]/.test(
-    content,
-  );
-}
+const defaultMarkdownClassName =
+  "prose prose-zinc max-w-none dark:prose-invert " +
+  "prose-p:my-3 prose-p:leading-8 " +
+  "prose-li:my-1 prose-li:leading-8 " +
+  "prose-ul:my-4 prose-ul:pl-6 " +
+  "prose-ol:my-4 prose-ol:pl-6 " +
+  "prose-pre:max-w-none prose-pre:overflow-x-auto prose-pre:bg-zinc-900 prose-pre:text-zinc-100 " +
+  "prose-code:before:content-none prose-code:after:content-none " +
+  "prose-table:max-w-none";
 
-export function ServerProblemMarkdown({ content }: ServerProblemMarkdownProps) {
+const compactMarkdownClassName =
+  "max-w-none text-xs leading-5 text-zinc-400 dark:text-zinc-500";
+
+export default function ServerProblemMarkdown({
+  content,
+  className,
+  variant = "default",
+}: ProblemMarkdownProps) {
+  const pathname = usePathname();
   const normalizedContent = normalizeMarkdownContent(content);
-
-  if (!normalizedContent) return null;
-
-  if (hasMathSyntax(normalizedContent)) {
-    return <ProblemMarkdown content={normalizedContent} />;
-  }
+  const isCompact = variant === "compact";
 
   return (
-    <div className="problem-markdown prose prose-zinc max-w-none dark:prose-invert prose-p:my-2 prose-p:max-w-[72ch] prose-p:leading-7 prose-li:my-1 prose-li:max-w-[72ch] prose-li:leading-7 prose-ul:my-3 prose-ul:max-w-[72ch] prose-ul:pl-6 prose-ol:my-3 prose-ol:max-w-[72ch] prose-ol:pl-6 prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-code:before:content-none prose-code:after:content-none">
+    <div
+      className={cn(
+        "problem-markdown w-full",
+        isCompact ? compactMarkdownClassName : defaultMarkdownClassName,
+        className,
+      )}
+    >
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[rehypeKatex]}
         components={{
-          h1: ({ children }) => (
-            <h1 className="mb-4 mt-0 max-w-[72ch] text-2xl font-bold">
+          h1: ({ children }) =>
+            isCompact ? (
+              <span>{children}</span>
+            ) : (
+              <h1 className="mb-4 mt-0 w-full text-2xl font-bold">
+                {children}
+              </h1>
+            ),
+
+          h2: ({ children }) =>
+            isCompact ? (
+              <span>{children}</span>
+            ) : (
+              <h2 className="mb-3 mt-6 w-full text-xl font-bold">
+                {children}
+              </h2>
+            ),
+
+          h3: ({ children }) =>
+            isCompact ? (
+              <span>{children}</span>
+            ) : (
+              <h3 className="mb-2 mt-5 w-full text-lg font-semibold">
+                {children}
+              </h3>
+            ),
+
+          p: ({ children }) =>
+            isCompact ? (
+              <span>{children}</span>
+            ) : (
+              <p className="my-3 w-full leading-8 text-zinc-700 dark:text-zinc-300">
+                {children}
+              </p>
+            ),
+
+          ul: ({ children }) =>
+            isCompact ? (
+              <span>{children}</span>
+            ) : (
+              <ul className="my-4 w-full list-disc space-y-1 pl-6 text-zinc-700 dark:text-zinc-300">
+                {children}
+              </ul>
+            ),
+
+          ol: ({ children }) =>
+            isCompact ? (
+              <span>{children}</span>
+            ) : (
+              <ol className="my-4 w-full list-decimal space-y-1 pl-6 text-zinc-700 dark:text-zinc-300">
+                {children}
+              </ol>
+            ),
+
+          li: ({ children }) =>
+            isCompact ? (
+              <span>{children} </span>
+            ) : (
+              <li
+                className={cn(
+                  "leading-8 [&>p]:my-0 [&>p]:leading-8",
+                  pathname === "/search" && "[&>p]:mt-0!",
+                )}
+              >
+                {children}
+              </li>
+            ),
+
+          table: ({ children }) =>
+            isCompact ? (
+              <span>{children}</span>
+            ) : (
+              <div className="my-4 w-full overflow-x-auto">
+                <table className="min-w-max table-auto border-collapse text-sm">
+                  {children}
+                </table>
+              </div>
+            ),
+
+          thead: ({ children }) => (
+            <thead className="border-b border-zinc-200 dark:border-zinc-700">
               {children}
-            </h1>
+            </thead>
           ),
-          h2: ({ children }) => (
-            <h2 className="mb-3 mt-6 max-w-[72ch] text-xl font-bold">
+
+          th: ({ children }) => (
+            <th className="whitespace-nowrap border border-zinc-200 bg-zinc-50 px-3 py-2 text-left font-semibold text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
               {children}
-            </h2>
+            </th>
           ),
-          h3: ({ children }) => (
-            <h3 className="mb-2 mt-5 max-w-[72ch] text-lg font-semibold">
+
+          td: ({ children }) => (
+            <td className="border border-zinc-200 px-3 py-2 text-zinc-700 dark:border-zinc-700 dark:text-zinc-300">
               {children}
-            </h3>
+            </td>
           ),
-          p: ({ children }) => (
-            <p className="my-2 max-w-[72ch] leading-7 text-zinc-700 dark:text-zinc-300">
-              {children}
-            </p>
-          ),
-          ul: ({ children }) => (
-            <ul className="my-3 max-w-[72ch] list-disc space-y-1 pl-6 text-zinc-700 dark:text-zinc-300">
-              {children}
-            </ul>
-          ),
-          ol: ({ children }) => (
-            <ol className="my-3 max-w-[72ch] list-decimal space-y-1 pl-6 text-zinc-700 dark:text-zinc-300">
-              {children}
-            </ol>
-          ),
-          li: ({ children }) => (
-            <li className="max-w-[72ch] leading-7 [&>p]:my-0 [&>p]:max-w-[72ch] [&>p]:leading-7">
-              {children}
-            </li>
-          ),
+
+          pre: ({ children }) =>
+            isCompact ? (
+              <span>{children}</span>
+            ) : (
+              <pre className="my-4 w-full overflow-x-auto rounded-lg bg-zinc-900 p-4 text-sm text-zinc-100">
+                {children}
+              </pre>
+            ),
+
           code: ({ children, className }) => {
-            if (className) {
+            const isBlockCode = Boolean(className);
+
+            if (isBlockCode) {
               return <code className={className}>{children}</code>;
             }
 
-            return (
+            return isCompact ? (
+              <code className="text-blue-500 dark:text-blue-300">
+                {children}
+              </code>
+            ) : (
               <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-sm text-blue-600 dark:bg-zinc-800 dark:text-blue-300">
                 {children}
               </code>
