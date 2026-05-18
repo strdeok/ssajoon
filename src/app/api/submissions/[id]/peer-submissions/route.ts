@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 const PAGE_SIZE = 10;
+const MAX_PAGE_SIZE = 50;
 
 const sortConfig = {
   recent: { column: "submitted_at", ascending: false },
@@ -42,6 +44,13 @@ function getPage(value: string | null) {
   return Number.isInteger(page) && page > 0 ? page : 1;
 }
 
+function getPageSize(value: string | null) {
+  const pageSize = Number(value ?? PAGE_SIZE);
+  return Number.isInteger(pageSize) && pageSize > 0
+    ? Math.min(pageSize, MAX_PAGE_SIZE)
+    : PAGE_SIZE;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -58,13 +67,25 @@ export async function GET(
 
   const sort = getSortType(request.nextUrl.searchParams.get("sort"));
   const page = getPage(request.nextUrl.searchParams.get("page"));
-  const offset = (page - 1) * PAGE_SIZE;
-  const supabase = createAdminClient();
+  const pageSize = getPageSize(request.nextUrl.searchParams.get("pageSize"));
+  const offset = (page - 1) * pageSize;
+  const supabase = await createClient();
+  const supabaseAdmin = createAdminClient();
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const { data: currentSubmission, error: currentError } = await supabase
     .from("submissions")
     .select("id, problem_id, language")
     .eq("id", submissionId)
+    .eq("user_id", user.id)
     .or("is_deleted.is.false,is_deleted.is.null")
     .maybeSingle();
 
@@ -78,7 +99,7 @@ export async function GET(
     return NextResponse.json({
       items: [],
       page,
-      pageSize: PAGE_SIZE,
+      pageSize,
       totalCount: 0,
     });
   }
@@ -95,6 +116,7 @@ export async function GET(
     .in("result", ["AC", "ACCEPTED"])
     .or("is_deleted.is.false,is_deleted.is.null")
     .neq("id", current.id)
+    .neq("user_id", user.id)
     .order(config.column, {
       ascending: config.ascending,
       nullsFirst: false,
@@ -115,7 +137,7 @@ export async function GET(
     data: peerRows,
     error: peerError,
     count,
-  } = await peerQuery.range(offset, offset + PAGE_SIZE - 1);
+  } = await peerQuery.range(offset, offset + pageSize - 1);
 
   if (peerError) {
     return NextResponse.json({ error: peerError.message }, { status: 500 });
@@ -132,7 +154,7 @@ export async function GET(
   const nicknameMap = new Map<string, string>();
 
   if (userIds.length > 0) {
-    const { data: users } = await supabase
+    const { data: users } = await supabaseAdmin
       .from("users")
       .select("id, nickname")
       .in("id", userIds);
@@ -155,7 +177,7 @@ export async function GET(
       submittedAt: submission.submitted_at,
     })),
     page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     totalCount: count ?? 0,
   });
 }
