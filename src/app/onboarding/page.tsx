@@ -62,8 +62,13 @@ export default function OnboardingPage({
     try {
       const result = await checkNicknameDuplicate(nickname);
 
+      if (result.error) {
+        setNicknameStatus("idle");
+        return;
+      }
+
       setNicknameStatus(result.isDuplicate ? "duplicate" : "available");
-    } catch (error) {
+    } catch {
       setNicknameStatus("idle");
     }
   };
@@ -77,6 +82,12 @@ export default function OnboardingPage({
 
       const result = await checkSchoolNumberDuplicate(schoolNumber);
       console.log(result)
+
+      if (result.error) {
+        setSchoolNumberStatus(result.status);
+        return;
+      }
+
       setSchoolNumberStatus(result.status);
     } catch {
       setSchoolNumberStatus("length");

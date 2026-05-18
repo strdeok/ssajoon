@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -15,6 +16,8 @@ export async function setupProfile(formData: FormData) {
     return redirect("/login");
   }
 
+  const supabaseAdmin = createAdminClient();
+
   // Validate that both nickname and school_number are provided
   if (!nickname.trim()) {
     return redirect(`/onboarding?message=${encodeURIComponent("닉네임을 입력해주세요.")}`);
@@ -25,10 +28,11 @@ export async function setupProfile(formData: FormData) {
   }
 
   // Check unique nickname using public users table
-  const { data: existingProfile, error: nicknameError } = await supabase
+  const { data: existingProfile, error: nicknameError } = await supabaseAdmin
     .from("users")
-    .select("nickname")
+    .select("id")
     .eq("nickname", nickname.trim())
+    .neq("id", user.id)
     .maybeSingle();
 
   if (nicknameError) {
@@ -40,10 +44,11 @@ export async function setupProfile(formData: FormData) {
   }
 
   // Check unique school_number using public users table
-  const { data: existingSchoolNumber, error: schoolError } = await supabase
+  const { data: existingSchoolNumber, error: schoolError } = await supabaseAdmin
     .from("users")
-    .select("school_number")
-    .eq("school_number", parseInt(school_number))
+    .select("id")
+    .eq("school_number", school_number.trim())
+    .neq("id", user.id)
     .maybeSingle();
 
   if (schoolError) {
