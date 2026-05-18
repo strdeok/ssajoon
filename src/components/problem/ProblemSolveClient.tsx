@@ -15,6 +15,7 @@ import {
   TestResultViewer,
 } from "@/components/submission/TestResultViewer";
 import { EditorSkeleton } from "@/components/problem/EditorSkeleton";
+import { createClient } from "@/utils/supabase/client";
 
 const CodeEditor = dynamic(
   () => import("@/components/editor/CodeEditor").then((mod) => mod.CodeEditor),
@@ -92,6 +93,7 @@ export function ProblemSolveClient({ problem }: ProblemSolveClientProps) {
     isCodeSectionLocked || isSubmitting || isTesting || isCodeLoading;
   const { submissionId, status, result, setSubmissionId, setStatus, reset } =
     useSubmissionStore();
+  const setResult = useSubmissionStore((state) => state.setResult);
 
   const closeEventSource = useCallback(() => {
     eventSourceRef.current?.close();
@@ -102,6 +104,40 @@ export function ProblemSolveClient({ problem }: ProblemSolveClientProps) {
     const messageEvent = event as MessageEvent<string>;
     return JSON.parse(messageEvent.data) as JudgeEventPayload;
   }, []);
+
+  const loadSubmissionResult = useCallback(
+    async (sid: string | number, fallbackResult: SubmissionStatus | null) => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("submissions")
+        .select(
+          "status, result, execution_time_ms, memory_kb, failed_testcase_order",
+        )
+        .eq("id", sid)
+        .maybeSingle();
+
+      if (!data) {
+        setResult(
+          fallbackResult
+            ? {
+                status: fallbackResult,
+                result: fallbackResult,
+              }
+            : null,
+        );
+        return;
+      }
+
+      setResult({
+        status: (data.status || fallbackResult || "DONE") as SubmissionStatus,
+        result: data.result || fallbackResult || undefined,
+        execution_time_ms: data.execution_time_ms ?? undefined,
+        memory_kb: data.memory_kb ?? undefined,
+        failed_testcase_order: data.failed_testcase_order ?? undefined,
+      });
+    },
+    [setResult],
+  );
 
   const handleRunningEvent = useCallback(
     (event: Event) => {
@@ -123,6 +159,7 @@ export function ProblemSolveClient({ problem }: ProblemSolveClientProps) {
         receivedDoneRef.current = true;
         setProgress({ ...payload });
         setStatus((payload.result || "DONE") as SubmissionStatus);
+        void loadSubmissionResult(payload.submissionId, payload.result);
         setIsSubmitting(false);
         closeEventSource();
       } catch {
@@ -131,7 +168,7 @@ export function ProblemSolveClient({ problem }: ProblemSolveClientProps) {
         closeEventSource();
       }
     },
-    [closeEventSource, parseJudgeEvent, setStatus],
+    [closeEventSource, loadSubmissionResult, parseJudgeEvent, setStatus],
   );
 
   const handleProxyErrorEvent = useCallback(

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useSubmissionStore } from "@/store/submissionStore";
 import { Problem } from "@/types/problem";
+import { FailedTestcaseModal } from "@/components/submission/FailedTestcaseModal";
 
 import { SubmissionStatus } from "@/types/submission";
 
@@ -166,9 +167,13 @@ export function ResultViewer({
     effectiveResult,
     isRunning ? "RUNNING" : effectiveStatus,
   );
+  const failedTestcaseOrder = result?.failed_testcase_order;
+  const shouldShowFailedTestcase =
+    resultInfo.type === "fail" &&
+    Boolean(failedTestcaseOrder) &&
+    Boolean(effectiveSubmissionId) &&
+    Boolean(problem?.id);
 
-  const completedTestcases = Math.max(0, progress?.completedTestcases ?? 0);
-  const totalTestcases = Math.max(0, progress?.totalTestcases ?? 0);
   const progressPercent = clampPercent(progress?.progressPercent);
 
   if (!progress && !status && !submissionId && !submitError) return null;
@@ -238,6 +243,16 @@ export function ResultViewer({
       {submitError && (
         <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-600 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400">
           {submitError}
+        </div>
+      )}
+
+      {shouldShowFailedTestcase && (
+        <div className="mt-4">
+          <FailedTestcaseModal
+            submissionId={String(effectiveSubmissionId)}
+            problemId={String(problem?.id)}
+            failedOrder={failedTestcaseOrder}
+          />
         </div>
       )}
 
