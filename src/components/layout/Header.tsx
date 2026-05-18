@@ -21,7 +21,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/95 shadow-sm backdrop-blur dark:border-white/5 dark:bg-[#09090b]/95">
-      <div className="mx-auto flex w-full max-w-7xl items-center gap-2 px-4 py-3 sm:gap-3 sm:px-6 lg:px-8">
+      <div className="w-full flex items-center justify-between gap-4 lg:px-24 lg:py-4 md:px-12 md:py-4 px-6 py-4">
         <Link
           href="/"
           prefetch={false}
@@ -45,20 +45,6 @@ export function Header() {
           ))}
         </nav>
 
-        <form
-          action="/problems"
-          method="GET"
-          className="relative hidden min-w-0 flex-1 md:block"
-        >
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="text"
-            name="q"
-            placeholder="문제 번호 또는 제목 검색"
-            className="h-11 rounded-full border-zinc-200 bg-zinc-50 pl-10 pr-4 dark:border-zinc-800 dark:bg-zinc-900/50"
-          />
-        </form>
-
         <div className="ml-auto hidden items-center gap-3 lg:flex">
           <ThemeSwitcher />
           <Separator orientation="vertical" className="h-8" />
@@ -69,7 +55,6 @@ export function Header() {
           <ThemeSwitcher />
           <Button
             type="button"
-            variant="outline"
             size="icon"
             className="rounded-full"
             onClick={() => setMobileOpen((current) => !current)}
@@ -87,15 +72,6 @@ export function Header() {
         )}
       >
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6">
-          <form action="/problems" method="GET" className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="text"
-              name="q"
-              placeholder="문제 번호 또는 제목 검색"
-              className="h-11 rounded-full pl-10"
-            />
-          </form>
           <nav className="flex flex-col gap-1">
             {navItems.map((item) => (
               <Link

@@ -91,7 +91,6 @@ export function AuthNav() {
           href="/admin"
           prefetch={false}
           className={buttonVariants({
-            variant: "outline",
             size: "sm",
             className: "w-full justify-center rounded-full lg:w-auto",
           })}
@@ -105,7 +104,7 @@ export function AuthNav() {
         href="/mypage"
         prefetch={false}
         className={cn(
-          "inline-flex w-full min-w-0 items-center justify-center gap-2 rounded-full border border-border bg-background px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground lg:w-auto lg:justify-start",
+          "inline-flex w-full min-w-0 items-center justify-center gap-2 rounded-full bg-background px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground lg:w-auto lg:justify-start",
         )}
       >
         <UserCircle2 className="h-4 w-4 shrink-0" />

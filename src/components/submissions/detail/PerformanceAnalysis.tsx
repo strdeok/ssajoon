@@ -27,6 +27,7 @@ function calculateAverage(values: number[]) {
 
 function calculateTopPercent(myValue: number | null, values: number[]) {
   if (!isValidNumber(myValue) || values.length === 0) return null;
+  if (values.length <= 1) return 0;
 
   const betterCount = values.filter((value) => value < myValue).length;
   const rank = betterCount + 1;

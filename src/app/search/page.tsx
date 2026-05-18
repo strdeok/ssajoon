@@ -6,14 +6,19 @@ import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   ChevronRight,
-  Clock,
   Loader2,
-  MemoryStick,
   Search,
   SearchIcon,
-  Sparkles,
 } from "lucide-react";
 import { DIFFICULTY_ORDER, getKoreanTag } from "@/utils/tagUtils";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface OptionItem {
   tag1: string;
@@ -127,19 +132,6 @@ export default function GeneratePage() {
       (a, b) => getDifficultyRank(a) - getDifficultyRank(b),
     );
   }, [optionItems, selectedTag1, selectedTag2]);
-
-  const matchingProblemCount = useMemo(() => {
-    return optionItems
-      .filter((item) => {
-        const tag1Matches = selectedTag1 === ALL_OPTION || item.tag1 === selectedTag1;
-        const tag2Matches = selectedTag2 === ALL_OPTION || item.tag2 === selectedTag2;
-        const difficultyMatches =
-          selectedDifficulty === ALL_OPTION || item.difficulty === selectedDifficulty;
-
-        return tag1Matches && tag2Matches && difficultyMatches;
-      })
-      .reduce((sum, item) => sum + item.count, 0);
-  }, [optionItems, selectedDifficulty, selectedTag1, selectedTag2]);
 
   const resetResults = () => {
     setProblems([]);
@@ -320,52 +312,66 @@ export default function GeneratePage() {
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 h-98 overflow-y-scroll">
-                {problems.map((problem) => (
-                  <button
-                    key={problem.id}
-                    type="button"
-                    onClick={() => router.push(`/problems/${problem.id}`)}
-                    className="group w-full rounded-2xl border border-zinc-200 max-h-32 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md dark:border-zinc-800 dark:bg-[#09090b] dark:hover:border-blue-500/50"
-                  >
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="min-w-0 flex-1 space-y-3">
-                        <div className="flex flex-wrap items-center gap-2">
+              <div className="max-h-98 overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-[#09090b]">
+                <Table className="min-w-210">
+                  <TableHeader className="bg-zinc-50 dark:bg-white/3">
+                    <TableRow className="border-zinc-200 hover:bg-transparent dark:border-zinc-800">
+                      <TableHead className="w-16 px-5">#</TableHead>
+                      <TableHead className="min-w-55">문제</TableHead>
+                      <TableHead className="w-32">난이도</TableHead>
+                      <TableHead className="min-w-45">유형</TableHead>
+                      <TableHead className="w-24 text-right">시간</TableHead>
+                      <TableHead className="w-24 text-right">메모리</TableHead>
+                      <TableHead className="w-12" />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {problems.map((problem) => (
+                      <TableRow
+                        key={problem.id}
+                        onClick={() => router.push(`/problems/${problem.id}`)}
+                        className="group cursor-pointer border-zinc-200 hover:bg-blue-50/50 dark:border-zinc-800 dark:hover:bg-blue-500/5"
+                      >
+                        <TableCell className="px-5 text-sm font-semibold text-zinc-400 dark:text-zinc-500">
+                          {problem.id}
+                        </TableCell>
+                        <TableCell>
+                          <span className="line-clamp-1 text-sm font-black text-zinc-950 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+                            {problem.title}
+                          </span>
+                        </TableCell>
+                        <TableCell>
                           <span
-                            className={`rounded-full border px-3 py-1 text-xs font-bold ${difficultyColor(problem.difficulty)}`}
+                            className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${difficultyColor(problem.difficulty)}`}
                           >
                             {problem.difficulty}
                           </span>
-                          <span className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-bold text-zinc-600 dark:border-zinc-800 dark:bg-black dark:text-zinc-400">
-                            {getKoreanTag(problem.tag1)}
-                          </span>
-                          {problem.tag2 && (
-                            <span className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-bold text-zinc-600 dark:border-zinc-800 dark:bg-black dark:text-zinc-400">
-                              {getKoreanTag(problem.tag2)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs font-bold text-zinc-600 dark:border-zinc-800 dark:bg-black dark:text-zinc-400">
+                              {getKoreanTag(problem.tag1)}
                             </span>
-                          )}
-                        </div>
-
-                        <h3 className="truncate text-lg font-black text-zinc-950 dark:text-white">
-                          {problem.title}
-                        </h3>
-
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400">
-                          <span className="inline-flex items-center gap-1.5">
-                            <Clock className="h-4 w-4" />
-                            시간 제한 {problem.time_limit_ms / 1000}초
-                          </span>
-                          <span className="inline-flex items-center gap-1.5">
-                            <MemoryStick className="h-4 w-4" />
-                            메모리 제한 {problem.memory_limit_mb}MB
-                          </span>
-                        </div>
-                      </div>
-
-                      <ChevronRight className="h-5 w-5 text-zinc-400 transition group-hover:translate-x-1 group-hover:text-blue-500" />
-                    </div>
-                  </button>
-                ))}
+                            {problem.tag2 && (
+                              <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs font-bold text-zinc-600 dark:border-zinc-800 dark:bg-black dark:text-zinc-400">
+                                {getKoreanTag(problem.tag2)}
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                          {problem.time_limit_ms / 1000}초
+                        </TableCell>
+                        <TableCell className="text-right text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                          {problem.memory_limit_mb}MB
+                        </TableCell>
+                        <TableCell>
+                          <ChevronRight className="h-4 w-4 text-zinc-400 transition group-hover:translate-x-1 group-hover:text-blue-500" />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             </div>
           )}

@@ -13,10 +13,6 @@ export function Footer() {
           </div>
           <p className="text-xs sm:text-right">Premium Algorithm Platform</p>
         </div>
-        <div className="flex flex-col gap-2 border-t border-zinc-100 pt-4 text-xs dark:border-white/5 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} SSAJOON. All rights reserved.</p>
-          <p>Built with Next.js and Supabase.</p>
-        </div>
       </div>
     </footer>
   );

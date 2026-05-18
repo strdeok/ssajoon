@@ -1,7 +1,15 @@
 import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@/lib/utils";
 
-type ButtonVariant = "default" | "secondary" | "outline" | "ghost" | "destructive";
+type ButtonVariant =
+  | "default"
+  | "secondary"
+  | "outline"
+  | "ghost"
+  | "destructive"
+  | "hero";
+
 type ButtonSize = "default" | "sm" | "lg" | "icon";
 
 export interface ButtonProps
@@ -14,13 +22,21 @@ export interface ButtonProps
 const variantClasses: Record<ButtonVariant, string> = {
   default:
     "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90",
+
   secondary:
     "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+
   outline:
     "border border-border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground",
-  ghost: "hover:bg-accent hover:text-accent-foreground",
+
+  ghost:
+    "hover:bg-accent hover:text-accent-foreground",
+
   destructive:
     "bg-destructive text-white shadow-sm hover:bg-destructive/90",
+
+  hero:
+    "bg-white text-blue-600 shadow-sm hover:bg-blue-50 dark:bg-white dark:text-blue-600 dark:hover:bg-blue-50",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -40,7 +56,7 @@ export const buttonVariants = ({
   className?: string;
 }) =>
   cn(
-    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,box-shadow,background-color,border-color] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ring-offset-background",
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,box-shadow,background-color,border-color] outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
     variantClasses[variant],
     sizeClasses[size],
     className,
@@ -50,13 +66,15 @@ export function Button({
   className,
   variant = "default",
   size = "default",
+  asChild = false,
   ...props
 }: ButtonProps) {
+  const Comp = asChild ? Slot : "button";
+
   return (
-    <button
+    <Comp
       className={buttonVariants({ variant, size, className })}
       {...props}
     />
   );
 }
-

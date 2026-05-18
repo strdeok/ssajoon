@@ -10,8 +10,8 @@ export function ThemeSwitcher() {
   return (
     <Button
       type="button"
-      variant="outline"
       size="icon"
+      variant="outline"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       aria-label="Toggle theme"
       className="rounded-full"

@@ -187,6 +187,7 @@ export default async function Home() {
                 href="/problems"
                 prefetch={false}
                 className={buttonVariants({
+                  variant: "default",
                   className:
                     "h-11 rounded-lg bg-white px-6 font-bold text-blue-600 hover:bg-blue-50",
                 })}
