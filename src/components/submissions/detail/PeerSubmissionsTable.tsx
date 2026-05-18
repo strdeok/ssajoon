@@ -314,6 +314,19 @@ export default function PeerSubmissionsTable({
     setIsCodeLoading(false);
   };
 
+  const convertLanguage = (language: string | null) => {
+    if (!language) return;
+
+    switch (language) {
+      case "java":
+        return "Java 17";
+      case "cpp":
+        return "C++ 17";
+      case "python":
+        return "Python 3.11"
+    }
+  };
+
   return (
     <>
       <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl dark:border-white/5 dark:bg-zinc-900">
@@ -351,21 +364,16 @@ export default function PeerSubmissionsTable({
           <table className="w-full text-left">
             <thead className="bg-zinc-50/80 dark:bg-zinc-800/30">
               <tr className="border-b border-zinc-100 dark:border-white/5">
-                {[
-                  "닉네임",
-                  "언어",
-                  "결과",
-                  "실행 시간",
-                  "메모리",
-                  "코드",
-                ].map((header) => (
-                  <th
-                    key={header}
-                    className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400"
-                  >
-                    {header}
-                  </th>
-                ))}
+                {["닉네임", "언어", "결과", "실행 시간", "메모리", "코드"].map(
+                  (header) => (
+                    <th
+                      key={header}
+                      className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400"
+                    >
+                      {header}
+                    </th>
+                  ),
+                )}
               </tr>
             </thead>
             <tbody>
@@ -403,7 +411,7 @@ export default function PeerSubmissionsTable({
                       {item.nickname}
                     </td>
                     <td className="px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
-                      {item.language ?? "-"}
+                      {convertLanguage(item.language) ?? "-"}
                     </td>
                     <td className="px-6 py-4">
                       <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
