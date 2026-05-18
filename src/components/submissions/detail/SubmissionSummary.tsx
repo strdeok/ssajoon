@@ -280,7 +280,7 @@ export default function SubmissionSummary({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 w-full">
             <div className="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-zinc-100 dark:border-zinc-700/50">
               <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 text-xs font-medium mb-1 uppercase tracking-wider">
                 <Clock className="w-3 h-3" />
@@ -310,15 +310,6 @@ export default function SubmissionSummary({
               </div>
               <div className="text-md font-bold text-zinc-900 dark:text-white capitalize">
                 {submission.language === "cpp" ? "C++" : submission.language}
-              </div>
-            </div>
-            <div className="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-zinc-100 dark:border-zinc-700/50">
-              <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 text-xs font-medium mb-1 uppercase tracking-wider">
-                <Calendar className="w-3 h-3" />
-                제출
-              </div>
-              <div className="text-md font-bold text-zinc-900 dark:text-white whitespace-nowrap">
-                {formatSubmissionDateTime(submission.submitted_at)}
               </div>
             </div>
           </div>

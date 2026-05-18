@@ -50,7 +50,10 @@ export async function GET(
   const submissionId = Number(id);
 
   if (!Number.isInteger(submissionId)) {
-    return NextResponse.json({ error: "Invalid submission id" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid submission id" },
+      { status: 400 },
+    );
   }
 
   const sort = getSortType(request.nextUrl.searchParams.get("sort"));
@@ -81,7 +84,7 @@ export async function GET(
   }
 
   const config = sortConfig[sort];
-  const { data: peerRows, error: peerError, count } = await supabase
+  let peerQuery = supabase
     .from("submissions")
     .select(
       "id, user_id, result, language, execution_time_ms, memory_kb, submitted_at",
@@ -95,8 +98,24 @@ export async function GET(
     .order(config.column, {
       ascending: config.ascending,
       nullsFirst: false,
-    })
-    .range(offset, offset + PAGE_SIZE - 1);
+    });
+
+  if (sort === "memory" || sort === "time") {
+    peerQuery = peerQuery.order("submitted_at", {
+      ascending: false,
+      nullsFirst: false,
+    });
+  }
+
+  peerQuery = peerQuery.order("id", {
+    ascending: false,
+  });
+
+  const {
+    data: peerRows,
+    error: peerError,
+    count,
+  } = await peerQuery.range(offset, offset + PAGE_SIZE - 1);
 
   if (peerError) {
     return NextResponse.json({ error: peerError.message }, { status: 500 });
@@ -127,7 +146,7 @@ export async function GET(
     items: peers.map((submission) => ({
       id: submission.id,
       nickname: submission.user_id
-        ? nicknameMap.get(submission.user_id) ?? "익명"
+        ? (nicknameMap.get(submission.user_id) ?? "익명")
         : "익명",
       result: submission.result,
       language: submission.language,
