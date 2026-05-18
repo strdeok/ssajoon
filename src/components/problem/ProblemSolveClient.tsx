@@ -225,12 +225,12 @@ export function ProblemSolveClient({ problem }: ProblemSolveClientProps) {
 
   useEffect(() => {
     if (!submissionId || !status) return;
-    if (status === "PENDING" || status === "QUEUED" || status === "RUNNING") {
+    if (status !== "AC") {
       return;
     }
     const timer = window.setTimeout(() => {
       router.push(`/submissions/${submissionId}`);
-    }, 1500);
+    }, 1000);
     return () => window.clearTimeout(timer);
   }, [router, status, submissionId]);
 
