@@ -142,6 +142,7 @@ function ProblemsContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const searchParamsRef = useRef(searchParams);
+  const pushedSearchRef = useRef<string | null>(null);
   const urlSearchQuery = searchParams.get("search") || searchParams.get("q") || "";
 
   const [user, setUser] = useState<User | null>(null);
@@ -239,11 +240,14 @@ function ProblemsContent() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
+      const nextSearch = searchInput.trim();
+
       setDebouncedSearch(searchInput);
       setCurrentPage(1);
+      pushedSearchRef.current = nextSearch;
       updateQueryParams({
         page: "1",
-        search: searchInput.trim() || null,
+        search: nextSearch || null,
         sort: sortField,
         order: sortOrder,
       });
@@ -253,6 +257,11 @@ function ProblemsContent() {
   }, [searchInput, sortField, sortOrder, updateQueryParams]);
 
   useEffect(() => {
+    if (pushedSearchRef.current === urlSearchQuery) {
+      pushedSearchRef.current = null;
+      return;
+    }
+
     setSearchInput(urlSearchQuery);
     setDebouncedSearch(urlSearchQuery);
     setCurrentPage(1);
