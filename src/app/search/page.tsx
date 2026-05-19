@@ -13,7 +13,7 @@ import {
   Search,
   SearchIcon,
 } from "lucide-react";
-import { DIFFICULTY_ORDER, getKoreanTag } from "@/utils/tagUtils";
+import { getDifficultyRank, getKoreanTag } from "@/utils/tagUtils";
 import {
   Table,
   TableBody,
@@ -22,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
 
 interface OptionItem {
   tag1: string;
@@ -49,20 +50,6 @@ const ALL_OPTION = "전체";
 
 const normalizeSelection = (value: string) =>
   value === ALL_OPTION ? "" : value;
-const DIFFICULTY_RANK: Record<string, number> = {
-  ...DIFFICULTY_ORDER,
-  EASY: DIFFICULTY_ORDER.Easy,
-  MEDIUM: DIFFICULTY_ORDER.Medium,
-  MEDIUM_HARD: DIFFICULTY_ORDER["Medium-Hard"],
-  "MEDIUM-HARD": DIFFICULTY_ORDER["Medium-Hard"],
-  HARD: DIFFICULTY_ORDER.Hard,
-  VERY_HARD: DIFFICULTY_ORDER["Very-Hard"],
-  "VERY-HARD": DIFFICULTY_ORDER["Very-Hard"],
-};
-
-const getDifficultyRank = (difficulty: string) =>
-  DIFFICULTY_RANK[difficulty] || 99;
-
 function SortableTableHead({
   label,
   field,
@@ -507,10 +494,10 @@ export default function GeneratePage() {
                             {problem.difficulty}
                           </span>
                         </TableCell>
-                        <TableCell className="text-right text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                        <TableCell className="text-left text-sm font-medium text-zinc-500 dark:text-zinc-400">
                           {problem.time_limit_ms / 1000}초
                         </TableCell>
-                        <TableCell className="text-right text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                        <TableCell className="text-left text-sm font-medium text-zinc-500 dark:text-zinc-400">
                           {problem.memory_limit_mb}MB
                         </TableCell>
                         <TableCell>
@@ -549,21 +536,16 @@ function FilterSelect({
       <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
         {label}
       </label>
-      <div className="relative">
-        <select
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          disabled={disabled}
-          className="w-full appearance-none rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3.5 pr-11 font-medium text-zinc-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-black/40 dark:text-zinc-100"
-        >
-          {options.map((option) => (
-            <option key={option} value={option}>
-              {renderLabel(option)}
-            </option>
-          ))}
-        </select>
-        <ChevronRight className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 rotate-90 text-zinc-500" />
-      </div>
+      <DropdownSelect
+        value={value}
+        onValueChange={onChange}
+        disabled={disabled}
+        options={options.map((option) => ({
+          value: option,
+          label: renderLabel(option),
+        }))}
+        triggerClassName="rounded-xl border-zinc-200 bg-zinc-50 px-4 py-3.5 font-medium text-zinc-950 focus:border-blue-500 focus:ring-blue-500/20 dark:border-zinc-800 dark:bg-black/40 dark:text-zinc-100"
+      />
     </div>
   );
 }

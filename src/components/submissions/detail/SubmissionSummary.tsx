@@ -11,7 +11,6 @@ import {
   AlignJustify,
   ServerCrash,
   Code2,
-  Calendar
 } from "lucide-react";
 import { FailedTestcaseModal } from "@/components/submission/FailedTestcaseModal";
 import Link from "next/link";
@@ -237,6 +236,19 @@ function formatSubmissionDateTime(dateString: string) {
   }).format(new Date(dateString));
 }
 
+const convertLanguageToDisplayName = (language: string) => {
+  switch (language.toLowerCase()) {
+    case "cpp":
+      return "C++";
+    case "java":
+      return "Java 17";
+    case "python":
+      return "Python3";
+    default:
+      return language;
+  }
+};
+
 export default function SubmissionSummary({
   submission,
 }: SubmissionSummaryProps) {
@@ -309,7 +321,7 @@ export default function SubmissionSummary({
                 언어
               </div>
               <div className="text-md font-bold text-zinc-900 dark:text-white capitalize">
-                {submission.language === "cpp" ? "C++" : submission.language}
+                {convertLanguageToDisplayName(submission.language)}
               </div>
             </div>
           </div>

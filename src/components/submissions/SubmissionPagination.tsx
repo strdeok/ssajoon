@@ -38,8 +38,8 @@ export default function SubmissionPagination({
   const pages = getPageNumbers();
 
   return (
-    <div className="flex justify-end items-center mb-10">
-      <nav className="inline-flex items-center -space-x-px rounded-md shadow-sm bg-white dark:bg-zinc-900" aria-label="Pagination">
+    <div className="mb-10 flex w-full min-w-0 items-center justify-center overflow-x-auto sm:justify-end">
+      <nav className="inline-flex shrink-0 items-center -space-x-px rounded-md bg-white shadow-sm dark:bg-zinc-900" aria-label="Pagination">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
@@ -53,7 +53,7 @@ export default function SubmissionPagination({
           <button
             key={page}
             onClick={() => onPageChange(page)}
-            className={`relative inline-flex items-center px-4 py-2 text-sm font-medium border focus:z-20 transition-colors ${
+            className={`relative inline-flex items-center px-3 py-2 text-sm font-medium border focus:z-20 transition-colors sm:px-4 ${
               currentPage === page
                 ? "z-10 bg-blue-50 dark:bg-blue-900/30 border-blue-500 text-blue-600 dark:text-blue-400"
                 : "bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-800 text-gray-500 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800"

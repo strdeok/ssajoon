@@ -13,6 +13,22 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     
     if (!error) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (user) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('is_deleted')
+          .eq('id', user.id)
+          .maybeSingle()
+
+        if (userData?.is_deleted) {
+          return NextResponse.redirect(`${origin}/rejoin`)
+        }
+      }
+
       return NextResponse.redirect(`${origin}${next}`)
     }
   }

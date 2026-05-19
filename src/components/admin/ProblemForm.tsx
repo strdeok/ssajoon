@@ -6,6 +6,7 @@ import { Plus, Trash2, Loader2, Save, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { DIFFICULTY_OPTIONS } from "@/utils/tagUtils";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
 
 interface Example {
   input_text: string;
@@ -17,7 +18,22 @@ interface Testcase {
   expected_output: string;
 }
 
-export function ProblemForm({ initialData }: { initialData?: any }) {
+interface ProblemFormData {
+  id?: number | string;
+  title?: string;
+  tag1?: string;
+  tag2?: string | null;
+  difficulty?: string;
+  description?: string;
+  input_description?: string;
+  output_description?: string;
+  time_limit_ms?: number;
+  memory_limit_mb?: number;
+  problem_examples?: Example[];
+  problem_testcases?: Testcase[];
+}
+
+export function ProblemForm({ initialData }: { initialData?: ProblemFormData }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,14 +52,14 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
   });
 
   const [examples, setExamples] = useState<Example[]>(
-    initialData?.problem_examples?.map((ex: any) => ({
+    initialData?.problem_examples?.map((ex) => ({
       input_text: ex.input_text,
       output_text: ex.output_text,
     })) || []
   );
 
   const [testcases, setTestcases] = useState<Testcase[]>(
-    initialData?.problem_testcases?.map((tc: any) => ({
+    initialData?.problem_testcases?.map((tc) => ({
       input_text: tc.input_text,
       expected_output: tc.expected_output,
     })) || []
@@ -100,8 +116,9 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
 
       await saveProblem(payload);
       router.push('/admin/problems');
-    } catch (err: any) {
-      if (err?.digest?.startsWith("NEXT_REDIRECT")) {
+    } catch (err: unknown) {
+      const redirectError = err as { digest?: string };
+      if (redirectError.digest?.startsWith("NEXT_REDIRECT")) {
         throw err;
       }
 
@@ -185,17 +202,17 @@ export function ProblemForm({ initialData }: { initialData?: any }) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">난이도</label>
-                  <select
+                  <DropdownSelect
                     value={formData.difficulty}
-                    onChange={e => setFormData({ ...formData, difficulty: e.target.value })}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-lg px-4 py-2 text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {DIFFICULTY_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, difficulty: value })
+                    }
+                    options={DIFFICULTY_OPTIONS.map((option) => ({
+                      value: option,
+                      label: option,
+                    }))}
+                    triggerClassName="bg-zinc-50 dark:bg-zinc-950 border-zinc-300 dark:border-zinc-800 px-4 py-2 text-zinc-900 dark:text-zinc-100 focus:ring-blue-500"
+                  />
                 </div>
               </div>
             </div>

@@ -116,7 +116,7 @@ export default async function ProblemPage({ params }: ProblemPageProps) {
 
   return (
     <div className="flex-1 flex flex-col lg:flex-row lg:h-full bg-zinc-50 dark:bg-black p-4 gap-4">
-      <div className="flex-1 lg:w-1/2 h-[calc(100dvh-120px)] overflow-y-scroll flex flex-col min-h-0 bg-white dark:bg-[#09090b] rounded-xl shadow-2xl border border-zinc-200 dark:border-white/5 relative">
+      <div className="flex-1 h-[calc(100dvh-120px)] overflow-y-scroll flex flex-col min-h-0 bg-white dark:bg-[#09090b] rounded-xl shadow-2xl border border-zinc-200 dark:border-white/5 relative">
         <ProblemContent
           problem={problem}
           publicTestcases={publicTestcases}

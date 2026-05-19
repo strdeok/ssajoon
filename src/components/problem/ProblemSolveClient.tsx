@@ -16,6 +16,7 @@ import {
 } from "@/components/submission/TestResultViewer";
 import { EditorSkeleton } from "@/components/problem/EditorSkeleton";
 import { createClient } from "@/utils/supabase/client";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
 
 const CodeEditor = dynamic(
   () => import("@/components/editor/CodeEditor").then((mod) => mod.CodeEditor),
@@ -478,17 +479,18 @@ export function ProblemSolveClient({ problem }: ProblemSolveClientProps) {
                 언어
               </label>
 
-              <select
+              <DropdownSelect
                 id="language-select"
                 disabled={isCodeSectionLocked}
                 value={language}
-                onChange={(event) => void loadSavedCode(event.target.value)}
-                className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-white disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="python">Python3</option>
-                <option value="java">Java 17</option>
-                <option value="cpp">C++</option>
-              </select>
+                onValueChange={(value) => void loadSavedCode(value)}
+                options={[
+                  { value: "python", label: "Python3" },
+                  { value: "java", label: "Java 17" },
+                  { value: "cpp", label: "C++" },
+                ]}
+                triggerClassName="w-32 border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+              />
             </div>
 
             <div className="flex items-center gap-2 mt-3 lg:mt-0">

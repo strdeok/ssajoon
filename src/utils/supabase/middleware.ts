@@ -9,8 +9,15 @@ const authRequiredRoutes = [
   '/submissions',
 ]
 
+const deletedUserAllowedRoutes = [
+  '/rejoin',
+  '/api/auth/signout',
+]
+
 function matchesRoute(pathname: string, routes: string[]) {
-  return routes.some((route) => pathname === route || pathname.startsWith(`${route}/`))
+  return routes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  )
 }
 
 function redirectToLogin(request: NextRequest) {
@@ -18,6 +25,23 @@ function redirectToLogin(request: NextRequest) {
   url.pathname = '/login'
   url.searchParams.set('next', `${request.nextUrl.pathname}${request.nextUrl.search}`)
   return NextResponse.redirect(url)
+}
+
+function redirectToRejoin(request: NextRequest) {
+  const url = request.nextUrl.clone()
+  url.pathname = '/rejoin'
+  url.search = ''
+  return NextResponse.redirect(url)
+}
+
+function shouldSkipDeletedUserRedirect(pathname: string) {
+  return (
+    matchesRoute(pathname, deletedUserAllowedRoutes) ||
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/auth') ||
+    pathname.startsWith('/_next') ||
+    pathname === '/favicon.ico'
+  )
 }
 
 export async function updateSession(request: NextRequest) {
@@ -35,21 +59,19 @@ export async function updateSession(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+
           supabaseResponse = NextResponse.next({
             request,
           })
-          cookiesToSet.forEach(({ name, value, options }) =>
+
+          cookiesToSet.forEach(({ name, value, options }) => {
             supabaseResponse.cookies.set(name, value, options)
-          )
+          })
         },
       },
-    }
+    },
   )
-
-  // IMPORTANT: Avoid writing any logic between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
-
+  
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -61,32 +83,38 @@ export async function updateSession(request: NextRequest) {
   }
 
   let dbUser: { role: string | null; is_deleted: boolean | null } | null = null
+
   if (user) {
-    const needsUserRecord = matchesRoute(pathname, authRequiredRoutes)
+    const { data } = await supabase
+      .from('users')
+      .select('role, is_deleted')
+      .eq('id', user.id)
+      .maybeSingle()
 
-    if (needsUserRecord) {
-      const { data } = await supabase
-        .from('users')
-        .select('role, is_deleted')
-        .eq('id', user.id)
-        .single()
-      dbUser = data
-    }
+    dbUser = data ?? null
 
+    /**
+     * 탈퇴 회원 처리
+     *
+     * soft delete 회원은 어떤 일반 페이지에 접근하더라도 /rejoin으로 보낸다.
+     * 단, /rejoin 자체와 auth/api 관련 경로는 제외한다.
+     */
     if (
       dbUser?.is_deleted &&
-      !pathname.startsWith('/rejoin') &&
-      !pathname.startsWith('/api/auth/signout')
+      !shouldSkipDeletedUserRedirect(pathname)
     ) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/rejoin'
-      url.search = ''
-      return NextResponse.redirect(url)
+      return redirectToRejoin(request)
     }
 
+    /**
+     * 닉네임이 없는 신규 회원 온보딩 처리
+     *
+     * 탈퇴 회원은 위에서 먼저 /rejoin으로 빠지므로,
+     * 여기서는 일반 활성 회원만 온보딩 검사한다.
+     */
     if (
-      !user.user_metadata?.nickname && 
-      !pathname.startsWith('/rejoin') &&
+      !dbUser?.is_deleted &&
+      !user.user_metadata?.nickname &&
       !pathname.startsWith('/onboarding') &&
       !pathname.startsWith('/api') &&
       !pathname.startsWith('/auth') &&
@@ -98,7 +126,8 @@ export async function updateSession(request: NextRequest) {
     }
 
     if (
-      user.user_metadata?.nickname && 
+      !dbUser?.is_deleted &&
+      user.user_metadata?.nickname &&
       pathname.startsWith('/onboarding')
     ) {
       const url = request.nextUrl.clone()

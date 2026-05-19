@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { getKoreanTag, DIFFICULTY_OPTIONS } from "@/utils/tagUtils";
 
 interface AdminProblemFiltersProps {
@@ -45,55 +46,45 @@ export function AdminProblemFilters({ categories }: AdminProblemFiltersProps) {
     <div className="flex flex-wrap gap-4 items-center bg-zinc-50 dark:bg-zinc-800/30 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
       <div className="flex flex-col gap-1.5">
         <label className="ml-1 text-xs font-bold uppercase tracking-wider text-zinc-500">카테고리</label>
-        <select
+        <DropdownSelect
           value={currentCategory}
-          onChange={(e) => updateFilter("category", e.target.value)}
-          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-        >
-          <option value="전체">전체 카테고리</option>
-          {categories.map((c) => (
-            <option key={c} value={c}>{getKoreanTag(c)}</option>
-          ))}
-        </select>
+          onValueChange={(value) => updateFilter("category", value)}
+          options={[
+            { value: "전체", label: "전체 카테고리" },
+            ...categories.map((c) => ({ value: c, label: getKoreanTag(c) })),
+          ]}
+          triggerClassName="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-sm focus:ring-blue-500/20"
+        />
       </div>
 
       <div className="flex flex-col gap-1.5">
         <label className="ml-1 text-xs font-bold uppercase tracking-wider text-zinc-500">난이도</label>
-        <select
+        <DropdownSelect
           value={currentDifficulty}
-          onChange={(e) => updateFilter("difficulty", e.target.value)}
-          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-        >
-          {DIFFICULTIES.map((d) => (
-            <option key={d} value={d}>{d}</option>
-          ))}
-        </select>
+          onValueChange={(value) => updateFilter("difficulty", value)}
+          options={DIFFICULTIES.map((d) => ({ value: d, label: d }))}
+          triggerClassName="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-sm focus:ring-blue-500/20"
+        />
       </div>
 
       <div className="flex flex-col gap-1.5">
         <label className="ml-1 text-xs font-bold uppercase tracking-wider text-zinc-500">상태</label>
-        <select
+        <DropdownSelect
           value={currentStatus}
-          onChange={(e) => updateFilter("status", e.target.value)}
-          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-        >
-          {STATUSES.map((s) => (
-            <option key={s.value} value={s.value}>{s.label}</option>
-          ))}
-        </select>
+          onValueChange={(value) => updateFilter("status", value)}
+          options={STATUSES.map((s) => ({ value: s.value, label: s.label }))}
+          triggerClassName="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-sm focus:ring-blue-500/20"
+        />
       </div>
 
       <div className="flex flex-col gap-1.5">
         <label className="ml-1 text-xs font-bold uppercase tracking-wider text-zinc-500">정렬</label>
-        <select
+        <DropdownSelect
           value={currentSort}
-          onChange={(e) => updateFilter("sort", e.target.value)}
-          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-        >
-          {SORTS.map((s) => (
-            <option key={s.value} value={s.value}>{s.label}</option>
-          ))}
-        </select>
+          onValueChange={(value) => updateFilter("sort", value)}
+          options={SORTS.map((s) => ({ value: s.value, label: s.label }))}
+          triggerClassName="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-sm focus:ring-blue-500/20"
+        />
       </div>
     </div>
   );

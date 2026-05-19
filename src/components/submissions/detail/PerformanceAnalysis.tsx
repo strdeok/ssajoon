@@ -86,20 +86,12 @@ export default function PerformanceAnalysis({
     .map((row) => row.memory_kb)
     .filter(isValidNumber);
 
-  const runtimeValuesWithMine = isValidNumber(runtime)
-    ? [...runtimeValues, runtime]
-    : runtimeValues;
-
-  const memoryValuesWithMine = isValidNumber(memory)
-    ? [...memoryValues, memory]
-    : memoryValues;
-
   const averageRuntime = calculateAverage(runtimeValues);
 
-  const runtimeTopPercent = calculateTopPercent(runtime, runtimeValuesWithMine);
-  const memoryTopPercent = calculateTopPercent(memory, memoryValuesWithMine);
+  const runtimeTopPercent = calculateTopPercent(runtime, runtimeValues);
+  const memoryTopPercent = calculateTopPercent(memory, memoryValues);
 
-  const hasComparisonData = runtimeValuesWithMine.length > 0 || memoryValuesWithMine.length > 0;
+  const hasComparisonData = runtimeValues.length > 0 || memoryValues.length > 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -111,7 +103,7 @@ export default function PerformanceAnalysis({
         {hasComparisonData ? (
           <div className="space-y-2 text-center">
             <p className="text-xl leading-relaxed text-zinc-800 dark:text-zinc-100">
-              다른 사람들은 평균적으로{" "}
+              정답 제출들은 평균적으로{" "}
               <span className="font-bold">
                 {averageRuntime === null ? "-" : `${averageRuntime}ms`}
               </span>
