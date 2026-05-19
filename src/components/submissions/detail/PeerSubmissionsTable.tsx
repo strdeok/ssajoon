@@ -70,7 +70,7 @@ function convertLanguage(language: string | null) {
     case "cpp":
       return "C++ 17";
     case "python":
-      return "Python 3.11";
+      return "Python3";
     default:
       return language;
   }

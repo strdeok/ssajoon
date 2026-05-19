@@ -97,7 +97,7 @@ function formatDateTime(dateString: string | null) {
 
 function getLanguageKey(language: string | null) {
   const normalized = (language ?? "unknown").trim().toLowerCase();
-  if (["py", "python", "python3", "python 3.11"].includes(normalized)) {
+  if (["py", "python", "python3", "Python3"].includes(normalized)) {
     return "python";
   }
   if (["java", "java17", "java 17"].includes(normalized)) return "java";

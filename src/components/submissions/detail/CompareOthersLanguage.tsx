@@ -25,8 +25,8 @@ function normalizeLanguage(language: string | null | undefined) {
 
 function formatLanguage(language: string) {
   const languageMap: Record<string, string> = {
-    python: "Python 3.11",
-    python3: "Python 3.11",
+    python: "Python3",
+    python3: "Python3",
     javascript: "JavaScript",
     typescript: "TypeScript",
     java: "Java 17",

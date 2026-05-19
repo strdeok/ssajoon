@@ -280,7 +280,7 @@ export default function ClientForm({
             >
               <option value="">선택 안 함</option>
               <option value="JAVA">JAVA 17</option>
-              <option value="PYTHON">PYTHON 3.11</option>
+              <option value="PYTHON">Python3</option>
               <option value="C++">C++</option>
             </select>
           </div>
