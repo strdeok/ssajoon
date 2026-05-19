@@ -230,12 +230,12 @@ export default function SubmissionTable({
                       </div>
 
                       <div className="mt-1 flex min-w-0 flex-nowrap gap-1 overflow-hidden">
-                        <span className="max-w-[82px] truncate whitespace-nowrap rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                        <span className="max-w-20.5 truncate whitespace-nowrap rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
                           {getKoreanTag(sub.tag1)}
                         </span>
 
                         {sub.tag2 && (
-                          <span className="max-w-[82px] truncate whitespace-nowrap rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                          <span className="max-w-20.5 truncate whitespace-nowrap rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
                             {getKoreanTag(sub.tag2)}
                           </span>
                         )}
@@ -243,7 +243,7 @@ export default function SubmissionTable({
                     </div>
                   </td>
 
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
+                  <td className="whitespace-nowrap px-6 py-4 text-center text-sm text-zinc-600 dark:text-zinc-400">
                     {convertLanguage(sub.language)}
                   </td>
 
@@ -262,18 +262,18 @@ export default function SubmissionTable({
                     </Link>
                   </td>
 
-                  <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                  <td className={`whitespace-nowrap  py-4 ${sub.runtimeMs !== null ? "text-left pl-7" : "text-center pr-5"} text-sm font-medium text-zinc-600 dark:text-zinc-400`}>
                     {sub.runtimeMs !== null ? `${sub.runtimeMs} ms` : "-"}
                   </td>
 
-                  <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                  <td className={`whitespace-nowrap py-4 ${sub.memoryKb !== null ? "text-right pr-5" : "text-center pl-2"} text-sm font-medium text-zinc-600 dark:text-zinc-400`}>
                     {sub.memoryKb !== null
                       ? `${(sub.memoryKb / 1024).toFixed(2)} MB`
                       : "-"}
                   </td>
 
-                  <td className="whitespace-nowrap px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-1.5 text-zinc-600 dark:text-zinc-400">
+                  <td className="whitespace-nowrap px-6 py-4 text-left">
+                    <div className="flex items-center justify-center gap-1.5 text-zinc-600 dark:text-zinc-400">
                       <Users className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
                       <span className="text-sm font-medium">
                         {sub.solvedUsersCount?.toLocaleString() ?? "-"}

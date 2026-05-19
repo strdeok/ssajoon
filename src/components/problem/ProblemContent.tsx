@@ -46,6 +46,7 @@ export type PublicTestcase = {
 type ProblemContentProps = {
   problem: Problem;
   publicTestcases: PublicTestcase[];
+  showAlgorithm?: boolean;
 };
 
 type ActiveSection = "description" | "my-submissions";
@@ -100,7 +101,7 @@ function getLanguageKey(language: string | null) {
     return "python";
   }
   if (["java", "java17", "java 17"].includes(normalized)) return "java";
-  if (["c++", "cpp", "cxx", "cpp17", "c++17", "c++ 17"].includes(normalized)) {
+  if (["c++", "cpp", "cxx", "cpp17", "C++", "c++ 17"].includes(normalized)) {
     return "cpp";
   }
   if (["js", "javascript"].includes(normalized)) return "javascript";
@@ -411,9 +412,11 @@ function CodeViewerModal({
 export function ProblemContent({
   problem,
   publicTestcases,
+  showAlgorithm = true,
 }: ProblemContentProps) {
   const [activeSection, setActiveSection] =
     useState<ActiveSection>("description");
+  const [isAlgorithmRevealed, setIsAlgorithmRevealed] = useState(showAlgorithm);
   const [mySubmissions, setMySubmissions] = useState<MySubmission[]>([]);
   const [isSubmissionsLoading, setIsSubmissionsLoading] = useState(false);
   const [submissionsError, setSubmissionsError] = useState<string | null>(null);
@@ -593,6 +596,8 @@ export function ProblemContent({
     return converted;
   };
 
+  const shouldShowAlgorithm = showAlgorithm || isAlgorithmRevealed;
+
   return (
     <div className="flex h-auto flex-col rounded-xl bg-white dark:bg-zinc-900/50 lg:h-full lg:overflow-hidden">
       <div className="sticky top-0 z-10 shrink-0 border-b border-zinc-200 bg-white/95 dark:border-white/10 dark:bg-zinc-900/95">
@@ -602,13 +607,25 @@ export function ProblemContent({
             {problem.title}
           </h1>
           <div className="flex flex-wrap gap-2">
-            <span className="cursor-default rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-sm font-bold text-zinc-700 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-              {getKoreanTag(problem.tag1)}
-            </span>
-            {problem.tag2 && (
-              <span className="cursor-default rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-sm font-bold text-zinc-700 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                {getKoreanTag(problem.tag2)}
-              </span>
+            {shouldShowAlgorithm ? (
+              <>
+                <span className="cursor-default rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-sm font-bold text-zinc-700 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                  {getKoreanTag(problem.tag1)}
+                </span>
+                {problem.tag2 && (
+                  <span className="cursor-default rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-sm font-bold text-zinc-700 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                    {getKoreanTag(problem.tag2)}
+                  </span>
+                )}
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsAlgorithmRevealed(true)}
+                className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700 shadow-sm transition hover:bg-blue-100 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20"
+              >
+                알고리즘 보기
+              </button>
             )}
             {problem.difficulty && (
               <span className="cursor-default rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700 shadow-sm dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400">

@@ -386,9 +386,9 @@ export default function SubmissionsPage() {
 
   return (
     // 페이지 전체 배경은 아주 연한 회색(bg-gray-50), 최소 높이는 화면 전체(min-h-screen)
-    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300 flex justify-center">
       {/* 넉넉한 spacing을 가진 중앙 정렬 컨테이너 */}
-      <div className="md:px-14 px-2">
+      <div className="mx-auto lg:px-24 px-12 pt-8 pb-20 space-y-6 lg:max-w-360">
         {/* 1. 상단 헤더 및 요약 통계 섹션 */}
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-8">
           <div>

@@ -231,7 +231,7 @@ export default async function Home() {
                   <div className="col-span-1">#</div>
                   <div className="col-span-6">문제 제목</div>
                   <div className="col-span-3">난이도</div>
-                  <div className="col-span-2 text-right">보기</div>
+                  <div className="col-span-2"></div>
                 </div>
                 {recentProblems.length === 0 ? (
                   <div className="flex min-h-72 items-center justify-center px-6 text-center text-sm text-zinc-400">

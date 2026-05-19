@@ -29,8 +29,8 @@ function canonicalLanguage(language: string | null | undefined) {
         value === "cplusplus" ||
         value === "g++" ||
         value === "cpp17" ||
-        value === "c++17" ||
-        value === "gnu c++17"
+        value === "C++" ||
+        value === "gnu C++"
     ) {
         return "cpp";
     }
@@ -50,7 +50,7 @@ function getLanguageAliases(language: string) {
     }
 
     if (canonical === "cpp") {
-        return ["cpp", "c++", "C++", "CPP", "cplusplus", "g++", "cpp17", "c++17", "C++17", "GNU C++17"];
+        return ["cpp", "c++", "C++", "CPP", "cplusplus", "g++", "cpp17", "C++", "C++", "GNU C++"];
     }
 
     return [canonical];

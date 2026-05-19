@@ -64,6 +64,10 @@ type ProblemStats = {
   acceptance_rate: number;
 };
 
+type UserProfile = {
+  show_algorithm?: boolean | null;
+};
+
 const DIFFICULTIES = ["전체", ...DIFFICULTY_OPTIONS];
 const PAGE_SIZE = 20;
 
@@ -72,6 +76,8 @@ function ProblemsContent() {
   const initialQuery = searchParams.get("q") || "";
 
   const [user, setUser] = useState<User | null>(null);
+  const [showAlgorithm, setShowAlgorithm] = useState(true);
+  const [isAlgorithmFilterOpen, setIsAlgorithmFilterOpen] = useState(false);
   const [problems, setProblems] = useState<Problem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [filteredCount, setFilteredCount] = useState(0);
@@ -124,8 +130,21 @@ function ProblemsContent() {
   useEffect(() => {
     const supabase = createClient();
     const init = async () => {
-      const { data, error } = await supabase.auth.getUser();
+      const { data } = await supabase.auth.getUser();
       setUser(data.user);
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from("users")
+          .select("show_algorithm")
+          .eq("id", data.user.id)
+          .maybeSingle();
+
+        setShowAlgorithm(
+          (profile as UserProfile | null)?.show_algorithm ?? true,
+        );
+      } else {
+        setShowAlgorithm(true);
+      }
 
       try {
         const res = await fetch("/api/problems/categories");
@@ -138,6 +157,17 @@ function ProblemsContent() {
     };
     init();
   }, []);
+
+  useEffect(() => {
+    if (!showAlgorithm) {
+      setCategory("전체");
+      setIsAlgorithmFilterOpen(false);
+      if (sortField === "tag") {
+        setSortField("id");
+        setSortOrder("asc");
+      }
+    }
+  }, [showAlgorithm, sortField]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -422,8 +452,11 @@ function ProblemsContent() {
     setCurrentPage(1);
   };
 
+  const shouldShowAlgorithmFilter =
+    showAlgorithm || isAlgorithmFilterOpen || selectedCategory !== "전체";
+
   return (
-    <div className="w-full mx-auto lg:px-24 px-12 pt-8 pb-20 space-y-6">
+    <div className="w-full lg:max-w-360 mx-auto lg:px-24 px-12 pt-8 pb-20 space-y-6">
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
@@ -480,7 +513,25 @@ function ProblemsContent() {
       </div>
 
       <div className="bg-white dark:bg-[#18181b] border border-[#E2E8F0] dark:border-zinc-800 rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.05)] px-4 py-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {!showAlgorithm && !shouldShowAlgorithmFilter && (
+          <div className="mb-4 flex flex-col gap-3 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 dark:border-blue-500/20 dark:bg-blue-500/10 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
+              알고리즘을 선택하면 문제의 풀이 유형을 미리 알 수 있습니다.
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsAlgorithmFilterOpen(true)}
+              className="inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"
+            >
+              알고리즘 기준으로 문제 고르기
+            </button>
+          </div>
+        )}
+        <div
+          className={`grid grid-cols-1 sm:grid-cols-2 ${
+            shouldShowAlgorithmFilter ? "lg:grid-cols-4" : "lg:grid-cols-3"
+          } gap-3`}
+        >
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
               난이도
@@ -499,9 +550,10 @@ function ProblemsContent() {
               ))}
             </select>
           </div>
+          {shouldShowAlgorithmFilter && (
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-              카테고리
+              알고리즘
             </label>
             <select
               value={selectedCategory}
@@ -517,7 +569,13 @@ function ProblemsContent() {
                 </option>
               ))}
             </select>
+            {!showAlgorithm && selectedCategory !== "전체" && (
+              <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                적용 중: {getKoreanTag(selectedCategory)}
+              </span>
+            )}
           </div>
+          )}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
               상태
@@ -617,6 +675,7 @@ function ProblemsContent() {
                     </span>
                   </button>
                 </TableHead>
+                {showAlgorithm && (
                 <TableHead className="min-w-45">
                   <button
                     type="button"
@@ -637,6 +696,7 @@ function ProblemsContent() {
                     </span>
                   </button>
                 </TableHead>
+                )}
                 <TableHead className="w-36">
                   <button
                     type="button"
@@ -714,9 +774,11 @@ function ProblemsContent() {
                       <TableCell>
                         <div className="h-4 rounded bg-zinc-100 dark:bg-zinc-800" />
                       </TableCell>
+                      {showAlgorithm && (
                       <TableCell>
                         <div className="h-4 rounded bg-zinc-100 dark:bg-zinc-800" />
                       </TableCell>
+                      )}
                       <TableCell>
                         <div className="h-4 w-16 rounded bg-zinc-100 dark:bg-zinc-800" />
                       </TableCell>
@@ -756,6 +818,7 @@ function ProblemsContent() {
                             </p>
                           </Link>
                         </TableCell>
+                        {showAlgorithm && (
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
                             <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
@@ -768,10 +831,11 @@ function ProblemsContent() {
                             )}
                           </div>
                         </TableCell>
+                        )}
                         <TableCell>
                           <DifficultyBadge difficulty={problem.difficulty} />
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right pr-7.5">
                           <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">
                             {acceptanceRate}
                           </span>
@@ -840,7 +904,10 @@ function ProblemsContent() {
                         1,
                         currentPage - Math.floor(windowSize / 2),
                       );
-                      let end = Math.min(totalPages, start + windowSize - 1);
+                      const end = Math.min(
+                        totalPages,
+                        start + windowSize - 1,
+                      );
 
                       start = Math.max(1, end - windowSize + 1);
 

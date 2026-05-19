@@ -26,6 +26,10 @@ type PublicProblemRow = {
   updated_at?: string | null;
 };
 
+type UserProfile = {
+  show_algorithm?: boolean | null;
+};
+
 type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
 async function getProblem(
@@ -87,19 +91,37 @@ export default async function ProblemPage({ params }: ProblemPageProps) {
   }
 
   const supabase = await createClient();
-  const [problem, publicTestcases] = await Promise.all([
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const [problem, publicTestcases, profileResult] = await Promise.all([
     getProblem(supabase, problemId),
     getPublicTestcases(supabase, problemId),
+    user
+      ? supabase
+          .from("users")
+          .select("show_algorithm")
+          .eq("id", user.id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
 
   if (!problem) {
     notFound();
   }
 
+  const showAlgorithm =
+    ((profileResult.data as UserProfile | null)?.show_algorithm ?? true);
+
   return (
     <div className="flex-1 flex flex-col lg:flex-row lg:h-full bg-zinc-50 dark:bg-black p-4 gap-4">
       <div className="flex-1 lg:w-1/2 h-[calc(100dvh-120px)] overflow-y-scroll flex flex-col min-h-0 bg-white dark:bg-[#09090b] rounded-xl shadow-2xl border border-zinc-200 dark:border-white/5 relative">
-        <ProblemContent problem={problem} publicTestcases={publicTestcases} />
+        <ProblemContent
+          problem={problem}
+          publicTestcases={publicTestcases}
+          showAlgorithm={showAlgorithm}
+        />
       </div>
 
       <ProblemSolveClient problem={problem} />
