@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Moon, Send, Sun } from "lucide-react";
 import type { Problem } from "@/types/problem";
 import type { SubmissionStatus } from "@/types/submission";
@@ -83,11 +84,13 @@ function cancelIdleHandle(handle: ReturnType<typeof getIdleHandle>) {
 
 export function ProblemSolveClient({ problem }: ProblemSolveClientProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [language, setLanguage] = useState("python");
   const [code, setCode] = useState(getDefaultCodeTemplate("python"));
   const [isSolveStateLoading, setIsSolveStateLoading] = useState(true);
   const [isCodeLoading, setIsCodeLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const [testResults] = useState<TestResult[] | null>(null);
   const [isTesting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -152,15 +155,29 @@ export function ProblemSolveClient({ problem }: ProblemSolveClientProps) {
         return;
       }
 
+      const finalResult = data.result || fallbackResult || undefined;
+
       setResult({
         status: (data.status || fallbackResult || "DONE") as SubmissionStatus,
-        result: data.result || fallbackResult || undefined,
+        result: finalResult,
         execution_time_ms: data.execution_time_ms ?? undefined,
         memory_kb: data.memory_kb ?? undefined,
         failed_testcase_order: data.failed_testcase_order ?? undefined,
       });
+
+      if (userId && isAcceptedResult(finalResult)) {
+        queryClient.invalidateQueries({
+          queryKey: ["user", userId, "solved-problems"],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["user", userId, "problem-statuses"],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["user", userId, "submissions"],
+        });
+      }
     },
-    [setResult],
+    [queryClient, setResult, userId],
   );
 
   const handleRunningEvent = useCallback(
@@ -184,6 +201,17 @@ export function ProblemSolveClient({ problem }: ProblemSolveClientProps) {
         setProgress({ ...payload });
         setStatus((payload.result || "DONE") as SubmissionStatus);
         void loadSubmissionResult(payload.submissionId, payload.result);
+        if (userId && isAcceptedResult(payload.result)) {
+          queryClient.invalidateQueries({
+            queryKey: ["user", userId, "solved-problems"],
+          });
+          queryClient.invalidateQueries({
+            queryKey: ["user", userId, "problem-statuses"],
+          });
+          queryClient.invalidateQueries({
+            queryKey: ["user", userId, "submissions"],
+          });
+        }
         setIsSubmitting(false);
         closeEventSource();
       } catch {
@@ -192,7 +220,14 @@ export function ProblemSolveClient({ problem }: ProblemSolveClientProps) {
         closeEventSource();
       }
     },
-    [closeEventSource, loadSubmissionResult, parseJudgeEvent, setStatus],
+    [
+      closeEventSource,
+      loadSubmissionResult,
+      parseJudgeEvent,
+      queryClient,
+      setStatus,
+      userId,
+    ],
   );
 
   const handleProxyErrorEvent = useCallback(
@@ -265,6 +300,15 @@ export function ProblemSolveClient({ problem }: ProblemSolveClientProps) {
 
       const nextLanguage = normalizeLanguage(data.initialLanguage);
       setIsAuthenticated(data.authenticated);
+      if (data.authenticated) {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        setUserId(user?.id ?? null);
+      } else {
+        setUserId(null);
+      }
       setLanguage(nextLanguage);
       setCode(data.initialSourceCode || getDefaultCodeTemplate(nextLanguage));
       setIsSolveStateLoading(false);
