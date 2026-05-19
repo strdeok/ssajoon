@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 싸준
 
-## Getting Started
+> 웹에서 알고리즘 문제를 풀고, 코드를 제출하고, 채점 결과와 제출 기록까지 관리할 수 있는 온라인 코딩 테스트 연습 서비스
 
-First, run the development server:
+싸준은 알고리즘 문제 풀이와 코드 제출/채점을 위한 웹 서비스입니다.  
+사용자는 별도의 IDE 없이 웹에서 문제를 확인하고, 코드를 작성하고, 제출 결과를 확인할 수 있습니다.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 주요 기능
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 사용자 기능
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- 알고리즘 문제 목록 조회
+- 난이도 및 알고리즘 유형 기반 문제 필터링
+- 문제 상세 페이지 확인
+- 웹 코드 에디터를 통한 코드 작성
+- 코드 실행 및 제출
+- 채점 결과 확인
+- 제출 내역 조회
+- 제출한 코드 다시 보기
+- 같은 언어로 제출한 다른 사용자의 풀이 확인
 
-## Learn More
+### 관리자 기능
 
-To learn more about Next.js, take a look at the following resources:
+- 문제 생성, 수정, 삭제
+- 문제 예제 관리
+- 테스트케이스 관리
+- 사용자 관리
+- 제출 현황 확인
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 기술 스택
 
-## Deploy on Vercel
+### Frontend
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- CodeMirror 6
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Backend / Database
+
+- Next.js Route Handler
+- Supabase
+- PostgreSQL
+- Supabase Auth
+- Supabase RPC
+
+### Infra / Deploy
+
+- Vercel
+- Supabase
+
+
+개선 결과, 문제 목록 API 응답 시간이 크게 감소했습니다.
+
+```txt
+개선 전: 약 600ms 이상
+개선 후: 약 120ms 수준
