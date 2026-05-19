@@ -1,17 +1,26 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 
-export async function restoreDeletedAccount() {
+type ActionResult = {
+  success: boolean;
+  message?: string;
+};
+
+export async function restoreDeletedAccount(): Promise<ActionResult> {
   const supabase = await createClient();
+
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect("/login");
+  if (authError || !user) {
+    return {
+      success: false,
+      message: "로그인이 필요합니다.",
+    };
   }
 
   const { error: userError } = await supabase
@@ -23,25 +32,49 @@ export async function restoreDeletedAccount() {
     .eq("id", user.id);
 
   if (userError) {
-    redirect(`/rejoin?message=${encodeURIComponent("계정 복구 중 오류가 발생했습니다.")}`);
+    return {
+      success: false,
+      message: "계정 복구 중 오류가 발생했습니다.",
+    };
   }
 
   const { error: submissionsError } = await supabase
     .from("submissions")
-    .update({ is_deleted: false })
+    .update({
+      is_deleted: false,
+      deleted_at: null,
+    })
     .eq("user_id", user.id);
 
   if (submissionsError) {
-    redirect(`/rejoin?message=${encodeURIComponent("제출 내역 복구 중 오류가 발생했습니다.")}`);
+    return {
+      success: false,
+      message: "제출 내역 복구 중 오류가 발생했습니다.",
+    };
   }
 
   revalidatePath("/", "layout");
-  redirect("/");
+
+  return {
+    success: true,
+  };
 }
 
-export async function keepAccountDeleted() {
+export async function keepAccountDeleted(): Promise<ActionResult> {
   const supabase = await createClient();
-  await supabase.auth.signOut();
+
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    return {
+      success: false,
+      message: "로그아웃 중 오류가 발생했습니다.",
+    };
+  }
+
   revalidatePath("/", "layout");
-  redirect("/login");
+
+  return {
+    success: true,
+  };
 }

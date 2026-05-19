@@ -30,6 +30,7 @@ import { getKoreanTag } from "@/utils/tagUtils";
 import { CopyButton } from "@/components/problem/CopyButton";
 import { EditorSkeleton } from "@/components/problem/EditorSkeleton";
 import ServerProblemMarkdown from "./ServerProblemMarkdown";
+import { DifficultyBadge } from "./ProblemComponents";
 
 const CodeEditor = dynamic(
   () => import("@/components/editor/CodeEditor").then((mod) => mod.CodeEditor),
@@ -97,7 +98,7 @@ function formatDateTime(dateString: string | null) {
 
 function getLanguageKey(language: string | null) {
   const normalized = (language ?? "unknown").trim().toLowerCase();
-  if (["py", "python", "python3", "python 3.11"].includes(normalized)) {
+  if (["py", "python", "python3", "Python3"].includes(normalized)) {
     return "python";
   }
   if (["java", "java17", "java 17"].includes(normalized)) return "java";
@@ -192,6 +193,7 @@ function getResultBadge(result: string | null, status: string | null) {
     TIME_LIMIT_EXCEEDED: "시간 초과",
     MLE: "메모리 초과",
     MEMORY_LIMIT_EXCEEDED: "메모리 초과",
+    SYSTEM_ERROR: "시스템 에러",
   };
 
   return {
@@ -628,9 +630,7 @@ export function ProblemContent({
               </button>
             )}
             {problem.difficulty && (
-              <span className="cursor-default rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700 shadow-sm dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400">
-                {problem.difficulty}
-              </span>
+              <DifficultyBadge difficulty={problem.difficulty} />
             )}
           </div>
         </div>
@@ -805,7 +805,7 @@ export function ProblemContent({
                           {isOpen && (
                             <div className="border-t border-zinc-200 dark:border-white/10">
                               <div className="overflow-x-auto">
-                                <table className="w-full text-left">
+                                <table className="w-full text-left min-w-200">
                                   <thead className="bg-zinc-50 dark:bg-white/3">
                                     <tr className="border-b border-zinc-200 dark:border-white/10">
                                       {[
@@ -867,7 +867,7 @@ export function ProblemContent({
                                                     submission,
                                                   )
                                                 }
-                                                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-200 dark:hover:bg-white/5"
+                                                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-xs font-semibold text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-200 dark:hover:bg-white/5"
                                               >
                                                 <Code2 className="h-4 w-4" />
                                                 소스코드 보기
@@ -875,7 +875,7 @@ export function ProblemContent({
                                               <Link
                                                 href={`/submissions/${submission.id}`}
                                                 prefetch={false}
-                                                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-200 dark:hover:bg-white/5"
+                                                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-xs font-semibold text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:text-zinc-200 dark:hover:bg-white/5"
                                               >
                                                 <ExternalLink className="h-4 w-4" />
                                                 상세 보기

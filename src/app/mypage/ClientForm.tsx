@@ -15,6 +15,8 @@ import {
   withdrawAccount,
 } from "./actions";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
 
 interface ClientFormProps {
   initialNickname: string;
@@ -177,15 +179,15 @@ export default function ClientForm({
         return;
       }
 
-      router.push("/");
+      const supabase = createClient();
+
+      await supabase.auth.signOut();
+
+      window.dispatchEvent(new Event("auth:signed-out"));
+
+      router.replace("/");
       router.refresh();
-    } catch (err) {
-      const error = err as { digest?: string };
-
-      if (error?.digest?.startsWith("NEXT_REDIRECT")) {
-        throw err;
-      }
-
+    } catch {
       setWithdrawMessage({
         type: "error",
         text: "탈퇴 처리 중 오류가 발생했습니다. 다시 시도해주세요.",
@@ -272,17 +274,18 @@ export default function ClientForm({
             >
               선호 언어
             </label>
-            <select
+            <DropdownSelect
               id="preferredLanguage"
               value={preferredLanguage}
-              onChange={(e) => handlePreferredLanguageChange(e.target.value)}
-              className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5 outline-none transition-all"
-            >
-              <option value="">선택 안 함</option>
-              <option value="JAVA">JAVA 17</option>
-              <option value="PYTHON">PYTHON 3.11</option>
-              <option value="C++">C++</option>
-            </select>
+              onValueChange={handlePreferredLanguageChange}
+              options={[
+                { value: "", label: "선택 안 함" },
+                { value: "JAVA", label: "JAVA 17" },
+                { value: "PYTHON", label: "Python3" },
+                { value: "C++", label: "C++" },
+              ]}
+              triggerClassName="bg-zinc-50 dark:bg-black border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 focus:ring-blue-500 focus:border-blue-500 px-4 py-2.5"
+            />
           </div>
 
           <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-black/20">
@@ -358,8 +361,9 @@ export default function ClientForm({
           Danger Zone
         </h3>
         <p className="text-sm text-red-600/80 dark:text-red-400/80 mb-6">
-          회원 탈퇴 시 계정과 제출 이력이 숨김 처리되며 모든 세션이 로그아웃됩니다.
-          같은 계정으로 다시 로그인하면 복구 여부를 선택할 수 있습니다.
+          회원 탈퇴 시 계정과 제출 이력이 숨김 처리되며 모든 세션이
+          로그아웃됩니다. 같은 계정으로 다시 로그인하면 복구 여부를 선택할 수
+          있습니다.
         </p>
         <button
           type="button"

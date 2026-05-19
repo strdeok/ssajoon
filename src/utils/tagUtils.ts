@@ -36,6 +36,27 @@ export const DIFFICULTY_ORDER: Record<string, number> = {
   "Very-Hard": 5,
 };
 
+export function getDifficultyRank(difficulty: string | null | undefined) {
+  if (!difficulty) return 0;
+
+  const normalized = difficulty.trim().toLowerCase().replace(/[\s_]+/g, "-");
+
+  switch (normalized) {
+    case "easy":
+      return DIFFICULTY_ORDER.Easy;
+    case "medium":
+      return DIFFICULTY_ORDER.Medium;
+    case "medium-hard":
+      return DIFFICULTY_ORDER["Medium-Hard"];
+    case "hard":
+      return DIFFICULTY_ORDER.Hard;
+    case "very-hard":
+      return DIFFICULTY_ORDER["Very-Hard"];
+    default:
+      return 0;
+  }
+}
+
 export function getKoreanTag(tag: string | null | undefined): string {
   if (!tag) return "";
   const lowerTag = tag.toLowerCase().trim();

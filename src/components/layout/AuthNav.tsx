@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { signout } from "@/app/login/actions";
+import { useRouter } from "next/navigation";
 import { LogOut, Settings, UserCircle2 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
@@ -13,56 +13,137 @@ import { cn } from "@/lib/utils";
 type AuthState = {
   user: User | null;
   userRole: string;
+  isDeleted: boolean;
   isLoading: boolean;
 };
 
 export function AuthNav() {
+  const router = useRouter();
+
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     userRole: "USER",
+    isDeleted: false,
     isLoading: true,
   });
 
   useEffect(() => {
     let ignore = false;
+    const supabase = createClient();
+
+    const setSignedOutState = () => {
+      setAuthState({
+        user: null,
+        userRole: "USER",
+        isDeleted: false,
+        isLoading: false,
+      });
+    };
 
     async function loadAuthState() {
-      const supabase = createClient();
       const {
         data: { user },
+        error: userError,
       } = await supabase.auth.getUser();
 
-      let userRole = "USER";
+      if (ignore) return;
 
-      if (user) {
-        const { data: userData } = await supabase
-          .from("users")
-          .select("role")
-          .eq("id", user.id)
-          .single();
+      if (userError || !user) {
+        setSignedOutState();
+        return;
+      }
 
-        if (typeof userData?.role === "string") {
-          userRole = userData.role;
+      const { data: userData, error: userDataError } = await supabase
+        .from("users")
+        .select("role, is_deleted")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (ignore) return;
+
+      // auth.users에는 있는데 public.users row가 없는 비정상 상태
+      if (userDataError || !userData) {
+        await supabase.auth.signOut();
+
+        if (!ignore) {
+          setSignedOutState();
+          router.refresh();
         }
+
+        return;
       }
 
-      if (!ignore) {
-        setAuthState({ user, userRole, isLoading: false });
-      }
+      // is_deleted === true여도 여기서 자동 로그아웃하지 않음
+      setAuthState({
+        user,
+        userRole: typeof userData.role === "string" ? userData.role : "USER",
+        isDeleted: Boolean(userData.is_deleted),
+        isLoading: false,
+      });
     }
 
     loadAuthState().catch(() => {
       if (!ignore) {
-        setAuthState({ user: null, userRole: "USER", isLoading: false });
+        setSignedOutState();
       }
     });
 
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (ignore) return;
+
+      if (event === "SIGNED_OUT" || !session?.user) {
+        setSignedOutState();
+        router.refresh();
+      }
+    });
+
+    const handleSignedOut = () => {
+      if (ignore) return;
+
+      setSignedOutState();
+      router.refresh();
+    };
+
+    const handleProfileUpdated = () => {
+      if (ignore) return;
+
+      loadAuthState().then(() => {
+        router.refresh();
+      });
+    };
+
+    window.addEventListener("auth:signed-out", handleSignedOut);
+    window.addEventListener("auth:profile-updated", handleProfileUpdated);
+
     return () => {
       ignore = true;
+      subscription.unsubscribe();
+      window.removeEventListener("auth:signed-out", handleSignedOut);
+      window.removeEventListener("auth:profile-updated", handleProfileUpdated);
     };
-  }, []);
+  }, [router]);
 
-  const { user, userRole, isLoading } = authState;
+  async function handleSignOut() {
+    const supabase = createClient();
+
+    await supabase.auth.signOut();
+
+    setAuthState({
+      user: null,
+      userRole: "USER",
+      isDeleted: false,
+      isLoading: false,
+    });
+
+    window.dispatchEvent(new Event("auth:signed-out"));
+
+    router.replace("/");
+    router.refresh();
+  }
+
+  const { user, userRole, isDeleted, isLoading } = authState;
 
   if (isLoading) {
     return <Skeleton className="h-10 w-full max-w-40 rounded-full" />;
@@ -81,6 +162,34 @@ export function AuthNav() {
       >
         로그인
       </Link>
+    );
+  }
+
+  if (isDeleted) {
+    return (
+      <div className="flex w-full flex-col items-stretch gap-2 sm:gap-3 lg:w-auto lg:flex-row lg:items-center lg:justify-end">
+        <Link
+          href="/account/restore"
+          prefetch={false}
+          className={buttonVariants({
+            size: "sm",
+            className: "w-full justify-center rounded-full lg:w-auto",
+          })}
+        >
+          계정 복구
+        </Link>
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={handleSignOut}
+          className="w-full justify-center rounded-full lg:w-auto"
+        >
+          <LogOut className="h-4 w-4" />
+          로그아웃
+        </Button>
+      </div>
     );
   }
 
@@ -104,7 +213,7 @@ export function AuthNav() {
         href="/mypage"
         prefetch={false}
         className={cn(
-          "inline-flex w-full min-w-0 items-center justify-center gap-2 rounded-full bg-background px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground lg:w-auto lg:justify-start",
+          "inline-flex w-full min-w-0 items-center justify-center gap-2 rounded-full bg-background px-3 py-2 text-sm font-medium text-gray-800 transition-colors hover:bg-accent hover:text-accent-foreground lg:w-auto lg:justify-start",
         )}
       >
         <UserCircle2 className="h-4 w-4 shrink-0" />
@@ -116,17 +225,16 @@ export function AuthNav() {
         </span>
       </Link>
 
-      <form action={signout} className="w-full lg:w-auto">
-        <Button
-          type="submit"
-          variant="ghost"
-          size="sm"
-          className="w-full justify-center rounded-full lg:w-auto"
-        >
-          <LogOut className="h-4 w-4" />
-          로그아웃
-        </Button>
-      </form>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={handleSignOut}
+        className="w-full justify-center rounded-full lg:w-auto"
+      >
+        <LogOut className="h-4 w-4" />
+        로그아웃
+      </Button>
     </div>
   );
 }

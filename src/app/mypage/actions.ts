@@ -3,7 +3,6 @@
 import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 export async function updateProfile(formData: FormData) {
   const nickname = String(formData.get("nickname") || "").trim();
@@ -152,13 +151,21 @@ export async function withdrawAccount() {
       };
     }
 
-    await supabase.auth.signOut();
+    const { error: signOutError } = await supabase.auth.signOut();
+
+    if (signOutError) {
+      return {
+        success: false,
+        message: "로그아웃 처리 중 오류가 발생했습니다.",
+      };
+    }
+
+    revalidatePath("/", "layout");
+    return { success: true, message: "회원 탈퇴가 완료되었습니다." };
   } catch {
     return {
       success: false,
       message: "회원 탈퇴 처리 중 오류가 발생했습니다.",
     };
   }
-
-  redirect("/");
 }

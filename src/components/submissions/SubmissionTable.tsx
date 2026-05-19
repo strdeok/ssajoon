@@ -25,6 +25,15 @@ type Props = {
   currentSort: { field: keyof Submission; order: "asc" | "desc" };
 };
 
+type SortHeaderProps = {
+  field: keyof Submission;
+  label: string;
+  currentSort: Props["currentSort"];
+  onSort: Props["onSort"];
+  className?: string;
+  align?: "left" | "right" | "center";
+};
+
 const getResultBadgeStyle = (result: string) => {
   switch (result) {
     case "AC":
@@ -74,7 +83,7 @@ const convertLanguage = (language: string | null) => {
     case "cpp":
       return "C++ 17";
     case "python":
-      return "Python 3.11";
+      return "Python3";
     default:
       return language;
   }
@@ -91,6 +100,48 @@ function formatToReadableDate(isoString: string): string {
   }).format(date);
 }
 
+function SortHeader({
+  field,
+  label,
+  currentSort,
+  onSort,
+  className = "",
+  align = "left",
+}: SortHeaderProps) {
+  const isActive = currentSort.field === field;
+
+  const alignClass =
+    align === "right"
+      ? "justify-end text-right"
+      : align === "center"
+        ? "justify-center text-center"
+        : "justify-start text-left";
+
+  return (
+    <th className={`h-11 whitespace-nowrap px-6 ${className}`}>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onSort(field);
+        }}
+        className={`group flex w-full items-center gap-1 text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 ${alignClass}`}
+      >
+        {label}
+        <span className="text-zinc-400 transition-colors group-hover:text-zinc-600 dark:group-hover:text-zinc-300">
+          {!isActive ? (
+            <ArrowUpDown className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
+          ) : currentSort.order === "asc" ? (
+            <ArrowUp className="h-3 w-3 text-blue-500" />
+          ) : (
+            <ArrowDown className="h-3 w-3 text-blue-500" />
+          )}
+        </span>
+      </button>
+    </th>
+  );
+}
+
 export default function SubmissionTable({
   submissions,
   onSort,
@@ -98,53 +149,101 @@ export default function SubmissionTable({
 }: Props) {
   const router = useRouter();
 
-  const SortHeader = ({
-    field,
-    label,
-    className = "",
-    align = "left",
-  }: {
-    field: keyof Submission;
-    label: string;
-    className?: string;
-    align?: "left" | "right" | "center";
-  }) => {
-    const isActive = currentSort.field === field;
-
-    const alignClass =
-      align === "right"
-        ? "justify-end text-right"
-        : align === "center"
-          ? "justify-center text-center"
-          : "justify-start text-left";
-
-    return (
-      <th className={`h-11 whitespace-nowrap px-6 ${className}`}>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onSort(field);
-          }}
-          className={`group flex w-full items-center gap-1 text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 ${alignClass}`}
-        >
-          {label}
-          <span className="text-zinc-400 transition-colors group-hover:text-zinc-600 dark:group-hover:text-zinc-300">
-            {!isActive ? (
-              <ArrowUpDown className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
-            ) : currentSort.order === "asc" ? (
-              <ArrowUp className="h-3 w-3 text-blue-500" />
-            ) : (
-              <ArrowDown className="h-3 w-3 text-blue-500" />
-            )}
-          </span>
-        </button>
-      </th>
-    );
-  };
-
   return (
-    <div className="mb-6 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:border-zinc-800 dark:bg-[#18181b]">
+    <>
+    <div className="mb-6 space-y-3 md:hidden">
+      {submissions.length === 0 ? (
+        <div className="rounded-lg border border-[#E2E8F0] bg-white px-5 py-14 text-center shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:border-zinc-800 dark:bg-[#18181b]">
+          <p className="text-base font-medium text-zinc-900 dark:text-zinc-200">
+            제출 내역이 없습니다.
+          </p>
+          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-500">
+            아직 제출한 문제가 없습니다. 새로운 문제에 도전해보세요!
+          </p>
+        </div>
+      ) : (
+        submissions.map((sub) => (
+          <div
+            key={sub.id}
+            role="button"
+            tabIndex={0}
+            onClick={() => router.push(`/submissions/${sub.id}`)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                router.push(`/submissions/${sub.id}`);
+              }
+            }}
+            className="rounded-lg border border-[#E2E8F0] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.05)] transition-colors active:bg-[#F8FAFC] dark:border-zinc-800 dark:bg-[#18181b] dark:active:bg-zinc-800/20"
+          >
+            <div className="flex min-w-0 items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                  {sub.problemTitle}
+                </p>
+                <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+                  #{sub.problemId} · 제출 ID {sub.id}
+                </p>
+              </div>
+              <span
+                className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium ${getResultBadgeStyle(
+                  sub.result,
+                )}`}
+              >
+                {getResultText(sub.result)}
+              </span>
+            </div>
+
+            <div className="mt-3 flex min-w-0 flex-wrap gap-1">
+              <span className="max-w-28 truncate whitespace-nowrap rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                {getKoreanTag(sub.tag1)}
+              </span>
+              {sub.tag2 && (
+                <span className="max-w-28 truncate whitespace-nowrap rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                  {getKoreanTag(sub.tag2)}
+                </span>
+              )}
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-zinc-500 dark:text-zinc-400">
+              <div>
+                <span className="block font-medium text-zinc-400">언어</span>
+                <span className="mt-0.5 block text-sm text-zinc-700 dark:text-zinc-300">
+                  {convertLanguage(sub.language)}
+                </span>
+              </div>
+              <div>
+                <span className="block font-medium text-zinc-400">맞춘 사람</span>
+                <span className="mt-0.5 flex items-center gap-1 text-sm text-zinc-700 dark:text-zinc-300">
+                  <Users className="h-3.5 w-3.5" />
+                  {sub.solvedUsersCount?.toLocaleString() ?? "-"}
+                </span>
+              </div>
+              <div>
+                <span className="block font-medium text-zinc-400">실행 시간</span>
+                <span className="mt-0.5 block text-sm text-zinc-700 dark:text-zinc-300">
+                  {sub.runtimeMs !== null ? `${sub.runtimeMs} ms` : "-"}
+                </span>
+              </div>
+              <div>
+                <span className="block font-medium text-zinc-400">메모리</span>
+                <span className="mt-0.5 block text-sm text-zinc-700 dark:text-zinc-300">
+                  {sub.memoryKb !== null
+                    ? `${(sub.memoryKb / 1024).toFixed(2)} MB`
+                    : "-"}
+                </span>
+              </div>
+            </div>
+
+            <p className="mt-4 text-xs text-zinc-400 dark:text-zinc-500">
+              {formatToReadableDate(sub.submittedAt)}
+            </p>
+          </div>
+        ))
+      )}
+    </div>
+
+    <div className="mb-6 hidden w-full min-w-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:border-zinc-800 dark:bg-[#18181b] md:block">
       <div className="w-full overflow-x-auto">
         <table className="min-w-210 w-full table-fixed text-left text-sm">
           <colgroup>
@@ -160,18 +259,57 @@ export default function SubmissionTable({
 
           <thead className="border-b border-[#E2E8F0] bg-[#F8FAFC] dark:border-zinc-800 dark:bg-zinc-800/30">
             <tr className="hover:bg-transparent">
-              <SortHeader field="id" label="제출 ID" />
-              <SortHeader field="problemTitle" label="문제" />
-              <SortHeader field="language" label="언어" />
-              <SortHeader field="result" label="결과" />
-              <SortHeader field="runtimeMs" label="실행 시간" align="right" />
-              <SortHeader field="memoryKb" label="메모리" align="right" />
+              <SortHeader
+                field="id"
+                label="제출 ID"
+                currentSort={currentSort}
+                onSort={onSort}
+              />
+              <SortHeader
+                field="problemTitle"
+                label="문제"
+                currentSort={currentSort}
+                onSort={onSort}
+              />
+              <SortHeader
+                field="language"
+                label="언어"
+                currentSort={currentSort}
+                onSort={onSort}
+              />
+              <SortHeader
+                field="result"
+                label="결과"
+                currentSort={currentSort}
+                onSort={onSort}
+              />
+              <SortHeader
+                field="runtimeMs"
+                label="실행 시간"
+                align="right"
+                currentSort={currentSort}
+                onSort={onSort}
+              />
+              <SortHeader
+                field="memoryKb"
+                label="메모리"
+                align="right"
+                currentSort={currentSort}
+                onSort={onSort}
+              />
               <SortHeader
                 field="solvedUsersCount"
-                label="맞힌 사람"
+                label="맞춘 사람"
                 align="right"
+                currentSort={currentSort}
+                onSort={onSort}
               />
-              <SortHeader field="submittedAt" label="제출 시간" />
+              <SortHeader
+                field="submittedAt"
+                label="제출 시간"
+                currentSort={currentSort}
+                onSort={onSort}
+              />
             </tr>
           </thead>
 
@@ -291,5 +429,6 @@ export default function SubmissionTable({
         </table>
       </div>
     </div>
+    </>
   );
 }

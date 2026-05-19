@@ -157,7 +157,6 @@ export default async function SubmissionDetailPage({
         .eq("problem_id", submission.problem_id)
         .eq("language", submission.language)
         .in("result", ["AC", "ACCEPTED"])
-        .neq("id", submission.id)
         .or("is_deleted.is.false,is_deleted.is.null")
         .not("execution_time_ms", "is", null)
         .not("memory_kb", "is", null)

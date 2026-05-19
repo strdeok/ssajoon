@@ -9,19 +9,54 @@ const DIFFICULTY_FILTER: Record<string, string[]> = {
   "Very-Hard": ["VERY_HARD", "Very Hard"],
 };
 
-const createSpaceInsensitiveTitlePattern = (search: string) => {
-  const compactSearch = search.replace(/\s+/g, "");
+const SORTABLE_COLUMNS = {
+  id: "id",
+  title: "title",
+  tag1: "tag1",
+  tag2: "tag2",
+  difficulty: "difficulty",
+  created_at: "created_at",
+  attemptedUsers: "attemptedUsers",
+  solvedUsers: "solvedUsers",
+  acceptanceRate: "acceptanceRate",
+  status: "status",
+} as const;
 
-  if (!compactSearch) {
-    return "";
-  }
+type SortField = keyof typeof SORTABLE_COLUMNS;
+type SortOrder = "asc" | "desc";
 
-  return compactSearch.split("").join("%");
-};
+const DEFAULT_SORT: SortField = "id";
+const DEFAULT_ORDER: SortOrder = "asc";
+
+const isSortField = (value: string): value is SortField =>
+  value in SORTABLE_COLUMNS;
+
+const normalizeSort = (value: string | null): SortField =>
+  value && isSortField(value) ? value : DEFAULT_SORT;
+
+const normalizeOrder = (value: string | null): SortOrder =>
+  value === "desc" ? "desc" : DEFAULT_ORDER;
 
 type SubmissionProblemIdRow = {
   problem_id: number | string | null;
 };
+
+type SortedProblemRow = {
+  id: number;
+  title: string;
+  tag1: string;
+  tag2: string | null;
+  difficulty: string | null;
+  created_at: string | null;
+  attempted_users: number;
+  solved_users: number;
+  acceptance_rate: number;
+  user_status: "solved" | "wrong" | "none";
+  filtered_count: number;
+};
+
+const normalizeProblemIdsForRpc = (problemIds: number[] | null) =>
+  problemIds && problemIds.length > 0 ? problemIds : null;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -34,20 +69,12 @@ export async function GET(request: Request) {
   const status = searchParams.get("status") || "";
   const tag = searchParams.get("tag") || searchParams.get("category") || "";
   const search = searchParams.get("search") || "";
+  const sort = normalizeSort(searchParams.get("sort"));
+  const order = normalizeOrder(searchParams.get("order"));
 
   const supabase = await createClient();
-
-  const { count: totalCount } = await supabase
-    .from("problems")
-    .select("*", { count: "exact", head: true })
-    .eq("is_deleted", false)
-
-  let query = supabase
-    .from("problems")
-    .select("id, title, tag1, tag2, difficulty", { count: "exact" })
-    .eq("is_deleted", false)
-    .order("id", { ascending: true });
-
+  let includedProblemIds: number[] | null = null;
+  let excludedProblemIds: number[] | null = null;
   if (status) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -86,9 +113,9 @@ export async function GET(request: Request) {
 
     if (status === "풀었음") {
       if (acceptedProblemIds.length === 0) {
-        return NextResponse.json({ data: [], totalCount: totalCount ?? 0, filteredCount: 0 });
+        return NextResponse.json({ data: [], totalCount: 0, filteredCount: 0 });
       }
-      query = query.in("id", acceptedProblemIds);
+      includedProblemIds = acceptedProblemIds;
     }
 
     if (status === "틀렸음") {
@@ -97,57 +124,56 @@ export async function GET(request: Request) {
       );
 
       if (wrongProblemIds.length === 0) {
-        return NextResponse.json({ data: [], totalCount: totalCount ?? 0, filteredCount: 0 });
+        return NextResponse.json({ data: [], totalCount: 0, filteredCount: 0 });
       }
-      query = query.in("id", wrongProblemIds);
+      includedProblemIds = wrongProblemIds;
     }
 
     if (status === "안 풀었음") {
       if (attemptedProblemIds.length > 0) {
-        query = query.not("id", "in", `(${attemptedProblemIds.join(",")})`);
+        excludedProblemIds = attemptedProblemIds;
       }
     }
   }
 
-  if (difficulty && DIFFICULTY_FILTER[difficulty]) {
-    query = query.in("difficulty", DIFFICULTY_FILTER[difficulty]);
-  }
+  const difficultyValues = difficulty && DIFFICULTY_FILTER[difficulty]
+    ? DIFFICULTY_FILTER[difficulty]
+    : null;
 
-  if (tag) {
-    query = query.or(`tag1.eq.${tag},tag2.eq.${tag}`);
-  }
-
-  if (search.trim()) {
-    const trimmed = search.trim();
-    const num = parseInt(trimmed);
-    const compactTitlePattern = createSpaceInsensitiveTitlePattern(trimmed);
-    const titleFilters = [
-      `title.ilike.%${trimmed}%`,
-      compactTitlePattern && compactTitlePattern !== trimmed
-        ? `title.ilike.%${compactTitlePattern}%`
-        : "",
-    ].filter(Boolean);
-
-    if (!isNaN(num)) {
-      query = query.or([...titleFilters, `id.eq.${num}`].join(","));
-    } else {
-      query = query.or(titleFilters.join(","));
-    }
-  }
-
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-  query = query.range(from, to);
-
-  const { data, error, count } = await query;
+  const { data, error } = await supabase.rpc("get_visible_problems_sorted", {
+    p_page: page,
+    p_page_size: pageSize,
+    p_sort: sort,
+    p_order: order,
+    p_difficulty_values: difficultyValues,
+    p_tag: tag || null,
+    p_search: search.trim() || null,
+    p_problem_ids: normalizeProblemIdsForRpc(includedProblemIds),
+    p_excluded_problem_ids: normalizeProblemIdsForRpc(excludedProblemIds),
+  });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  const rows = (data ?? []) as SortedProblemRow[];
+  const totalCount = rows[0]?.filtered_count ?? 0;
+
   return NextResponse.json({
-    data: data ?? [],
-    totalCount: totalCount ?? 0,
-    filteredCount: count ?? 0,
+    data: rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      tag1: row.tag1,
+      tag2: row.tag2,
+      difficulty: row.difficulty,
+      created_at: row.created_at,
+      attemptedUsers: row.attempted_users,
+      solvedUsers: row.solved_users,
+      acceptanceRate: row.acceptance_rate,
+      userStatus: row.user_status,
+      filteredCount: row.filtered_count,
+    })),
+    totalCount,
+    filteredCount: totalCount,
   });
 }

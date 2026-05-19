@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback, Suspense, useMemo } from "react";
+import { useEffect, useState, useCallback, Suspense, useRef } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { Problem } from "@/types/problem";
 import { createClient } from "@/utils/supabase/client";
@@ -27,7 +27,6 @@ import {
 import {
   getKoreanTag,
   DIFFICULTY_OPTIONS,
-  DIFFICULTY_ORDER,
 } from "@/utils/tagUtils";
 import {
   Table,
@@ -37,6 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
 
 type ProblemStatus = "solved" | "wrong" | "none";
 
@@ -44,11 +44,15 @@ type ProblemId = Problem["id"];
 type SortField =
   | "id"
   | "title"
-  | "tag"
   | "difficulty"
+  | "tag1"
+  | "tag2"
+  | "created_at"
+  | "attemptedUsers"
+  | "solvedUsers"
   | "acceptanceRate"
   | "status";
-type SortValue = string | number | null | undefined;
+type SortOrder = "asc" | "desc";
 
 type SubmissionStatusRow = {
   problem_id: ProblemId;
@@ -57,11 +61,28 @@ type SubmissionStatusRow = {
 
 type ProblemStats = {
   problem_id: string | number;
+  attemptedUsers: number;
+  solvedUsers: number;
+  total_submissions: number;
+  accepted_submissions: number;
+  acceptanceRate: number;
+};
+
+type ProblemStatsApiRow = {
+  problem_id: string | number;
   attempted_users: number;
   solved_users: number;
   total_submissions: number;
   accepted_submissions: number;
   acceptance_rate: number;
+};
+
+type ProblemListItem = Problem & {
+  attemptedUsers?: number;
+  solvedUsers?: number;
+  acceptanceRate?: number;
+  userStatus?: ProblemStatus;
+  filteredCount?: number;
 };
 
 type UserProfile = {
@@ -70,10 +91,55 @@ type UserProfile = {
 
 const DIFFICULTIES = ["전체", ...DIFFICULTY_OPTIONS];
 const PAGE_SIZE = 20;
+const DEFAULT_SORT: SortField = "id";
+const DEFAULT_ORDER: SortOrder = "asc";
+const SORT_DEFAULT_ORDERS: Record<SortField, SortOrder> = {
+  id: "asc",
+  title: "asc",
+  difficulty: "asc",
+  tag1: "asc",
+  tag2: "asc",
+  created_at: "desc",
+  attemptedUsers: "desc",
+  solvedUsers: "desc",
+  acceptanceRate: "desc",
+  status: "asc",
+};
+
+const isSortField = (value: string | null): value is SortField =>
+  value === "id" ||
+  value === "title" ||
+  value === "difficulty" ||
+  value === "tag1" ||
+  value === "tag2" ||
+  value === "created_at" ||
+  value === "attemptedUsers" ||
+  value === "solvedUsers" ||
+  value === "acceptanceRate" ||
+  value === "status";
+
+const normalizeSort = (value: string | null): SortField =>
+  isSortField(value) ? value : DEFAULT_SORT;
+
+const normalizeOrder = (value: string | null): SortOrder =>
+  value === "desc" ? "desc" : DEFAULT_ORDER;
+
+const parsePage = (value: string | null) => {
+  const parsed = Number(value ?? "1");
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 1;
+};
+
+const getSortIconClassName = (isActive: boolean) =>
+  isActive
+    ? "opacity-100"
+    : "opacity-0 transition-opacity group-hover:opacity-100";
 
 function ProblemsContent() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const initialQuery = searchParams.get("q") || "";
+  const searchParamsRef = useRef(searchParams);
+  const initialQuery = searchParams.get("search") || searchParams.get("q") || "";
 
   const [user, setUser] = useState<User | null>(null);
   const [showAlgorithm, setShowAlgorithm] = useState(true);
@@ -91,37 +157,112 @@ function ProblemsContent() {
   >(new Map());
   const [totalSolvedCount, setTotalSolvedCount] = useState(0);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedDifficulty, setDifficulty] = useState("전체");
-  const [selectedCategory, setCategory] = useState("전체");
-  const [selectedStatus, setStatus] = useState("전체");
+  const [currentPage, setCurrentPage] = useState(() =>
+    parsePage(searchParams.get("page")),
+  );
+  const [selectedDifficulty, setDifficulty] = useState(
+    () => searchParams.get("difficulty") || "전체",
+  );
+  const [selectedCategory, setCategory] = useState(
+    () => searchParams.get("category") || "전체",
+  );
+  const [selectedStatus, setStatus] = useState(
+    () => searchParams.get("status") || "전체",
+  );
   const [searchInput, setSearchInput] = useState(initialQuery);
   const [debouncedSearch, setDebouncedSearch] = useState(initialQuery);
 
-  const [sortField, setSortField] = useState<SortField>("id");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [sortField, setSortField] = useState<SortField>(() =>
+    normalizeSort(searchParams.get("sort")),
+  );
+  const [sortOrder, setSortOrder] = useState<SortOrder>(() =>
+    normalizeOrder(searchParams.get("order")),
+  );
 
   const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortOrder("asc");
-    }
+    const nextOrder =
+      sortField === field
+        ? sortOrder === "asc"
+          ? "desc"
+          : "asc"
+        : SORT_DEFAULT_ORDERS[field];
+    const params = new URLSearchParams(searchParams);
+
+    params.set("page", "1");
+    params.set("sort", field);
+    params.set("order", nextOrder);
+
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    setCurrentPage(1);
+    setSortField(field);
+    setSortOrder(nextOrder);
   };
+
+  useEffect(() => {
+    searchParamsRef.current = searchParams;
+  }, [searchParams]);
+
+  const updateQueryParams = useCallback((updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParamsRef.current);
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (!value || value === "전체") {
+        params.delete(key);
+        return;
+      }
+
+      params.set(key, value);
+    });
+
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [pathname, router]);
+
+  const handlePageChange = (page: number) => {
+    const nextPage = Math.min(totalPages, Math.max(1, page));
+    const params = new URLSearchParams(searchParams);
+
+    params.set("page", String(nextPage));
+    params.set("sort", sortField);
+    params.set("order", sortOrder);
+
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    setCurrentPage(nextPage);
+  };
+
+  useEffect(() => {
+    const nextPage = parsePage(searchParams.get("page"));
+    const nextSort = normalizeSort(searchParams.get("sort"));
+    const nextOrder = normalizeOrder(searchParams.get("order"));
+    const nextDifficulty = searchParams.get("difficulty") || "전체";
+    const nextCategory = searchParams.get("category") || "전체";
+    const nextStatus = searchParams.get("status") || "전체";
+
+    setCurrentPage(nextPage);
+    setSortField(nextSort);
+    setSortOrder(nextOrder);
+    setDifficulty(nextDifficulty);
+    setCategory(nextCategory);
+    setStatus(nextStatus);
+  }, [searchParams]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchInput);
       setCurrentPage(1);
+      updateQueryParams({
+        page: "1",
+        search: searchInput.trim() || null,
+        sort: sortField,
+        order: sortOrder,
+      });
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [searchInput]);
+  }, [searchInput, sortField, sortOrder, updateQueryParams]);
 
   // Handle URL search query changes
   useEffect(() => {
-    const q = searchParams.get("q");
+    const q = searchParams.get("search") || searchParams.get("q");
     if (q !== null && q !== searchInput) {
       setSearchInput(q);
     }
@@ -162,12 +303,13 @@ function ProblemsContent() {
     if (!showAlgorithm) {
       setCategory("전체");
       setIsAlgorithmFilterOpen(false);
-      if (sortField === "tag") {
+      if (sortField === "tag1") {
         setSortField("id");
         setSortOrder("asc");
+        updateQueryParams({ page: "1", sort: "id", order: "asc" });
       }
     }
-  }, [showAlgorithm, sortField]);
+  }, [showAlgorithm, sortField, updateQueryParams]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -276,14 +418,49 @@ function ProblemsContent() {
     if (selectedCategory !== "전체") params.set("category", selectedCategory);
     if (selectedStatus !== "전체") params.set("status", selectedStatus);
     if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
+    params.set("sort", sortField);
+    params.set("order", sortOrder);
 
     try {
       const res = await fetch(`/api/problems?${params}`);
       if (!res.ok) throw new Error("문제 목록 조회 실패");
       const json = await res.json();
-      setProblems(json.data ?? []);
+      const nextProblems = (json.data ?? []) as ProblemListItem[];
+      setProblems(nextProblems);
       setTotalCount(json.totalCount ?? 0);
       setFilteredCount(json.filteredCount ?? 0);
+
+      const statsMap = new Map<string, ProblemStats>();
+      const statusMap = new Map<ProblemId, ProblemStatus>();
+
+      nextProblems.forEach((problem) => {
+        if (
+          problem.attemptedUsers !== undefined &&
+          problem.solvedUsers !== undefined &&
+          problem.acceptanceRate !== undefined
+        ) {
+          statsMap.set(String(problem.id), {
+            problem_id: problem.id,
+            attemptedUsers: problem.attemptedUsers,
+            solvedUsers: problem.solvedUsers,
+            total_submissions: 0,
+            accepted_submissions: 0,
+            acceptanceRate: problem.acceptanceRate,
+          });
+        }
+
+        if (problem.userStatus) {
+          statusMap.set(problem.id, problem.userStatus);
+        }
+      });
+
+      if (statsMap.size > 0) {
+        setProblemStatsMap(statsMap);
+      }
+
+      if (statusMap.size > 0) {
+        setProblemStatusMap(statusMap);
+      }
     } catch (error) {
       setProblems([]);
       setTotalCount(0);
@@ -297,6 +474,8 @@ function ProblemsContent() {
     selectedCategory,
     selectedStatus,
     debouncedSearch,
+    sortField,
+    sortOrder,
   ]);
 
   useEffect(() => {
@@ -369,8 +548,15 @@ function ProblemsContent() {
         if (!res.ok) throw new Error("문제 통계 조회 실패");
         const json = await res.json();
         const nextStatsMap = new Map<string, ProblemStats>();
-        (json.data ?? []).forEach((stats: ProblemStats) => {
-          nextStatsMap.set(String(stats.problem_id), stats);
+        ((json.data ?? []) as ProblemStatsApiRow[]).forEach((stats) => {
+          nextStatsMap.set(String(stats.problem_id), {
+            problem_id: stats.problem_id,
+            attemptedUsers: stats.attempted_users,
+            solvedUsers: stats.solved_users,
+            total_submissions: stats.total_submissions,
+            accepted_submissions: stats.accepted_submissions,
+            acceptanceRate: stats.acceptance_rate,
+          });
         });
         setProblemStatsMap(nextStatsMap);
       } catch (error) {
@@ -380,59 +566,7 @@ function ProblemsContent() {
     fetchProblemStats();
   }, [problems]);
 
-  const displayed =
-    selectedStatus === "풀었음"
-      ? problems.filter((p) => problemStatusMap.get(p.id) === "solved")
-      : selectedStatus === "틀렸음"
-        ? problems.filter((p) => problemStatusMap.get(p.id) === "wrong")
-        : selectedStatus === "안 풀었음"
-          ? problems.filter(
-              (p) => (problemStatusMap.get(p.id) ?? "none") === "none",
-            )
-          : problems;
-
-  const sortedDisplayed = useMemo(() => {
-    return [...displayed].sort((a, b) => {
-      let aVal: SortValue;
-      let bVal: SortValue;
-
-      if (sortField === "acceptanceRate") {
-        const aStats = problemStatsMap.get(String(a.id));
-        const bStats = problemStatsMap.get(String(b.id));
-        aVal = aStats?.acceptance_rate ?? -1;
-        bVal = bStats?.acceptance_rate ?? -1;
-      } else if (sortField === "difficulty") {
-        aVal = DIFFICULTY_ORDER[a.difficulty || ""] || 0;
-        bVal = DIFFICULTY_ORDER[b.difficulty || ""] || 0;
-      } else if (sortField === "tag") {
-        aVal = getKoreanTag(a.tag1);
-        bVal = getKoreanTag(b.tag1);
-      } else if (sortField === "status") {
-        const statusOrder: Record<string, number> = {
-          solved: 1,
-          wrong: 2,
-          none: 3,
-        };
-        aVal = statusOrder[problemStatusMap.get(a.id) ?? "none"];
-        bVal = statusOrder[problemStatusMap.get(b.id) ?? "none"];
-      } else if (sortField === "title") {
-        aVal = a.title;
-        bVal = b.title;
-      } else {
-        aVal = a.id;
-        bVal = b.id;
-      }
-
-      if (aVal === bVal) return 0;
-      if (aVal === null || aVal === undefined)
-        return sortOrder === "asc" ? -1 : 1;
-      if (bVal === null || bVal === undefined)
-        return sortOrder === "asc" ? 1 : -1;
-
-      const res = aVal < bVal ? -1 : 1;
-      return sortOrder === "asc" ? res : -res;
-    });
-  }, [displayed, sortField, sortOrder, problemStatsMap, problemStatusMap]);
+  const displayed = problems;
 
   const totalPages = Math.max(1, Math.ceil(filteredCount / PAGE_SIZE));
 
@@ -445,11 +579,30 @@ function ProblemsContent() {
     setSortField("id");
     setSortOrder("asc");
     setCurrentPage(1);
+    updateQueryParams({
+      difficulty: null,
+      category: null,
+      status: null,
+      search: null,
+      page: "1",
+      sort: "id",
+      order: "asc",
+    });
   };
 
-  const handleFilterChange = (fn: () => void) => {
+  const handleFilterChange = (
+    key: "difficulty" | "category" | "status",
+    value: string,
+    fn: () => void,
+  ) => {
     fn();
     setCurrentPage(1);
+    updateQueryParams({
+      [key]: value,
+      page: "1",
+      sort: sortField,
+      order: sortOrder,
+    });
   };
 
   const shouldShowAlgorithmFilter =
@@ -536,39 +689,35 @@ function ProblemsContent() {
             <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
               난이도
             </label>
-            <select
+            <DropdownSelect
               value={selectedDifficulty}
-              onChange={(e) =>
-                handleFilterChange(() => setDifficulty(e.target.value))
+              onValueChange={(value) =>
+                handleFilterChange("difficulty", value, () =>
+                  setDifficulty(value),
+                )
               }
-              className="w-full bg-[#F8FAFC] dark:bg-[#09090b] border border-[#E2E8F0] dark:border-zinc-800 text-sm text-zinc-800 dark:text-zinc-200 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 dark:focus:border-blue-500/50 transition cursor-pointer"
-            >
-              {DIFFICULTIES.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
+              options={DIFFICULTIES.map((d) => ({ value: d, label: d }))}
+              triggerClassName="min-h-9 rounded-md bg-[#F8FAFC] dark:bg-[#09090b] border-[#E2E8F0] dark:border-zinc-800 text-sm text-zinc-800 dark:text-zinc-200 focus:ring-blue-500/30 focus:border-blue-400 dark:focus:border-blue-500/50"
+            />
           </div>
           {shouldShowAlgorithmFilter && (
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
               알고리즘
             </label>
-            <select
+            <DropdownSelect
               value={selectedCategory}
-              onChange={(e) =>
-                handleFilterChange(() => setCategory(e.target.value))
+              onValueChange={(value) =>
+                handleFilterChange("category", value, () =>
+                  setCategory(value),
+                )
               }
-              className="w-full bg-[#F8FAFC] dark:bg-[#09090b] border border-[#E2E8F0] dark:border-zinc-800 text-sm text-zinc-800 dark:text-zinc-200 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 dark:focus:border-blue-500/50 transition cursor-pointer"
-            >
-              <option value="전체">전체</option>
-              {categories.map((c) => (
-                <option key={c} value={c}>
-                  {getKoreanTag(c)}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: "전체", label: "전체" },
+                ...categories.map((c) => ({ value: c, label: getKoreanTag(c) })),
+              ]}
+              triggerClassName="min-h-9 rounded-md bg-[#F8FAFC] dark:bg-[#09090b] border-[#E2E8F0] dark:border-zinc-800 text-sm text-zinc-800 dark:text-zinc-200 focus:ring-blue-500/30 focus:border-blue-400 dark:focus:border-blue-500/50"
+            />
             {!showAlgorithm && selectedCategory !== "전체" && (
               <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
                 적용 중: {getKoreanTag(selectedCategory)}
@@ -580,19 +729,22 @@ function ProblemsContent() {
             <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
               상태
             </label>
-            <select
+            <DropdownSelect
               value={selectedStatus}
-              onChange={(e) =>
-                handleFilterChange(() => setStatus(e.target.value))
-              }
               disabled={!user}
-              className="w-full bg-[#F8FAFC] dark:bg-[#09090b] border border-[#E2E8F0] dark:border-zinc-800 text-sm text-zinc-800 dark:text-zinc-200 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 dark:focus:border-blue-500/50 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <option value="전체">전체</option>
-              <option value="풀었음">풀었음</option>
-              <option value="틀렸음">틀렸음</option>
-              <option value="안 풀었음">안 풀었음</option>
-            </select>
+              onValueChange={(value) =>
+                handleFilterChange("status", value, () =>
+                  setStatus(value),
+                )
+              }
+              options={[
+                { value: "전체", label: "전체" },
+                { value: "풀었음", label: "풀었음" },
+                { value: "틀렸음", label: "틀렸음" },
+                { value: "안 풀었음", label: "안 풀었음" },
+              ]}
+              triggerClassName="min-h-9 rounded-md bg-[#F8FAFC] dark:bg-[#09090b] border-[#E2E8F0] dark:border-zinc-800 text-sm text-zinc-800 dark:text-zinc-200 focus:ring-blue-500/30 focus:border-blue-400 dark:focus:border-blue-500/50"
+            />
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
@@ -632,7 +784,7 @@ function ProblemsContent() {
             </button>
           </div>
         ) : (
-          <Table className="min-w-210">
+          <Table className="min-w-230">
             <TableHeader className="bg-[#F8FAFC] dark:bg-zinc-800/30">
               <TableRow className="border-[#E2E8F0] dark:border-zinc-800 hover:bg-transparent">
                 <TableHead className="w-20 px-6">
@@ -642,7 +794,7 @@ function ProblemsContent() {
                     onClick={() => handleSort("id")}
                   >
                     #
-                    <span className="opacity-0 transition-opacity group-hover:opacity-100">
+                    <span className={getSortIconClassName(sortField === "id")}>
                       {sortField === "id" ? (
                         sortOrder === "asc" ? (
                           <ArrowUp className="h-3 w-3 text-blue-500" />
@@ -662,7 +814,7 @@ function ProblemsContent() {
                     onClick={() => handleSort("title")}
                   >
                     제목
-                    <span className="opacity-0 transition-opacity group-hover:opacity-100">
+                    <span className={getSortIconClassName(sortField === "title")}>
                       {sortField === "title" ? (
                         sortOrder === "asc" ? (
                           <ArrowUp className="h-3 w-3 text-blue-500" />
@@ -679,12 +831,13 @@ function ProblemsContent() {
                 <TableHead className="min-w-45">
                   <button
                     type="button"
-                    className="group flex items-center gap-1 transition-colors hover:text-zinc-700 dark:hover:text-zinc-200"
-                    onClick={() => handleSort("tag")}
+                    title="알고리즘 태그 기준 정렬"
+                    className="group flex cursor-pointer items-center gap-1 transition-colors hover:text-zinc-700 dark:hover:text-zinc-200"
+                    onClick={() => handleSort("tag1")}
                   >
                     태그
-                    <span className="opacity-0 transition-opacity group-hover:opacity-100">
-                      {sortField === "tag" ? (
+                    <span className={getSortIconClassName(sortField === "tag1")}>
+                      {sortField === "tag1" ? (
                         sortOrder === "asc" ? (
                           <ArrowUp className="h-3 w-3 text-blue-500" />
                         ) : (
@@ -704,7 +857,7 @@ function ProblemsContent() {
                     onClick={() => handleSort("difficulty")}
                   >
                     난이도
-                    <span className="opacity-0 transition-opacity group-hover:opacity-100">
+                    <span className={getSortIconClassName(sortField === "difficulty")}>
                       {sortField === "difficulty" ? (
                         sortOrder === "asc" ? (
                           <ArrowUp className="h-3 w-3 text-blue-500" />
@@ -720,12 +873,34 @@ function ProblemsContent() {
                 <TableHead className="w-28 text-right">
                   <button
                     type="button"
-                    className="group ml-auto flex items-center justify-end gap-1 transition-colors hover:text-zinc-700 dark:hover:text-zinc-200"
+                    title="정답률 기준 정렬"
+                    className="group ml-auto flex cursor-pointer items-center justify-end gap-1 transition-colors hover:text-zinc-700 dark:hover:text-zinc-200"
                     onClick={() => handleSort("acceptanceRate")}
                   >
                     정답률
-                    <span className="opacity-0 transition-opacity group-hover:opacity-100">
+                    <span className={getSortIconClassName(sortField === "acceptanceRate")}>
                       {sortField === "acceptanceRate" ? (
+                        sortOrder === "asc" ? (
+                          <ArrowUp className="h-3 w-3 text-blue-500" />
+                        ) : (
+                          <ArrowDown className="h-3 w-3 text-blue-500" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3" />
+                      )}
+                    </span>
+                  </button>
+                </TableHead>
+                <TableHead className="w-28 text-right">
+                  <button
+                    type="button"
+                    title="생성일 기준 정렬"
+                    className="group ml-auto flex cursor-pointer items-center justify-end gap-1 transition-colors hover:text-zinc-700 dark:hover:text-zinc-200"
+                    onClick={() => handleSort("created_at")}
+                  >
+                    생성일
+                    <span className={getSortIconClassName(sortField === "created_at")}>
+                      {sortField === "created_at" ? (
                         sortOrder === "asc" ? (
                           <ArrowUp className="h-3 w-3 text-blue-500" />
                         ) : (
@@ -741,11 +916,12 @@ function ProblemsContent() {
                   <TableHead className="w-24 text-center">
                     <button
                       type="button"
-                      className="group mx-auto flex items-center justify-center gap-1 transition-colors hover:text-zinc-700 dark:hover:text-zinc-200"
+                      title="내 풀이 상태 기준 정렬"
+                      className="group mx-auto flex cursor-pointer items-center justify-center gap-1 transition-colors hover:text-zinc-700 dark:hover:text-zinc-200"
                       onClick={() => handleSort("status")}
                     >
                       상태
-                      <span className="opacity-0 transition-opacity group-hover:opacity-100">
+                      <span className={getSortIconClassName(sortField === "status")}>
                         {sortField === "status" ? (
                           sortOrder === "asc" ? (
                             <ArrowUp className="h-3 w-3 text-blue-500" />
@@ -785,6 +961,9 @@ function ProblemsContent() {
                       <TableCell>
                         <div className="ml-auto h-4 w-12 rounded bg-zinc-100 dark:bg-zinc-800" />
                       </TableCell>
+                      <TableCell>
+                        <div className="ml-auto h-4 w-16 rounded bg-zinc-100 dark:bg-zinc-800" />
+                      </TableCell>
                       {user && (
                         <TableCell>
                           <div className="mx-auto h-4 w-6 rounded bg-zinc-100 dark:bg-zinc-800" />
@@ -792,13 +971,13 @@ function ProblemsContent() {
                       )}
                     </TableRow>
                   ))
-                : sortedDisplayed.map((problem, i) => {
+                : displayed.map((problem, i) => {
                     const status = problemStatusMap.get(problem.id) ?? "none";
                     const stats = problemStatsMap.get(String(problem.id));
                     const acceptanceRate =
-                      !stats || stats.attempted_users === 0
+                      !stats || stats.attemptedUsers === 0
                         ? "-"
-                        : `${stats.acceptance_rate}%`;
+                        : `${stats.acceptanceRate}%`;
 
                     return (
                       <TableRow
@@ -840,6 +1019,14 @@ function ProblemsContent() {
                             {acceptanceRate}
                           </span>
                         </TableCell>
+                        <TableCell className="text-right text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                          {problem.created_at
+                            ? new Date(problem.created_at).toLocaleDateString(
+                                "ko-KR",
+                                { timeZone: "Asia/Seoul" },
+                              )
+                            : "-"}
+                        </TableCell>
                         {user && (
                           <TableCell>
                             <div className="flex justify-center">
@@ -877,7 +1064,7 @@ function ProblemsContent() {
                 <div className="mx-auto flex w-max items-center justify-center gap-1 sm:mx-0">
                   <button
                     type="button"
-                    onClick={() => setCurrentPage(1)}
+                    onClick={() => handlePageChange(1)}
                     disabled={currentPage === 1}
                     className="h-8 w-8 shrink-0 items-center justify-center rounded-md text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 sm:inline-flex"
                     aria-label="첫 페이지로 이동"
@@ -887,7 +1074,7 @@ function ProblemsContent() {
 
                   <button
                     type="button"
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                     className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
                     aria-label="이전 페이지로 이동"
@@ -919,7 +1106,7 @@ function ProblemsContent() {
                         <button
                           key={page}
                           type="button"
-                          onClick={() => setCurrentPage(page)}
+                          onClick={() => handlePageChange(page)}
                           aria-current={
                             currentPage === page ? "page" : undefined
                           }
@@ -937,9 +1124,7 @@ function ProblemsContent() {
 
                   <button
                     type="button"
-                    onClick={() =>
-                      setCurrentPage((p) => Math.min(totalPages, p + 1))
-                    }
+                    onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
                     className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
                     aria-label="다음 페이지로 이동"
@@ -949,7 +1134,7 @@ function ProblemsContent() {
 
                   <button
                     type="button"
-                    onClick={() => setCurrentPage(totalPages)}
+                    onClick={() => handlePageChange(totalPages)}
                     disabled={currentPage === totalPages}
                     className="h-8 w-8 shrink-0 items-center justify-center rounded-md text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 sm:inline-flex"
                     aria-label="마지막 페이지로 이동"

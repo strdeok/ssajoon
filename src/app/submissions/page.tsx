@@ -18,7 +18,7 @@ import WeeklySubmissionChart, {
 const ITEMS_PER_PAGE = 10;
 
 const isAcceptedResult = (result: string | null) => {
-  if (!result) return false;
+  if (!result) return false; 
   const lower = result.toLowerCase();
   return (
     lower.includes("맞았습니다") ||
@@ -56,6 +56,29 @@ const normalizeLanguage = (lang: string | null | undefined) => {
   const lower = lang.toLowerCase();
   if (lower === "cpp" || lower === "c++") return "c++";
   return lower;
+};
+
+type SubmissionProblemRow = {
+  title: string | null;
+  tag1: string | null;
+  tag2: string | null;
+};
+
+type SubmissionQueryRow = {
+  id: number;
+  problem_id: number;
+  language: string | null;
+  result: string | null;
+  status: string | null;
+  execution_time_ms: number | null;
+  memory_kb: number | null;
+  submitted_at: string;
+  problems: SubmissionProblemRow | SubmissionProblemRow[] | null;
+};
+
+type ProblemStatRow = {
+  problem_id: string | number;
+  solved_users: number | null;
 };
 
 export default function SubmissionsPage() {
@@ -130,7 +153,8 @@ export default function SubmissionsPage() {
           throw fetchError;
         }
 
-        const mappedSubmissions: Submission[] = (data || []).map((sub: any) => {
+        const mappedSubmissions: Submission[] = ((data ??
+          []) as SubmissionQueryRow[]).map((sub) => {
           const problemData = Array.isArray(sub.problems)
             ? sub.problems[0]
             : sub.problems;
@@ -208,8 +232,8 @@ export default function SubmissionsPage() {
               });
               if (res.ok) {
                 const json = await res.json();
-                (json.data ?? []).forEach((stat: any) => {
-                  statsMap.set(String(stat.problem_id), stat.solved_users);
+                ((json.data ?? []) as ProblemStatRow[]).forEach((stat) => {
+                  statsMap.set(String(stat.problem_id), stat.solved_users ?? 0);
                 });
               }
             } catch (err) {
@@ -242,9 +266,13 @@ export default function SubmissionsPage() {
 
         const stats = calculateWeeklySubmissionStats(mappedSubmissions);
         setWeeklyStats(stats);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Submission fetch failed:", err);
-        setError(err.message || "데이터를 불러오는 중 오류가 발생했습니다.");
+        setError(
+          err instanceof Error
+            ? err.message
+            : "데이터를 불러오는 중 오류가 발생했습니다.",
+        );
         setSubmissions([]);
         setSummary({
           totalSubmissions: 0,
@@ -310,7 +338,11 @@ export default function SubmissionsPage() {
       }
     });
 
-    return internalStats.map(({ localDateStr, ...rest }) => rest);
+    return internalStats.map((stat) => ({
+      date: stat.date,
+      count: stat.count,
+      isToday: stat.isToday,
+    }));
   };
 
   const filteredSubmissions = useMemo(() => {
@@ -386,12 +418,12 @@ export default function SubmissionsPage() {
 
   return (
     // 페이지 전체 배경은 아주 연한 회색(bg-gray-50), 최소 높이는 화면 전체(min-h-screen)
-    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300 flex justify-center">
+    <div className="flex min-h-screen justify-center bg-gray-50 px-4 py-6 transition-colors duration-300 dark:bg-zinc-950 sm:px-6 sm:py-8 lg:px-8">
       {/* 넉넉한 spacing을 가진 중앙 정렬 컨테이너 */}
-      <div className="mx-auto lg:px-24 px-12 pt-8 pb-20 space-y-6 lg:max-w-360">
+      <div className="w-full min-w-0 space-y-6 pb-20 pt-4 sm:pt-8 lg:max-w-360 lg:px-24">
         {/* 1. 상단 헤더 및 요약 통계 섹션 */}
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-8">
-          <div>
+        <div className="mb-8 flex min-w-0 flex-col gap-6 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0">
             {/* 큰 제목 */}
             <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-2">
               제출 기록
