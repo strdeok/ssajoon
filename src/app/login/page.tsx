@@ -22,6 +22,17 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ me
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
+        const { data: userData } = await supabase
+          .from("users")
+          .select("is_deleted")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (userData?.is_deleted) {
+          router.push("/rejoin");
+          return;
+        }
+
         router.push(next);
         return;
       }
