@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback, Suspense, useRef } from "react";
+import { useEffect, useState, useCallback, Suspense, useMemo, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
+import { useQuery } from "@tanstack/react-query";
 import { Problem } from "@/types/problem";
 import { createClient } from "@/utils/supabase/client";
 import {
@@ -21,7 +22,6 @@ import {
 } from "lucide-react";
 import {
   DifficultyBadge,
-  isAcceptedResult,
   StatusIcon,
 } from "@/components/problem/ProblemComponents";
 import {
@@ -54,11 +54,6 @@ type SortField =
   | "status";
 type SortOrder = "asc" | "desc";
 
-type SubmissionStatusRow = {
-  problem_id: ProblemId;
-  result: string | null;
-};
-
 type ProblemStats = {
   problem_id: string | number;
   attemptedUsers: number;
@@ -68,21 +63,29 @@ type ProblemStats = {
   acceptanceRate: number;
 };
 
-type ProblemStatsApiRow = {
-  problem_id: string | number;
-  attempted_users: number;
-  solved_users: number;
-  total_submissions: number;
-  accepted_submissions: number;
-  acceptance_rate: number;
-};
-
 type ProblemListItem = Problem & {
   attemptedUsers?: number;
   solvedUsers?: number;
   acceptanceRate?: number;
-  userStatus?: ProblemStatus;
   filteredCount?: number;
+  isSolved?: boolean;
+  userStatus?: ProblemStatus;
+};
+
+type ProblemsResponse = {
+  data: ProblemListItem[];
+  totalCount: number;
+  filteredCount: number;
+};
+
+type SolvedProblemsResponse = {
+  solvedProblemIds: number[];
+};
+
+type ProblemStatusesResponse = {
+  solvedProblemIds: number[];
+  attemptedProblemIds: number[];
+  wrongProblemIds: number[];
 };
 
 type UserProfile = {
@@ -144,18 +147,7 @@ function ProblemsContent() {
   const [user, setUser] = useState<User | null>(null);
   const [showAlgorithm, setShowAlgorithm] = useState(true);
   const [isAlgorithmFilterOpen, setIsAlgorithmFilterOpen] = useState(false);
-  const [problems, setProblems] = useState<Problem[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [filteredCount, setFilteredCount] = useState(0);
-  const [isFetching, setIsFetching] = useState(true);
   const [categories, setCategories] = useState<string[]>([]);
-  const [problemStatusMap, setProblemStatusMap] = useState<
-    Map<ProblemId, ProblemStatus>
-  >(new Map());
-  const [problemStatsMap, setProblemStatsMap] = useState<
-    Map<string, ProblemStats>
-  >(new Map());
-  const [totalSolvedCount, setTotalSolvedCount] = useState(0);
 
   const [currentPage, setCurrentPage] = useState(() =>
     parsePage(searchParams.get("page")),
@@ -292,7 +284,7 @@ function ProblemsContent() {
         if (!res.ok) throw new Error("카테고리 목록 조회 실패");
         const cats = await res.json();
         setCategories(Array.isArray(cats) ? cats : []);
-      } catch (categoryError) {
+      } catch {
         setCategories([]);
       }
     };
@@ -311,262 +303,367 @@ function ProblemsContent() {
     }
   }, [showAlgorithm, sortField, updateQueryParams]);
 
-  useEffect(() => {
-    const supabase = createClient();
-
-    const PAGE_SIZE = 1000;
-
-    const CHUNK_SIZE = 300;
-
-    const fetchAllAcceptedSubmissionProblemIds = async () => {
-      const allProblemIds: number[] = [];
-
-      let from = 0;
-
-      while (true) {
-        const to = from + PAGE_SIZE - 1;
-
-        const { data, error } = await supabase
-          .from("submissions")
-          .select("problem_id")
-          .eq("user_id", user!.id)
-          .eq("is_deleted", false)
-          .in("result", ["AC", "ACCEPTED"])
-          .range(from, to);
-
-        if (error) {
-          throw error;
-        }
-
-        const rows = data ?? [];
-
-        rows.forEach((row) => {
-          if (row.problem_id !== null && row.problem_id !== undefined) {
-            allProblemIds.push(row.problem_id);
-          }
-        });
-
-        if (rows.length < PAGE_SIZE) {
-          break;
-        }
-
-        from += PAGE_SIZE;
-      }
-
-      return Array.from(new Set(allProblemIds));
-    };
-
-    const fetchPublicProblemIds = async (problemIds: number[]) => {
-      const publicProblemIds: number[] = [];
-
-      for (let i = 0; i < problemIds.length; i += CHUNK_SIZE) {
-        const chunk = problemIds.slice(i, i + CHUNK_SIZE);
-
-        const { data, error } = await supabase
-          .from("problems")
-          .select("id")
-          .in("id", chunk)
-          .eq("is_deleted", false);
-
-        if (error) {
-          throw error;
-        }
-
-        (data ?? []).forEach((problem) => {
-          publicProblemIds.push(problem.id);
-        });
-      }
-
-      return publicProblemIds;
-    };
-
-    const fetchTotalSolvedCount = async () => {
-      if (!user) {
-        setTotalSolvedCount(0);
-        return;
-      }
-
-      try {
-        const solvedProblemIds = await fetchAllAcceptedSubmissionProblemIds();
-
-        if (solvedProblemIds.length === 0) {
-          setTotalSolvedCount(0);
-          return;
-        }
-
-        const publicSolvedProblemIds =
-          await fetchPublicProblemIds(solvedProblemIds);
-
-        setTotalSolvedCount(publicSolvedProblemIds.length);
-      } catch (error) {
-        setTotalSolvedCount(0);
-      }
-    };
-
-    fetchTotalSolvedCount();
-  }, [user]);
-
-  const fetchProblems = useCallback(async () => {
-    setIsFetching(true);
-    const params = new URLSearchParams({
-      page: String(currentPage),
-      pageSize: String(PAGE_SIZE),
-    });
-
-    if (selectedDifficulty !== "전체")
-      params.set("difficulty", selectedDifficulty);
-    if (selectedCategory !== "전체") params.set("category", selectedCategory);
-    if (selectedStatus !== "전체") params.set("status", selectedStatus);
-    if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
-    params.set("sort", sortField);
-    params.set("order", sortOrder);
-
-    try {
-      const res = await fetch(`/api/problems?${params}`);
-      if (!res.ok) throw new Error("문제 목록 조회 실패");
-      const json = await res.json();
-      const nextProblems = (json.data ?? []) as ProblemListItem[];
-      setProblems(nextProblems);
-      setTotalCount(json.totalCount ?? 0);
-      setFilteredCount(json.filteredCount ?? 0);
-
-      const statsMap = new Map<string, ProblemStats>();
-      const statusMap = new Map<ProblemId, ProblemStatus>();
-
-      nextProblems.forEach((problem) => {
-        if (
-          problem.attemptedUsers !== undefined &&
-          problem.solvedUsers !== undefined &&
-          problem.acceptanceRate !== undefined
-        ) {
-          statsMap.set(String(problem.id), {
-            problem_id: problem.id,
-            attemptedUsers: problem.attemptedUsers,
-            solvedUsers: problem.solvedUsers,
-            total_submissions: 0,
-            accepted_submissions: 0,
-            acceptanceRate: problem.acceptanceRate,
-          });
-        }
-
-        if (problem.userStatus) {
-          statusMap.set(problem.id, problem.userStatus);
-        }
+  const solvedProblemsQuery = useQuery({
+    queryKey: ["user", user?.id, "solved-problems"],
+    queryFn: async () => {
+      const response = await fetch("/api/me/solved-problems", {
+        cache: "no-store",
       });
 
-      if (statsMap.size > 0) {
-        setProblemStatsMap(statsMap);
+      if (!response.ok) {
+        throw new Error("해결한 문제 목록 조회 실패");
       }
 
-      if (statusMap.size > 0) {
-        setProblemStatusMap(statusMap);
-      }
-    } catch (error) {
-      setProblems([]);
-      setTotalCount(0);
-      setFilteredCount(0);
-    } finally {
-      setIsFetching(false);
-    }
-  }, [
-    currentPage,
-    selectedDifficulty,
-    selectedCategory,
-    selectedStatus,
-    debouncedSearch,
-    sortField,
-    sortOrder,
-  ]);
+      return (await response.json()) as SolvedProblemsResponse;
+    },
+    enabled: Boolean(user?.id),
+    staleTime: 1000 * 30,
+    gcTime: 1000 * 60 * 5,
+  });
 
-  useEffect(() => {
-    fetchProblems();
-  }, [fetchProblems]);
+  const problemStatusesQuery = useQuery({
+    queryKey: ["user", user?.id, "problem-statuses"],
+    queryFn: async () => {
+      const response = await fetch("/api/me/problem-statuses", {
+        cache: "no-store",
+      });
 
-  useEffect(() => {
-    const supabase = createClient();
-    const fetchProblemStatuses = async () => {
-      if (!user || problems.length === 0) {
-        setProblemStatusMap(new Map());
-        return;
+      if (!response.ok) {
+        throw new Error("문제 풀이 상태 조회 실패");
       }
 
-      const problemIds = problems.map((p) => p.id);
-      const { data, error } = await supabase
-        .from("submissions")
-        .select("problem_id, result")
-        .eq("user_id", user.id)
-        .in("problem_id", problemIds);
+      return (await response.json()) as ProblemStatusesResponse;
+    },
+    enabled: Boolean(user?.id),
+    staleTime: 1000 * 30,
+    gcTime: 1000 * 60 * 5,
+  });
 
-      if (error) {
-        setProblemStatusMap(new Map());
-        return;
+  const solvedProblemIds = useMemo(
+    () => solvedProblemsQuery.data?.solvedProblemIds ?? [],
+    [solvedProblemsQuery.data?.solvedProblemIds],
+  );
+  const attemptedProblemIds = useMemo(
+    () => problemStatusesQuery.data?.attemptedProblemIds ?? [],
+    [problemStatusesQuery.data?.attemptedProblemIds],
+  );
+  const wrongProblemIds = useMemo(
+    () => problemStatusesQuery.data?.wrongProblemIds ?? [],
+    [problemStatusesQuery.data?.wrongProblemIds],
+  );
+
+  const solvedSet = useMemo(
+    () => new Set<ProblemId>(solvedProblemIds),
+    [solvedProblemIds],
+  );
+  const wrongSet = useMemo(
+    () => new Set<ProblemId>(wrongProblemIds),
+    [wrongProblemIds],
+  );
+
+  const statusProblemIds = useMemo(() => {
+    if (!user || selectedStatus === "전체") return null;
+    if (selectedStatus === "풀었음") return solvedProblemIds;
+    if (selectedStatus === "틀렸음") return wrongProblemIds;
+    return null;
+  }, [selectedStatus, solvedProblemIds, user, wrongProblemIds]);
+
+  const excludedStatusProblemIds = useMemo(() => {
+    if (!user || selectedStatus !== "안 풀었음") return null;
+    return attemptedProblemIds;
+  }, [attemptedProblemIds, selectedStatus, user]);
+
+  const shouldReturnEmptyProblems =
+    Boolean(user) &&
+    (selectedStatus === "풀었음" || selectedStatus === "틀렸음") &&
+    statusProblemIds !== null &&
+    statusProblemIds.length === 0;
+
+  const isWaitingForStatusFilter =
+    Boolean(user) &&
+    (selectedStatus !== "전체" || sortField === "status") &&
+    problemStatusesQuery.isLoading;
+  const isUserStatusFiltered =
+    Boolean(user) && (selectedStatus !== "전체" || sortField === "status");
+
+  const problemsQuery = useQuery({
+    queryKey: isUserStatusFiltered
+      ? [
+          "user",
+          user?.id,
+          "filtered-problems",
+          {
+            page: currentPage,
+            pageSize: PAGE_SIZE,
+            difficulty: selectedDifficulty,
+            tag1: selectedCategory,
+            search: debouncedSearch.trim(),
+            sort: sortField,
+            order: sortOrder,
+            status: selectedStatus,
+            problemIds: statusProblemIds,
+            excludedProblemIds: excludedStatusProblemIds,
+          },
+        ]
+      : [
+          "problems",
+          {
+            page: currentPage,
+            pageSize: PAGE_SIZE,
+            difficulty: selectedDifficulty,
+            category: selectedCategory,
+            search: debouncedSearch.trim(),
+            sort: sortField,
+            order: sortOrder,
+          },
+    ],
+    queryFn: async () => {
+      if (shouldReturnEmptyProblems) {
+        return { data: [], totalCount: 0, filteredCount: 0 } satisfies ProblemsResponse;
       }
 
-      const nextStatusMap = new Map<ProblemId, ProblemStatus>();
-      problems.forEach((p) => nextStatusMap.set(p.id, "none"));
+      const createProblemParams = ({
+        page,
+        pageSize,
+        sort,
+        order,
+        problemIds,
+        excludedProblemIds,
+      }: {
+        page: number;
+        pageSize: number;
+        sort: Exclude<SortField, "status">;
+        order: SortOrder;
+        problemIds?: number[] | null;
+        excludedProblemIds?: number[] | null;
+      }) => {
+        const params = new URLSearchParams({
+          page: String(page),
+          pageSize: String(pageSize),
+          sort,
+          order,
+        });
 
-      const parseProblemId = (value: number | string): number | null => {
-        if (typeof value === "number") return value;
-        const parsed = Number(value);
-        return Number.isNaN(parsed) ? null : parsed;
+        if (selectedDifficulty !== "전체") {
+          params.set("difficulty", selectedDifficulty);
+        }
+        if (selectedCategory !== "전체") {
+          params.set("category", selectedCategory);
+        }
+        if (debouncedSearch.trim()) {
+          params.set("search", debouncedSearch.trim());
+        }
+        if (problemIds && problemIds.length > 0) {
+          params.set("problemIds", problemIds.join(","));
+        }
+        if (excludedProblemIds && excludedProblemIds.length > 0) {
+          params.set("excludedProblemIds", excludedProblemIds.join(","));
+        }
+
+        return params;
       };
 
-      ((data as SubmissionStatusRow[] | null) ?? []).forEach((s) => {
-        const problemId = parseProblemId(s.problem_id);
-        if (problemId === null) return;
-
-        const current = nextStatusMap.get(problemId);
-        if (current === "solved") return;
-        if (isAcceptedResult(s.result)) {
-          nextStatusMap.set(problemId, "solved");
-          return;
+      const fetchProblemsPage = async (params: URLSearchParams) => {
+        const response = await fetch(`/api/problems?${params.toString()}`);
+        if (!response.ok) {
+          throw new Error("문제 목록 조회 실패");
         }
-        nextStatusMap.set(problemId, "wrong");
+
+        return (await response.json()) as ProblemsResponse;
+      };
+
+      const apiSort: Exclude<SortField, "status"> =
+        sortField === "status" ? "id" : sortField;
+
+      if (sortField === "status" && user && selectedStatus === "전체") {
+        const statusGroups =
+          sortOrder === "asc"
+            ? [
+                { problemIds: solvedProblemIds, excludedProblemIds: null },
+                { problemIds: wrongProblemIds, excludedProblemIds: null },
+                { problemIds: null, excludedProblemIds: attemptedProblemIds },
+              ]
+            : [
+                { problemIds: null, excludedProblemIds: attemptedProblemIds },
+                { problemIds: wrongProblemIds, excludedProblemIds: null },
+                { problemIds: solvedProblemIds, excludedProblemIds: null },
+              ];
+
+        const countResults = await Promise.all(
+          statusGroups.map((group) => {
+            if (group.problemIds && group.problemIds.length === 0) {
+              return Promise.resolve({
+                data: [],
+                totalCount: 0,
+                filteredCount: 0,
+              } satisfies ProblemsResponse);
+            }
+
+            return fetchProblemsPage(
+              createProblemParams({
+                page: 1,
+                pageSize: 1,
+                sort: "id",
+                order: "asc",
+                problemIds: group.problemIds,
+                excludedProblemIds: group.excludedProblemIds,
+              }),
+            );
+          }),
+        );
+
+        const groupCounts = countResults.map((result) => result.filteredCount);
+        const totalFilteredCount = groupCounts.reduce(
+          (sum, count) => sum + count,
+          0,
+        );
+        const pageStart = (currentPage - 1) * PAGE_SIZE;
+        let cursor = 0;
+        const pageProblems: ProblemListItem[] = [];
+
+        for (let index = 0; index < statusGroups.length; index += 1) {
+          const group = statusGroups[index];
+          const groupCount = groupCounts[index];
+          const groupStart = cursor;
+          const groupEnd = cursor + groupCount;
+
+          cursor = groupEnd;
+
+          if (
+            pageProblems.length >= PAGE_SIZE ||
+            pageStart + PAGE_SIZE <= groupStart ||
+            pageStart >= groupEnd
+          ) {
+            continue;
+          }
+
+          let groupOffset = Math.max(0, pageStart - groupStart);
+          let remaining = Math.min(
+            PAGE_SIZE - pageProblems.length,
+            groupCount - groupOffset,
+          );
+          const groupPageSize = 100;
+
+          while (remaining > 0) {
+            const groupPage = Math.floor(groupOffset / groupPageSize) + 1;
+            const offsetInPage = groupOffset % groupPageSize;
+            const groupResult = await fetchProblemsPage(
+              createProblemParams({
+                page: groupPage,
+                pageSize: groupPageSize,
+                sort: "id",
+                order: "asc",
+                problemIds: group.problemIds,
+                excludedProblemIds: group.excludedProblemIds,
+              }),
+            );
+            const slice = groupResult.data.slice(
+              offsetInPage,
+              offsetInPage + remaining,
+            );
+
+            pageProblems.push(...slice);
+
+            if (slice.length === 0) break;
+
+            groupOffset += slice.length;
+            remaining -= slice.length;
+          }
+        }
+
+        return {
+          data: pageProblems,
+          totalCount: totalFilteredCount,
+          filteredCount: totalFilteredCount,
+        } satisfies ProblemsResponse;
+      }
+
+      const params = new URLSearchParams({
+        page: String(currentPage),
+        pageSize: String(PAGE_SIZE),
+        sort: apiSort,
+        order: sortOrder,
       });
 
-      setProblemStatusMap(nextStatusMap);
-    };
-
-    fetchProblemStatuses();
-  }, [user, problems]);
-
-  useEffect(() => {
-    const fetchProblemStats = async () => {
-      if (problems.length === 0) {
-        setProblemStatsMap(new Map());
-        return;
+      if (selectedDifficulty !== "전체") {
+        params.set("difficulty", selectedDifficulty);
+      }
+      if (selectedCategory !== "전체") {
+        params.set("category", selectedCategory);
+      }
+      if (debouncedSearch.trim()) {
+        params.set("search", debouncedSearch.trim());
+      }
+      if (statusProblemIds && statusProblemIds.length > 0) {
+        params.set("problemIds", statusProblemIds.join(","));
+      }
+      if (excludedStatusProblemIds && excludedStatusProblemIds.length > 0) {
+        params.set("excludedProblemIds", excludedStatusProblemIds.join(","));
       }
 
-      const problemIds = problems.map((p) => p.id.toString());
-      try {
-        const res = await fetch("/api/problems/stats", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ problemIds }),
-        });
-
-        if (!res.ok) throw new Error("문제 통계 조회 실패");
-        const json = await res.json();
-        const nextStatsMap = new Map<string, ProblemStats>();
-        ((json.data ?? []) as ProblemStatsApiRow[]).forEach((stats) => {
-          nextStatsMap.set(String(stats.problem_id), {
-            problem_id: stats.problem_id,
-            attemptedUsers: stats.attempted_users,
-            solvedUsers: stats.solved_users,
-            total_submissions: stats.total_submissions,
-            accepted_submissions: stats.accepted_submissions,
-            acceptanceRate: stats.acceptance_rate,
-          });
-        });
-        setProblemStatsMap(nextStatsMap);
-      } catch (error) {
-        setProblemStatsMap(new Map());
+      const response = await fetch(`/api/problems?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error("문제 목록 조회 실패");
       }
-    };
-    fetchProblemStats();
+
+      return (await response.json()) as ProblemsResponse;
+    },
+    enabled: !isWaitingForStatusFilter,
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 30,
+  });
+
+  const problems = useMemo(
+    () => problemsQuery.data?.data ?? [],
+    [problemsQuery.data?.data],
+  );
+  const totalCount = problemsQuery.data?.totalCount ?? 0;
+  const filteredCount = problemsQuery.data?.filteredCount ?? 0;
+  const isFetching = problemsQuery.isLoading || isWaitingForStatusFilter;
+
+  const problemStatsMap = useMemo(() => {
+    const statsMap = new Map<string, ProblemStats>();
+
+    problems.forEach((problem) => {
+      if (
+        problem.attemptedUsers !== undefined &&
+        problem.solvedUsers !== undefined &&
+        problem.acceptanceRate !== undefined
+      ) {
+        statsMap.set(String(problem.id), {
+          problem_id: problem.id,
+          attemptedUsers: problem.attemptedUsers,
+          solvedUsers: problem.solvedUsers,
+          total_submissions: 0,
+          accepted_submissions: 0,
+          acceptanceRate: problem.acceptanceRate,
+        });
+      }
+    });
+
+    return statsMap;
   }, [problems]);
 
-  const displayed = problems;
+  const displayed = useMemo(
+    () =>
+      problems.map((problem) => {
+        const isSolved = solvedSet.has(problem.id);
+        const userStatus: ProblemStatus = isSolved
+          ? "solved"
+          : wrongSet.has(problem.id)
+            ? "wrong"
+            : "none";
+
+        return {
+          ...problem,
+          isSolved,
+          userStatus,
+        };
+      }),
+    [problems, solvedSet, wrongSet],
+  );
+
+  const totalSolvedCount = solvedProblemIds.length;
 
   const totalPages = Math.max(1, Math.ceil(filteredCount / PAGE_SIZE));
 
@@ -784,7 +881,16 @@ function ProblemsContent() {
             </button>
           </div>
         ) : (
-          <Table className="min-w-230">
+          <Table className="min-w-[75rem] table-fixed">
+            <colgroup>
+              <col className="w-20" />
+              <col className="w-96" />
+              {showAlgorithm && <col className="w-64" />}
+              <col className="w-36" />
+              <col className="w-28" />
+              <col className="w-32" />
+              {user && <col className="w-24" />}
+            </colgroup>
             <TableHeader className="bg-[#F8FAFC] dark:bg-zinc-800/30">
               <TableRow className="border-[#E2E8F0] dark:border-zinc-800 hover:bg-transparent">
                 <TableHead className="w-20 px-6">
@@ -807,7 +913,7 @@ function ProblemsContent() {
                     </span>
                   </button>
                 </TableHead>
-                <TableHead className="min-w-60">
+                <TableHead className="w-96">
                   <button
                     type="button"
                     className="group flex items-center gap-1 transition-colors hover:text-zinc-700 dark:hover:text-zinc-200"
@@ -828,7 +934,7 @@ function ProblemsContent() {
                   </button>
                 </TableHead>
                 {showAlgorithm && (
-                <TableHead className="min-w-45">
+                <TableHead className="w-64">
                   <button
                     type="button"
                     title="알고리즘 태그 기준 정렬"
@@ -947,11 +1053,11 @@ function ProblemsContent() {
                       <TableCell className="px-6">
                         <div className="h-4 rounded bg-zinc-100 dark:bg-zinc-800" />
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="overflow-hidden">
                         <div className="h-4 rounded bg-zinc-100 dark:bg-zinc-800" />
                       </TableCell>
                       {showAlgorithm && (
-                      <TableCell>
+                      <TableCell className="overflow-hidden">
                         <div className="h-4 rounded bg-zinc-100 dark:bg-zinc-800" />
                       </TableCell>
                       )}
@@ -972,7 +1078,7 @@ function ProblemsContent() {
                     </TableRow>
                   ))
                 : displayed.map((problem, i) => {
-                    const status = problemStatusMap.get(problem.id) ?? "none";
+                    const status = problem.userStatus ?? "none";
                     const stats = problemStatsMap.get(String(problem.id));
                     const acceptanceRate =
                       !stats || stats.attemptedUsers === 0
@@ -987,24 +1093,24 @@ function ProblemsContent() {
                         <TableCell className="px-6 text-sm font-medium text-zinc-400 dark:text-zinc-500">
                           {problem.id ?? (currentPage - 1) * PAGE_SIZE + i + 1}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="overflow-hidden">
                           <Link
                             href={`/problems/${problem.id}`}
                             className="block"
                           >
-                            <p className="line-clamp-1 text-sm font-semibold text-zinc-800 transition-colors group-hover:text-blue-600 dark:text-zinc-200 dark:group-hover:text-blue-400">
+                            <p className="truncate text-sm font-semibold text-zinc-800 transition-colors group-hover:text-blue-600 dark:text-zinc-200 dark:group-hover:text-blue-400">
                               {problem.title}
                             </p>
                           </Link>
                         </TableCell>
                         {showAlgorithm && (
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                        <TableCell className="overflow-hidden">
+                          <div className="flex min-w-0 gap-1 overflow-hidden">
+                            <span className="max-w-28 truncate rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
                               {getKoreanTag(problem.tag1)}
                             </span>
                             {problem.tag2 && (
-                              <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                              <span className="max-w-28 truncate rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
                                 {getKoreanTag(problem.tag2)}
                               </span>
                             )}

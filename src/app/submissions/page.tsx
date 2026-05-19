@@ -54,7 +54,7 @@ const getResultText = (result: string) => {
 const normalizeLanguage = (lang: string | null | undefined) => {
   if (!lang || lang === "Unknown") return "unknown";
   const lower = lang.toLowerCase();
-  if (lower === "cpp" || lower === "c++") return "c++";
+  if (lower === "cpp" || lower === "c++") return "C++";
   return lower;
 };
 

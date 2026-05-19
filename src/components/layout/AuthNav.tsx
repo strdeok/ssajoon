@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { LogOut, Settings, UserCircle2 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
@@ -19,6 +20,7 @@ type AuthState = {
 
 export function AuthNav() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
@@ -32,6 +34,7 @@ export function AuthNav() {
     const supabase = createClient();
 
     const setSignedOutState = () => {
+      queryClient.removeQueries({ queryKey: ["user"] });
       setAuthState({
         user: null,
         userRole: "USER",
@@ -123,12 +126,14 @@ export function AuthNav() {
       window.removeEventListener("auth:signed-out", handleSignedOut);
       window.removeEventListener("auth:profile-updated", handleProfileUpdated);
     };
-  }, [router]);
+  }, [queryClient, router]);
 
   async function handleSignOut() {
     const supabase = createClient();
 
     await supabase.auth.signOut();
+
+    queryClient.removeQueries({ queryKey: ["user"] });
 
     setAuthState({
       user: null,
