@@ -142,7 +142,7 @@ function ProblemsContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const searchParamsRef = useRef(searchParams);
-  const initialQuery = searchParams.get("search") || searchParams.get("q") || "";
+  const urlSearchQuery = searchParams.get("search") || searchParams.get("q") || "";
 
   const [user, setUser] = useState<User | null>(null);
   const [showAlgorithm, setShowAlgorithm] = useState(true);
@@ -161,8 +161,8 @@ function ProblemsContent() {
   const [selectedStatus, setStatus] = useState(
     () => searchParams.get("status") || "전체",
   );
-  const [searchInput, setSearchInput] = useState(initialQuery);
-  const [debouncedSearch, setDebouncedSearch] = useState(initialQuery);
+  const [searchInput, setSearchInput] = useState(urlSearchQuery);
+  const [debouncedSearch, setDebouncedSearch] = useState(urlSearchQuery);
 
   const [sortField, setSortField] = useState<SortField>(() =>
     normalizeSort(searchParams.get("sort")),
@@ -252,13 +252,11 @@ function ProblemsContent() {
     return () => clearTimeout(timer);
   }, [searchInput, sortField, sortOrder, updateQueryParams]);
 
-  // Handle URL search query changes
   useEffect(() => {
-    const q = searchParams.get("search") || searchParams.get("q");
-    if (q !== null && q !== searchInput) {
-      setSearchInput(q);
-    }
-  }, [searchInput, searchParams]);
+    setSearchInput(urlSearchQuery);
+    setDebouncedSearch(urlSearchQuery);
+    setCurrentPage(1);
+  }, [urlSearchQuery]);
 
   useEffect(() => {
     const supabase = createClient();
