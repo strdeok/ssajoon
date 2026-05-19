@@ -1,27 +1,20 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function updateProfile(formData: FormData) {
   const nickname = String(formData.get("nickname") || "").trim();
-  const schoolNumber = String(formData.get("school_number") || "").trim();
   const preferredLanguage = String(
     formData.get("preferred_language") || "",
   ).trim();
+  const showAlgorithm =
+    String(formData.get("show_algorithm") || "true") === "true";
 
   if (!nickname) {
     return { success: false, message: "닉네임을 입력해주세요." };
-  }
-
-  if (!schoolNumber) {
-    return { success: false, message: "학번을 입력해주세요." };
-  }
-
-  if (schoolNumber && !/^\d{7}$/.test(schoolNumber)) {
-    return { success: false, message: "학번은 숫자 7자리여야 합니다." };
   }
 
   const supabase = await createClient();
@@ -35,12 +28,13 @@ export async function updateProfile(formData: FormData) {
 
   try {
     const supabaseAdmin = createAdminClient();
-    const { data: duplicatedNickname, error: nicknameError } = await supabaseAdmin
-      .from("users")
-      .select("id")
-      .eq("nickname", nickname)
-      .neq("id", user.id)
-      .maybeSingle();
+    const { data: duplicatedNickname, error: nicknameError } =
+      await supabaseAdmin
+        .from("users")
+        .select("id")
+        .eq("nickname", nickname)
+        .neq("id", user.id)
+        .maybeSingle();
 
     if (nicknameError) {
       return {
@@ -53,63 +47,39 @@ export async function updateProfile(formData: FormData) {
       return { success: false, message: "이미 사용 중인 닉네임입니다." };
     }
 
-    if (schoolNumber) {
-      const { data: duplicatedSchoolNumber, error: schoolNumberError } =
-        await supabaseAdmin
-          .from("users")
-          .select("id")
-          .eq("school_number", schoolNumber)
-          .neq("id", user.id)
-          .maybeSingle();
-
-      if (schoolNumberError) {
-        return {
-          success: false,
-          message: "학번 중복 확인 중 오류가 발생했습니다.",
-        };
-      }
-
-      if (duplicatedSchoolNumber) {
-        return { success: false, message: "이미 사용 중인 학번입니다." };
-      }
-    }
-
-    // 1. auth.users 메타데이터 업데이트
     const { error: authError } = await supabase.auth.updateUser({
       data: {
         nickname,
-        school_number: schoolNumber,
         preferred_language: preferredLanguage,
+        show_algorithm: showAlgorithm,
       },
     });
 
     if (authError) throw authError;
 
-    // 2. public.users 테이블 업데이트
     const { error: dbError } = await supabase
       .from("users")
       .update({
         nickname,
-        school_number: schoolNumber,
         preferred_language: preferredLanguage || null,
+        show_algorithm: showAlgorithm,
       })
       .eq("id", user.id);
 
     if (dbError) {
-      // PostgreSQL Unique Constraint Error (닉네임 중복 시)
       if (dbError.code === "23505") {
-        return {
-          success: false,
-          message: "이미 사용 중인 닉네임 또는 학번입니다.",
-        };
+        return { success: false, message: "이미 사용 중인 닉네임입니다." };
       }
       throw dbError;
     }
 
     revalidatePath("/", "layout");
-    return { success: true, message: "프로필이 성공적으로 저장되었습니다." };
+    return { success: true, message: "프로필이 저장되었습니다." };
   } catch {
-    return { success: false, message: "프로필 저장 중 오류가 발생했습니다." };
+    return {
+      success: false,
+      message: "프로필 저장 중 오류가 발생했습니다.",
+    };
   }
 }
 
@@ -144,41 +114,6 @@ export async function checkProfileNicknameDuplicate(nickname: string) {
   return { isDuplicate: Boolean(data), error: null };
 }
 
-export async function checkProfileSchoolNumberDuplicate(schoolNumber: string) {
-  const normalizedSchoolNumber = schoolNumber.trim();
-
-  if (!normalizedSchoolNumber) {
-    return { isDuplicate: false, error: null };
-  }
-
-  if (!/^\d{7}$/.test(normalizedSchoolNumber)) {
-    return { isDuplicate: false, error: "학번은 숫자 7자리여야 합니다." };
-  }
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { isDuplicate: false, error: "로그인이 필요합니다." };
-  }
-
-  const supabaseAdmin = createAdminClient();
-  const { data, error } = await supabaseAdmin
-    .from("users")
-    .select("id")
-    .eq("school_number", normalizedSchoolNumber)
-    .neq("id", user.id)
-    .maybeSingle();
-
-  if (error) {
-    return { isDuplicate: false, error: error.message };
-  }
-
-  return { isDuplicate: Boolean(data), error: null };
-}
-
 export async function withdrawAccount() {
   const supabase = await createClient();
   const {
@@ -199,7 +134,10 @@ export async function withdrawAccount() {
       .eq("id", user.id);
 
     if (updateError) {
-      return { success: false, message: "탈퇴 처리 중 오류가 발생했습니다." };
+      return {
+        success: false,
+        message: "회원 탈퇴 처리 중 오류가 발생했습니다.",
+      };
     }
 
     const { error: submissionsError } = await supabase
@@ -210,19 +148,17 @@ export async function withdrawAccount() {
     if (submissionsError) {
       return {
         success: false,
-        message: "제출 내역 탈퇴 처리 중 오류가 발생했습니다.",
+        message: "제출 이력 탈퇴 처리 중 오류가 발생했습니다.",
       };
     }
 
-    const { error: signOutError } = await supabase.auth.signOut();
-
-    if (signOutError) {
-      // 탈퇴 처리는 완료되었으므로 로그아웃 실패는 무시
-    }
+    await supabase.auth.signOut();
   } catch {
-    return { success: false, message: "탈퇴 처리 중 오류가 발생했습니다." };
+    return {
+      success: false,
+      message: "회원 탈퇴 처리 중 오류가 발생했습니다.",
+    };
   }
 
-  // 성공 시 홈으로 리다이렉트
   redirect("/");
 }

@@ -14,7 +14,7 @@ export default async function Mypage() {
 
   const { data: userData } = await supabase
     .from("users")
-    .select("nickname, school_number, created_at, preferred_language")
+    .select("nickname, created_at, preferred_language, show_algorithm")
     .eq("id", user.id)
     .single();
 
@@ -33,12 +33,10 @@ export default async function Mypage() {
           initialNickname={
             userData?.nickname || user.user_metadata?.nickname || ""
           }
-          initialSchoolNumber={
-            userData?.school_number || user.user_metadata?.school_number || ""
-          }
           initialPreferredLanguage={
             userData?.preferred_language || user.user_metadata?.preferred_language || ""
           }
+          initialShowAlgorithm={userData?.show_algorithm ?? true}
           userEmail={user.email || ""}
         />
       </div>

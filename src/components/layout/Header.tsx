@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, Search, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { AuthNav } from "@/components/layout/AuthNav";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
@@ -20,8 +19,8 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/95 shadow-sm backdrop-blur dark:border-white/5 dark:bg-[#09090b]/95">
-      <div className="w-full flex items-center justify-between gap-4 lg:px-24 lg:py-4 md:px-12 md:py-4 px-6 py-4">
+    <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/95 shadow-sm backdrop-blur dark:border-white/5 dark:bg-[#09090b]/95 flex justify-center">
+      <div className="w-full lg:max-w-360 flex items-center justify-between gap-4 lg:px-24 lg:py-4 md:px-12 md:py-4 px-6 py-4">
         <Link
           href="/"
           prefetch={false}

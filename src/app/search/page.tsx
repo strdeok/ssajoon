@@ -297,7 +297,7 @@ export default function GeneratePage() {
   }, [problems, sortField, sortOrder]);
 
   return (
-    <div className="flex-1 w-full max-w-6xl mx-auto p-6 sm:p-8 pb-20 space-y-8">
+    <div className="flex-1 w-full max-w-360 mx-auto lg:px-24 px-12 pt-8 pb-20 space-y-6">
       <div className="flex flex-col gap-3 pt-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-black tracking-tight text-zinc-950 dark:text-white md:text-4xl">

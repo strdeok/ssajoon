@@ -487,7 +487,7 @@ export function ProblemSolveClient({ problem }: ProblemSolveClientProps) {
               >
                 <option value="python">Python 3.11</option>
                 <option value="java">Java 17</option>
-                <option value="cpp">C++17</option>
+                <option value="cpp">C++</option>
               </select>
             </div>
 
