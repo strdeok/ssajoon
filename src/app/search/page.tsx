@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -13,7 +13,12 @@ import {
   Search,
   SearchIcon,
 } from "lucide-react";
-import { getDifficultyRank, getKoreanTag } from "@/utils/tagUtils";
+import {
+  DIFFICULTY_OPTIONS,
+  TAG_MAP,
+  getDifficultyRank,
+  getKoreanTag,
+} from "@/utils/tagUtils";
 import {
   Table,
   TableBody,
@@ -23,13 +28,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
-
-interface OptionItem {
-  tag1: string;
-  tag2: string | null;
-  difficulty: string;
-  count: number;
-}
 
 interface RecommendedProblem {
   id: number;
@@ -50,6 +48,11 @@ const ALL_OPTION = "전체";
 
 const normalizeSelection = (value: string) =>
   value === ALL_OPTION ? "" : value;
+
+const ALGORITHM_OPTIONS = Object.keys(TAG_MAP).sort((a, b) =>
+  getKoreanTag(a).localeCompare(getKoreanTag(b), "ko"),
+);
+
 function SortableTableHead({
   label,
   field,
@@ -89,9 +92,6 @@ function SortableTableHead({
 
 export default function GeneratePage() {
   const router = useRouter();
-  const [optionItems, setOptionItems] = useState<OptionItem[]>([]);
-  const [isLoadingOptions, setIsLoadingOptions] = useState(true);
-
   const [selectedTag1, setSelectedTag1] = useState(ALL_OPTION);
   const [selectedTag2, setSelectedTag2] = useState(ALL_OPTION);
   const [selectedDifficulty, setSelectedDifficulty] = useState(ALL_OPTION);
@@ -102,72 +102,9 @@ export default function GeneratePage() {
   const [sortField, setSortField] = useState<SortField>("id");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
-  const fetchOptions = useCallback(async () => {
-    setIsLoadingOptions(true);
-
-    try {
-      const response = await fetch("/api/problems/recommend/options", {
-        cache: "no-store",
-      });
-      const data = await response.json();
-
-      setOptionItems(data.success ? (data.items ?? []) : []);
-    } catch {
-      setOptionItems([]);
-    } finally {
-      setIsLoadingOptions(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void fetchOptions();
-  }, [fetchOptions]);
-
-  const availableTag1s = useMemo(() => {
-    let items = optionItems;
-
-    if (selectedTag2 !== ALL_OPTION) {
-      items = items.filter((item) => item.tag2 === selectedTag2);
-    }
-
-    if (selectedDifficulty !== ALL_OPTION) {
-      items = items.filter((item) => item.difficulty === selectedDifficulty);
-    }
-
-    return Array.from(
-      new Set(items.map((item) => item.tag1).filter(Boolean)),
-    ).sort();
-  }, [optionItems, selectedDifficulty, selectedTag2]);
-
-  const availableTag2s = useMemo(() => {
-    let items = optionItems.filter((item) => item.tag2);
-
-    if (selectedTag1 !== ALL_OPTION) {
-      items = items.filter((item) => item.tag1 === selectedTag1);
-    }
-
-    if (selectedDifficulty !== ALL_OPTION) {
-      items = items.filter((item) => item.difficulty === selectedDifficulty);
-    }
-
-    return Array.from(new Set(items.map((item) => item.tag2 as string))).sort();
-  }, [optionItems, selectedDifficulty, selectedTag1]);
-
-  const availableDifficulties = useMemo(() => {
-    let items = optionItems;
-
-    if (selectedTag1 !== ALL_OPTION) {
-      items = items.filter((item) => item.tag1 === selectedTag1);
-    }
-
-    if (selectedTag2 !== ALL_OPTION) {
-      items = items.filter((item) => item.tag2 === selectedTag2);
-    }
-
-    return Array.from(
-      new Set(items.map((item) => item.difficulty).filter(Boolean)),
-    ).sort((a, b) => getDifficultyRank(a) - getDifficultyRank(b));
-  }, [optionItems, selectedTag1, selectedTag2]);
+  const availableTag1s = ALGORITHM_OPTIONS;
+  const availableTag2s = ALGORITHM_OPTIONS;
+  const availableDifficulties = DIFFICULTY_OPTIONS;
 
   const resetResults = () => {
     setProblems([]);
@@ -194,7 +131,7 @@ export default function GeneratePage() {
   };
 
   const handleSearch = async () => {
-    if (isLoadingOptions || status === "loading") return;
+    if (status === "loading") return;
 
     setStatus("loading");
     setProblems([]);
@@ -304,12 +241,12 @@ export default function GeneratePage() {
               label="알고리즘 유형"
               value={selectedTag1}
               onChange={handleTag1Change}
-              disabled={isLoadingOptions || status === "loading"}
+              disabled={status === "loading"}
               options={[ALL_OPTION, ...availableTag1s]}
               renderLabel={(value) =>
                 value === ALL_OPTION ? value : getKoreanTag(value)
               }
-            />
+            /> 
 
             <FilterSelect
               label="추가 유형"
@@ -318,7 +255,7 @@ export default function GeneratePage() {
                 setSelectedTag2(value);
                 resetResults();
               }}
-              disabled={isLoadingOptions || status === "loading"}
+              disabled={status === "loading"}
               options={[ALL_OPTION, ...availableTag2s]}
               renderLabel={(value) =>
                 value === ALL_OPTION ? value : getKoreanTag(value)
@@ -332,7 +269,7 @@ export default function GeneratePage() {
                 setSelectedDifficulty(value);
                 resetResults();
               }}
-              disabled={isLoadingOptions || status === "loading"}
+              disabled={status === "loading"}
               options={[ALL_OPTION, ...availableDifficulties]}
               renderLabel={(value) => value}
             />
@@ -340,7 +277,7 @@ export default function GeneratePage() {
             <button
               type="button"
               onClick={handleSearch}
-              disabled={isLoadingOptions || status === "loading"}
+              disabled={status === "loading"}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-950 px-5 py-3.5 font-bold text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
             >
               {status === "loading" ? (

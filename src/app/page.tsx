@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { ArrowRight, ChevronRight, Flame } from "lucide-react";
 import {
   HomeStatsCards,
@@ -93,27 +94,12 @@ function HomeDifficultyBadge({ difficulty }: { difficulty?: string | null }) {
 }
 
 async function getVisibleProblemsCount(supabase: ServerSupabaseClient) {
-  const query = supabase
+  const { count, error } = await supabase
     .from("problems")
-    .select("*", { count: "exact", head: true })
+    .select("id", { count: "exact", head: true })
     .eq("is_deleted", false);
 
-  const { count, error } = await query;
-
   if (!error) return count ?? 0;
-
-  if (isUndefinedColumnError(error)) {
-    const { count: fallbackCount, error: fallbackError } = await supabase
-      .from("problems")
-      .select("*", { count: "exact", head: true })
-      .eq("is_deleted", false);
-
-    if (fallbackError) {
-      return 0;
-    }
-
-    return fallbackCount ?? 0;
-  }
 
   return 0;
 }
@@ -146,16 +132,20 @@ async function getRecentVisibleProblems(supabase: ServerSupabaseClient) {
   return [];
 }
 
-async function getData() {
-  const supabase = createPublicSupabaseClient();
+const getData = unstable_cache(
+  async function getHomeData() {
+    const supabase = createPublicSupabaseClient();
 
-  const [totalProblemsCount, recentProblems] = await Promise.all([
-    getVisibleProblemsCount(supabase),
-    getRecentVisibleProblems(supabase),
-  ]);
+    const [totalProblemsCount, recentProblems] = await Promise.all([
+      getVisibleProblemsCount(supabase),
+      getRecentVisibleProblems(supabase),
+    ]);
 
-  return { totalProblemsCount, recentProblems };
-}
+    return { totalProblemsCount, recentProblems };
+  },
+  ["home-data"],
+  { revalidate: 60 },
+);
 
 export default async function Home() {
   const { totalProblemsCount, recentProblems } = await getData();

@@ -2,11 +2,27 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 
 const DIFFICULTY_FILTER: Record<string, string[]> = {
-  Easy: ["EASY", "Easy"],
-  Medium: ["MEDIUM", "Medium"],
-  "Medium-Hard": ["MEDIUM_HARD", "Medium Hard"],
-  Hard: ["HARD", "Hard"],
-  "Very-Hard": ["VERY_HARD", "Very Hard"],
+  Easy: ["EASY", "Easy", "easy"],
+  Medium: ["MEDIUM", "Medium", "medium"],
+  "Medium-Hard": [
+    "MEDIUM_HARD",
+    "MEDIUM-HARD",
+    "medium_hard",
+    "medium-hard",
+    "Medium-Hard",
+    "Medium Hard",
+    "medium hard",
+  ],
+  Hard: ["HARD", "Hard", "hard"],
+  "Very-Hard": [
+    "VERY_HARD",
+    "VERY-HARD",
+    "very_hard",
+    "very-hard",
+    "Very-Hard",
+    "Very Hard",
+    "very hard",
+  ],
 };
 
 const SORTABLE_COLUMNS = {
@@ -52,6 +68,33 @@ type SortedProblemRow = {
 const normalizeProblemIdsForRpc = (problemIds: number[] | null) =>
   problemIds && problemIds.length > 0 ? problemIds : null;
 
+const normalizeAllFilter = (value: string | null) => {
+  const normalized = value?.trim() ?? "";
+  return normalized && normalized !== "전체" ? normalized : "";
+};
+
+const normalizeDifficultyValues = (difficulty: string) => {
+  if (!difficulty) return null;
+
+  const trimmedDifficulty = difficulty.trim();
+  const normalizedKey = trimmedDifficulty.toLowerCase().replace(/[\s_]+/g, "-");
+  const matchedKey = Object.keys(DIFFICULTY_FILTER).find(
+    (key) => key.toLowerCase() === normalizedKey,
+  );
+
+  if (matchedKey) {
+    return Array.from(new Set(DIFFICULTY_FILTER[matchedKey]));
+  }
+
+  return Array.from(
+    new Set([
+      trimmedDifficulty,
+      trimmedDifficulty.toLowerCase(),
+      trimmedDifficulty.toUpperCase(),
+    ]),
+  );
+};
+
 const parseProblemIds = (value: string | null) => {
   if (!value) return null;
 
@@ -71,8 +114,10 @@ export async function GET(request: Request) {
     100,
     Math.max(1, parseInt(searchParams.get("pageSize") || "20")),
   );
-  const difficulty = searchParams.get("difficulty") || "";
-  const tag = searchParams.get("tag") || searchParams.get("category") || "";
+  const difficulty = normalizeAllFilter(searchParams.get("difficulty"));
+  const tag = normalizeAllFilter(
+    searchParams.get("tag") || searchParams.get("category"),
+  );
   const search = searchParams.get("search") || "";
   const sort = normalizeSort(searchParams.get("sort"));
   const order = normalizeOrder(searchParams.get("order"));
@@ -82,9 +127,7 @@ export async function GET(request: Request) {
   );
   const supabase = await createClient();
 
-  const difficultyValues = difficulty && DIFFICULTY_FILTER[difficulty]
-    ? DIFFICULTY_FILTER[difficulty]
-    : null;
+  const difficultyValues = normalizeDifficultyValues(difficulty);
 
   const rpcStartedAt = performance.now();
   const { data, error } = await supabase.rpc("get_visible_problems_sorted", {
