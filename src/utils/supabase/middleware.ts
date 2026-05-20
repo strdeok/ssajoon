@@ -45,6 +45,12 @@ function shouldSkipDeletedUserRedirect(pathname: string) {
 }
 
 export async function updateSession(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+
+  if (!matchesRoute(pathname, authRequiredRoutes)) {
+    return NextResponse.next()
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -75,8 +81,6 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-
-  const pathname = request.nextUrl.pathname
 
   if (!user && matchesRoute(pathname, authRequiredRoutes)) {
     return redirectToLogin(request)
