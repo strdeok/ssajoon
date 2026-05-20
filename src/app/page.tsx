@@ -189,7 +189,7 @@ export default async function Home() {
             </h1>
 
             <p className="mt-4 max-w-xl text-sm leading-7 text-blue-100 sm:text-base">
-              알고리즘 문제로 문제 해결 능력을 키우고 코딩 역량을 꾸준히
+              알고리즘 문제로 문제 해결 능력을 키우고 역량을 꾸준히
               성장시키세요.
             </p>
 
