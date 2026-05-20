@@ -261,6 +261,20 @@ function EmptySubmissionPanel() {
     </div>
   );
 }
+const convertLanguage = (language: string | null) => {
+  if (!language) return "-";
+
+  switch (language) {
+    case "java":
+      return "Java 17";
+    case "cpp":
+      return "C++ 17";
+    case "python":
+      return "Python3";
+    default:
+      return language;
+  }
+};
 
 export function HomeSubmissionPanel() {
   const { data, isLoading } = useHomeSubmissionData();
@@ -322,7 +336,7 @@ export function HomeSubmissionPanel() {
                   <div className="flex flex-col items-end gap-0.5">
                     <StatusLabel result={submission.result} />
                     <span className="text-xs text-zinc-400 dark:text-zinc-500">
-                      {submission.language || "-"}
+                      {convertLanguage(submission.language)}
                     </span>
                   </div>
                 </Link>
