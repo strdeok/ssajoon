@@ -17,10 +17,41 @@ function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
+function normalizePlainTextMath(part: string) {
+  const mathifiedPart = part
+    .replace(
+      /\b([A-Za-z])_([A-Za-z0-9]+)\b/g,
+      (_, base: string, subscript: string) => `$${base}_${subscript}$`,
+    )
+    .replace(
+      /\b(\d+)\^([+-]?\d+)\b/g,
+      (_, base: string, exponent: string) => `$${base}^${exponent}$`,
+    );
+
+  return mathifiedPart
+    .split(/(\$[^$\n]*\$)/g)
+    .map((segment, index) =>
+      index % 2 === 1 ? segment : segment.replace(/(?<!\\)_/g, "\\_"),
+    )
+    .join("");
+}
+
+function normalizeInlineMathNotation(content: string) {
+  const protectedSyntaxPattern =
+    /(```[\s\S]*?```|`[^`\n]*`|\$\$[\s\S]*?\$\$|\$[^$\n]*\$)/g;
+
+  return content
+    .split(protectedSyntaxPattern)
+    .map((part, index) =>
+      index % 2 === 1 ? part : normalizePlainTextMath(part),
+    )
+    .join("");
+}
+
 function normalizeMarkdownContent(content: string | null | undefined) {
   if (!content) return "";
 
-  return content
+  const normalizedContent = content
     .replace(/\r\n/g, "\n")
     .replace(/\r/g, "\n")
     .replace(/\\n/g, "\n")
@@ -35,6 +66,8 @@ function normalizeMarkdownContent(content: string | null | undefined) {
     .replace(/^\s*[-*+]\s*\n+\s+/gm, "- ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+
+  return normalizeInlineMathNotation(normalizedContent);
 }
 
 const defaultMarkdownClassName =

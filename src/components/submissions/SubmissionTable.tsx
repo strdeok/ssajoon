@@ -4,6 +4,7 @@ import { getKoreanTag } from "@/utils/tagUtils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, ArrowUpDown, Users } from "lucide-react";
+import SubmissionPagination from "./SubmissionPagination";
 
 export type Submission = {
   id: number;
@@ -23,6 +24,12 @@ type Props = {
   submissions: Submission[];
   onSort: (field: keyof Submission) => void;
   currentSort: { field: keyof Submission; order: "asc" | "desc" };
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    onPageChange: (page: number) => void;
+  };
 };
 
 type SortHeaderProps = {
@@ -146,12 +153,13 @@ export default function SubmissionTable({
   submissions,
   onSort,
   currentSort,
+  pagination,
 }: Props) {
   const router = useRouter();
 
   return (
     <>
-    <div className="mb-6 space-y-3 md:hidden">
+    <div className="space-y-3 md:hidden">
       {submissions.length === 0 ? (
         <div className="rounded-lg border border-[#E2E8F0] bg-white px-5 py-14 text-center shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:border-zinc-800 dark:bg-[#18181b]">
           <p className="text-base font-medium text-zinc-900 dark:text-zinc-200">
@@ -241,9 +249,17 @@ export default function SubmissionTable({
           </div>
         ))
       )}
+      {pagination && (
+        <SubmissionPagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          onPageChange={pagination.onPageChange}
+        />
+      )}
     </div>
 
-    <div className="mb-6 hidden w-full min-w-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:border-zinc-800 dark:bg-[#18181b] md:block">
+    <div className="hidden w-full min-w-0 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:border-zinc-800 dark:bg-[#18181b] md:block">
       <div className="w-full overflow-x-auto">
         <table className="min-w-210 w-full table-fixed text-left text-sm">
           <colgroup>
@@ -428,6 +444,14 @@ export default function SubmissionTable({
           </tbody>
         </table>
       </div>
+      {pagination && (
+        <SubmissionPagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          onPageChange={pagination.onPageChange}
+        />
+      )}
     </div>
     </>
   );

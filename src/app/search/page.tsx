@@ -298,8 +298,8 @@ export default function GeneratePage() {
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start">
-        <section className="lg:col-span-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-[#09090b]">
-          <div className="space-y-5">
+        <section className="lg:col-span-4 rounded-2xl border border-zinc-200 bg-white px-6 py-9 shadow-sm dark:border-zinc-800 dark:bg-[#09090b]">
+          <div className="flex flex-col gap-8">
             <FilterSelect
               label="알고리즘 유형"
               value={selectedTag1}
