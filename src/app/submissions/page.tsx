@@ -10,7 +10,6 @@ import SubmissionFilters from "@/components/submissions/SubmissionFilters";
 import SubmissionTable, {
   Submission,
 } from "@/components/submissions/SubmissionTable";
-import SubmissionPagination from "@/components/submissions/SubmissionPagination";
 import WeeklySubmissionChart, {
   WeeklyStat,
 } from "@/components/submissions/WeeklySubmissionChart";
@@ -55,6 +54,8 @@ const normalizeLanguage = (lang: string | null | undefined) => {
   if (!lang || lang === "Unknown") return "unknown";
   const lower = lang.toLowerCase();
   if (lower === "cpp" || lower === "c++") return "C++";
+  if (lower === "java" || lower.startsWith("java")) return "java";
+  if (lower === "python" || lower.startsWith("python")) return "python";
   return lower;
 };
 
@@ -453,13 +454,12 @@ export default function SubmissionsPage() {
           submissions={paginatedSubmissions}
           onSort={handleSort}
           currentSort={{ field: sortField, order: sortOrder }}
-        />
-
-        {/* 4. 페이지네이션 섹션 */}
-        <SubmissionPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
+          pagination={{
+            currentPage,
+            totalPages,
+            totalItems: filteredSubmissions.length,
+            onPageChange: setCurrentPage,
+          }}
         />
 
         {/* 5. 주간 제출 통계 (차트) 섹션 */}
