@@ -34,15 +34,12 @@
 ## 기술 스택
 
 ### Frontend
-
 - Next.js
-- React
 - TypeScript
 - Tailwind CSS
 - CodeMirror 6
 
 ### Backend / Database
-
 - Next.js Route Handler
 - Supabase
 - PostgreSQL
@@ -53,10 +50,3 @@
 
 - Vercel
 - Supabase
-
-
-개선 결과, 문제 목록 API 응답 시간이 크게 감소했습니다.
-
-```txt
-개선 전: 약 600ms 이상
-개선 후: 약 120ms 수준
