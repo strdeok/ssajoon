@@ -106,6 +106,8 @@ export default function GeneratePage() {
   const availableTag2s = ALGORITHM_OPTIONS;
   const availableDifficulties = DIFFICULTY_OPTIONS;
 
+  const isTag2Disabled = status === "loading" || selectedTag1 === ALL_OPTION;
+
   const resetResults = () => {
     setProblems([]);
     setErrorMessage(null);
@@ -212,8 +214,12 @@ export default function GeneratePage() {
       }
 
       if (aVal === bVal) return a.id - b.id;
-      if (aVal === null || aVal === undefined) return sortOrder === "asc" ? -1 : 1;
-      if (bVal === null || bVal === undefined) return sortOrder === "asc" ? 1 : -1;
+      if (aVal === null || aVal === undefined) {
+        return sortOrder === "asc" ? -1 : 1;
+      }
+      if (bVal === null || bVal === undefined) {
+        return sortOrder === "asc" ? 1 : -1;
+      }
 
       const result = aVal < bVal ? -1 : 1;
       return sortOrder === "asc" ? result : -result;
@@ -246,16 +252,18 @@ export default function GeneratePage() {
               renderLabel={(value) =>
                 value === ALL_OPTION ? value : getKoreanTag(value)
               }
-            /> 
+            />
 
             <FilterSelect
               label="추가 유형"
               value={selectedTag2}
               onChange={(value) => {
+                if (selectedTag1 === ALL_OPTION) return;
+
                 setSelectedTag2(value);
                 resetResults();
               }}
-              disabled={status === "loading"}
+              disabled={isTag2Disabled}
               options={[ALL_OPTION, ...availableTag2s]}
               renderLabel={(value) =>
                 value === ALL_OPTION ? value : getKoreanTag(value)
@@ -301,7 +309,7 @@ export default function GeneratePage() {
           </div>
         </section>
 
-        <section className="lg:col-span-8">
+        <section className="lg:col-span-8 max-h-200">
           {status === "idle" && (
             <StatePanel
               icon={<Search className="h-10 w-10" />}
@@ -342,7 +350,7 @@ export default function GeneratePage() {
                 </span>
               </div>
 
-              <div className="max-h-98 overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-[#09090b]">
+              <div className="h-full overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-[#09090b]">
                 <Table className="min-w-210">
                   <TableHeader className="bg-zinc-50 dark:bg-white/3">
                     <TableRow className="border-zinc-200 hover:bg-transparent dark:border-zinc-800">
@@ -397,6 +405,7 @@ export default function GeneratePage() {
                       <TableHead className="w-12" />
                     </TableRow>
                   </TableHeader>
+
                   <TableBody>
                     {sortedProblems.map((problem) => (
                       <TableRow
@@ -407,11 +416,13 @@ export default function GeneratePage() {
                         <TableCell className="px-5 text-sm font-medium text-zinc-400 dark:text-zinc-500">
                           {problem.id}
                         </TableCell>
+
                         <TableCell>
                           <span className="line-clamp-1 text-sm font-semibold text-zinc-950 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
                             {problem.title}
                           </span>
                         </TableCell>
+
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
                             <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs font-bold text-zinc-600 dark:border-zinc-800 dark:bg-black dark:text-zinc-400">
@@ -424,19 +435,25 @@ export default function GeneratePage() {
                             )}
                           </div>
                         </TableCell>
+
                         <TableCell>
                           <span
-                            className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${difficultyColor(problem.difficulty)}`}
+                            className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${difficultyColor(
+                              problem.difficulty,
+                            )}`}
                           >
                             {problem.difficulty}
                           </span>
                         </TableCell>
+
                         <TableCell className="text-left text-sm font-medium text-zinc-500 dark:text-zinc-400">
                           {problem.time_limit_ms / 1000}초
                         </TableCell>
+
                         <TableCell className="text-left text-sm font-medium text-zinc-500 dark:text-zinc-400">
                           {problem.memory_limit_mb}MB
                         </TableCell>
+
                         <TableCell>
                           <ChevronRight className="h-4 w-4 text-zinc-400 transition group-hover:translate-x-1 group-hover:text-blue-500" />
                         </TableCell>

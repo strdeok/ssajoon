@@ -11,10 +11,11 @@ export async function POST(request: Request) {
   try {
     const supabase = await createClient();
     const { tag1, tag2, difficulty } = await request.json();
+
     const { data, error } = await supabase.rpc("get_random_visible_problems", {
-      p_tag1: normalizeFilter(tag1) || null,
-      p_tag2: normalizeFilter(tag2) || null,
-      p_difficulty: normalizeFilter(difficulty) || null,
+      p_tag1: normalizeFilter(tag1),
+      p_tag2: normalizeFilter(tag2),
+      p_difficulty: normalizeFilter(difficulty),
     });
 
     if (error) {
