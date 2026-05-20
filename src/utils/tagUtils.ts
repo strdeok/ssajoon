@@ -26,14 +26,14 @@ export const TAG_MAP: Record<string, string> = {
   "bfs" : "너비 우선 탐색"
 };
 
-export const DIFFICULTY_OPTIONS = ["Easy", "Medium", "Medium-Hard", "Hard", "Very-Hard"];
+export const DIFFICULTY_OPTIONS = ["Easy", "Medium", "Medium_Hard", "Hard", "Very_Hard"];
 
 export const DIFFICULTY_ORDER: Record<string, number> = {
   "Easy": 1,
   "Medium": 2,
-  "Medium-Hard": 3,
+  "Medium_Hard": 3,
   "Hard": 4,
-  "Very-Hard": 5,
+  "Very_Hard": 5,
 };
 
 export function getDifficultyRank(difficulty: string | null | undefined) {
@@ -47,11 +47,11 @@ export function getDifficultyRank(difficulty: string | null | undefined) {
     case "medium":
       return DIFFICULTY_ORDER.Medium;
     case "medium-hard":
-      return DIFFICULTY_ORDER["Medium-Hard"];
+      return DIFFICULTY_ORDER["Medium_Hard"];
     case "hard":
       return DIFFICULTY_ORDER.Hard;
     case "very-hard":
-      return DIFFICULTY_ORDER["Very-Hard"];
+      return DIFFICULTY_ORDER["Very_Hard"];
     default:
       return 0;
   }
