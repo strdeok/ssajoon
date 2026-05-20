@@ -11,7 +11,10 @@ export function Footer() {
               더 나은 개발자가 되기 위한 알고리즘 트레이닝 플랫폼.
             </p>
           </div>
-          <p className="text-xs sm:text-right">Premium Algorithm Platform</p>
+          <div className="space-y-1 text-xs sm:text-right">
+            <p>Premium Algorithm Platform</p>
+            <p>Copyright © 2026 SSAJOON. All rights reserved.</p>
+          </div>
         </div>
       </div>
     </footer>
