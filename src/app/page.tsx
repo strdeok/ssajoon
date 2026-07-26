@@ -6,6 +6,7 @@ import {
   HomeStatsCards,
   HomeSubmissionPanel,
 } from "@/components/home/HomeSubmissionClient";
+import { JudgeServiceNotice } from "@/components/home/JudgeServiceNotice";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -152,6 +153,7 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-[#F7F9FC] px-4 py-4 dark:bg-zinc-950 sm:px-6 lg:px-8">
+      <JudgeServiceNotice />
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <section className="relative overflow-hidden rounded-2xl bg-[#253EEB] shadow-2xl shadow-blue-500/10 dark:bg-indigo-700">
           <Image
